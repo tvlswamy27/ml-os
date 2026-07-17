@@ -4140,3 +4140,127 @@ It serves as the gateway between an initial idea and a professionally managed Ma
 **Workflow Status:** Ready for Technical Initialization
 
 ---
+
+
+# Architecture Notes
+
+## Module Philosophy
+
+Project Discovery establishes the strategic foundation of every Machine Learning and Data Science project.
+
+Its purpose is not to produce code or models but to transform a business problem into a clearly defined engineering problem.
+
+The module emphasizes understanding before implementation and ensures that technical work begins only after business objectives, stakeholders, constraints, risks, and success criteria have been validated.
+
+---
+
+## Major Design Decisions
+
+### 1. Project Discovery Owns Business Understanding
+
+Project Discovery is responsible for answering:
+
+- Why are we building this?
+- What problem are we solving?
+- Is Machine Learning the correct solution?
+
+It deliberately avoids implementation decisions.
+
+---
+
+### 2. Recommendations Before Decisions
+
+ML-OS should analyze project requirements and recommend appropriate solutions rather than asking users to make technical decisions without sufficient context.
+
+This philosophy improves usability while preserving engineering quality.
+
+---
+
+### 3. Engineering Decisions Are Evidence-Based
+
+Every recommendation should include:
+
+- Supporting reasoning
+- Confidence level
+- Trade-offs
+- Alternative approaches
+
+Recommendations should never appear arbitrary.
+
+---
+
+### 4. Artifacts Are Primary Outputs
+
+Project Discovery produces structured engineering artifacts rather than temporary conversational responses.
+
+Examples include:
+
+- Project Discovery Report
+- Business Requirements Document
+- Risk Register
+- ML Suitability Assessment
+- Engineering Roadmap
+
+These artifacts become permanent project assets.
+
+---
+
+### 5. Project State Is the Single Source of Truth
+
+All validated information collected during Project Discovery should be synchronized into the shared Project State.
+
+Future workflow modules consume the Project State instead of repeatedly asking the user the same questions.
+
+---
+
+### 6. Modules Communicate Through Artifacts
+
+Workflow modules exchange structured artifacts and Project State rather than relying on conversational memory.
+
+This improves reproducibility, modularity, and traceability.
+
+---
+
+### 7. Quality Gates Are Mandatory
+
+Project Discovery cannot complete until mandatory validation checks have passed.
+
+Engineering quality is considered more important than workflow speed.
+
+---
+
+### 8. Module Contracts
+
+Project Discovery defines:
+
+- Required inputs
+- Owned responsibilities
+- Produced outputs
+- Exit guarantees
+
+This creates a clear contract with downstream workflow modules.
+
+---
+
+## Primary Artifact
+
+Project Discovery introduces the project's first foundational artifact:
+
+**Project Discovery Report**
+
+This report captures the complete business understanding of the project and becomes the strategic reference for all subsequent workflow modules.
+
+---
+
+## Architectural Outcome
+
+After completing Project Discovery, ML-OS understands:
+
+- What problem exists.
+- Why it matters.
+- Whether ML is appropriate.
+- What success looks like.
+- What constraints exist.
+- What engineering work lies ahead.
+
+This module transforms an idea into a validated engineering project.

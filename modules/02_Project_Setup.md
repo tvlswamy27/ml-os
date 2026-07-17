@@ -4667,3 +4667,179 @@ This module bridges strategic planning and technical execution, enabling downstr
 **Workflow Status:** Ready for Data Analysis
 
 ---
+
+
+# Architecture Notes
+
+## Module Philosophy
+
+Project Setup establishes the engineering foundation of every Machine Learning and Data Science project.
+
+Its purpose is not to initialize files or install packages, but to design an engineering environment that supports maintainability, reproducibility, scalability, and long-term development.
+
+The module answers one central question:
+
+> How should this project be engineered?
+
+---
+
+## Major Design Decisions
+
+### 1. Engineering Before Implementation
+
+Before any technical work begins, ML-OS designs the project's engineering architecture.
+
+Implementation should always follow an approved engineering design.
+
+---
+
+### 2. Engineering Profiles
+
+Instead of exposing users to dozens of technical tooling decisions, ML-OS classifies each project into an Engineering Profile.
+
+Examples include:
+
+- Learning
+- Portfolio
+- Research
+- Startup MVP
+- Enterprise
+
+The Engineering Profile drives all subsequent recommendations.
+
+---
+
+### 3. Recommendation-First Workflow
+
+Project Setup should not ask users questions such as:
+
+- Which package manager do you want?
+- Which formatter do you prefer?
+- Which testing framework should we use?
+
+Instead, ML-OS analyzes the project and recommends a complete engineering solution.
+
+User interaction occurs primarily through approval or controlled overrides.
+
+---
+
+### 4. Engineering Stack
+
+Project Setup recommends a complete Engineering Stack rather than isolated tools.
+
+The Engineering Stack includes:
+
+- Repository architecture
+- Development environment
+- Dependency strategy
+- Quality tools
+- Documentation standards
+- Repository workflow
+- Automation strategy
+
+The stack should function as a cohesive engineering system.
+
+---
+
+### 5. Engineering Blueprint
+
+The Engineering Blueprint is the primary artifact produced by Project Setup.
+
+It consolidates:
+
+- Engineering Profile
+- Repository Architecture
+- Engineering Stack
+- Repository Workflow
+- Engineering Standards
+- Automation Strategy
+
+All downstream modules should reference the Engineering Blueprint before making implementation decisions.
+
+---
+
+### 6. Repository Profiles
+
+Repository organization should be derived from project characteristics rather than manually designed.
+
+Repository standards should scale according to project complexity and collaboration requirements.
+
+---
+
+### 7. Recommendations Before Implementation
+
+Project Setup follows a universal workflow:
+
+Analysis
+
+↓
+
+Recommendation
+
+↓
+
+Approval
+
+↓
+
+Implementation
+
+↓
+
+Validation
+
+This pattern ensures transparency and allows users to review engineering decisions before execution.
+
+---
+
+### 8. Engineering Design Is Separate From Engineering Execution
+
+Project Setup designs the engineering environment.
+
+It does not:
+
+- Install packages
+- Configure environments
+- Generate implementation code
+
+Those activities occur only after the engineering architecture has been approved.
+
+---
+
+### 9. Project State Synchronization
+
+Engineering decisions become part of the Project State.
+
+Future workflow modules consume these decisions rather than recreating engineering context.
+
+---
+
+### 10. Engineering Readiness
+
+Project Setup concludes only after the project has achieved an implementation-ready engineering state.
+
+Readiness is determined through validation rather than by the presence of configuration files.
+
+---
+
+## Primary Artifact
+
+Project Setup introduces the project's second foundational artifact:
+
+**Engineering Blueprint**
+
+The Engineering Blueprint becomes the authoritative engineering specification for the remainder of the project lifecycle.
+
+---
+
+## Architectural Outcome
+
+After completing Project Setup, ML-OS understands:
+
+- How the repository should be organized.
+- Which engineering standards should be followed.
+- Which engineering profile best matches the project.
+- Which Engineering Stack should be used.
+- How the project should evolve throughout its lifecycle.
+
+The project is now prepared to begin technical implementation while maintaining professional engineering standards.
