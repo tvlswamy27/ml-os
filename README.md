@@ -1,20 +1,24 @@
 <p align="center">
-  <img src="assets/banner.png" alt="ML-OS Banner" width="100%">
+  <img src="assets/banner.png" width="100%">
 </p>
 
-# 🚀 ML-OS
+<h1 align="center">🚀 ML-OS</h1>
 
-> **An End-to-End Machine Learning Engineering Framework**
->
-> Design • Build • Evaluate • Deploy • Monitor • Review • Interview
+<p align="center">
+An End-to-End Machine Learning Engineering Framework
+</p>
 
-![Version](https://img.shields.io/badge/version-v1.0-blue)
+<p align="center">
+Design • Build • Evaluate • Deploy • Monitor • Review • Interview
+</p>
 
-![License](https://img.shields.io/badge/license-MIT-green)
+<p align="center">
+  <img src="https://img.shields.io/badge/version-v1.0-blue">
+  <img src="https://img.shields.io/badge/license-MIT-green">
+  <img src="https://img.shields.io/badge/modules-11-orange">
+  <img src="https://img.shields.io/badge/status-Stable-brightgreen">
+</p>
 
-![Modules](https://img.shields.io/badge/modules-11-orange)
-
-![Status](https://img.shields.io/badge/status-Stable-success)
 
 ML-OS is a structured engineering framework that guides Machine Learning projects from **business problem discovery** to **production deployment**, **repository management**, and **technical interview readiness**.
 
@@ -37,6 +41,19 @@ It provides a standardized workflow, reusable engineering artifacts, and best pr
 
 > **From Business Problem → Career-Ready Machine Learning Engineer**
 
+## 📑 Contents
+
+- Introduction
+- Why ML-OS?
+- Key Features
+- Architecture Overview
+- Module Overview
+- Repository Structure
+- Getting Started
+- Example Workflow
+- Roadmap
+- Contributing
+- License
 
 
 ## 📖 Introduction
