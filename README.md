@@ -8,6 +8,14 @@
 >
 > Design • Build • Evaluate • Deploy • Monitor • Review • Interview
 
+![Version](https://img.shields.io/badge/version-v1.0-blue)
+
+![License](https://img.shields.io/badge/license-MIT-green)
+
+![Modules](https://img.shields.io/badge/modules-11-orange)
+
+![Status](https://img.shields.io/badge/status-Stable-success)
+
 ML-OS is a structured engineering framework that guides Machine Learning projects from **business problem discovery** to **production deployment**, **repository management**, and **technical interview readiness**.
 
 It provides a standardized workflow, reusable engineering artifacts, and best practices that help developers build production-ready Machine Learning systems while following a consistent engineering process.
@@ -180,6 +188,19 @@ ML-OS is built on the following engineering principles:
 - **Production Readiness** – Build systems that are deployable and maintainable.
 - **Continuous Improvement** – Monitor, review, and refine models after deployment.
 - **Career Readiness** – Prepare developers to confidently explain and defend their engineering decisions.
+
+## 🛠️ Built With
+
+ML-OS is built using industry-standard tools and engineering practices.
+
+| Category | Technologies |
+|----------|--------------|
+| Documentation | Markdown |
+| Version Control | Git, GitHub |
+| Diagrams | Draw.io, Mermaid, Canva |
+| Machine Learning | Python, Scikit-learn, Pandas, NumPy |
+| Engineering Practices | MLOps, Git Workflow, Documentation Standards |
+| Development Environment | Visual Studio Code |
 
 
 ## 🏛️ ML-OS Architecture Overview
@@ -458,4 +479,6 @@ See the [LICENSE](LICENSE) file for details.
 ---
 
 ⭐ If you found ML-OS useful, consider giving the repository a **Star** to support the project.
+
+
 
