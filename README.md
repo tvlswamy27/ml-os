@@ -284,26 +284,25 @@ ML-OS is organized into **11 sequential modules**, each responsible for a specif
 
 ## 🗂️ Repository Structure
 
-The repository is organized into modular documentation and engineering resources.
+
 
 ```text
 ml-os/
 │
-├── modules/                 # Complete module documentation
-│   ├── 01_Project_Discovery.md
-│   ├── 02_Project_Setup.md
-│   ├── 03_Data_Understanding.md
-│   ├── 04_Data_Preparation.md
-│   ├── 05_Feature_Engineering.md
-│   ├── 06_Model_Development.md
-│   ├── 07_Model_Evaluation.md
-│   ├── 08_Deployment.md
-│   ├── 09_Monitoring.md
-│   ├── 10_GitHub_Review.md
-│   └── 11_Interview_Preparation.md
+├── assets/                 # Images and diagrams
+├── docs/                   # Additional documentation
+├── kernel/                 # Core framework concepts
+├── modules/                # 11 ML-OS modules
+├── project-management/     # Planning resources
+├── roadmap/                # Future roadmap
+├── sample-projects/        # Example implementations
+├── templates/              # Reusable templates
+├── workflows/              # Workflow definitions
 │
-├── README.md                # Project overview
-├── LICENSE                  # License
+├── README.md
+├── CHANGELOG.md
+├── CONTRIBUTING.md
+├── LICENSE
 └── .gitignore
 ```
 
@@ -314,10 +313,11 @@ ml-os/
 
 Follow these steps to begin using ML-OS.
 
+
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/your-username/ml-os.git
+git clone https://github.com/tvlswamy27/ml-os.git
 cd ml-os
 ```
 
