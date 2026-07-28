@@ -39,6 +39,10 @@ class DatasetAnalyzer:
             numerical_columns=self._get_numerical_columns(dataframe),
             categorical_columns=self._get_categorical_columns(dataframe),
             missing_values=self._get_missing_values(dataframe),
+            duplicate_rows=self._get_duplicate_rows(dataframe),
+            unique_values=self._get_unique_values(dataframe),
+            missing_percentages=self._get_missing_percentages(dataframe),
+            column_types=self._get_column_types(dataframe),
         )
 
     def _get_row_count(self, dataframe: pd.DataFrame) -> int:
@@ -139,3 +143,77 @@ class DatasetAnalyzer:
         """
 
         return dataframe.isnull().sum().to_dict()
+
+    def _get_duplicate_rows(
+        self,
+        dataframe: pd.DataFrame,
+    ) -> int:
+        """
+        Count duplicate rows in the dataset.
+
+        Parameters
+        ----------
+        dataframe : pandas.DataFrame
+           Dataset to inspect.
+
+        Returns
+        -------
+        int
+         Total number of duplicate rows.
+        """
+
+        return int(dataframe.duplicated().sum())
+
+    def _get_unique_values(
+        self,
+        dataframe,
+    ) -> dict[str, int]:
+        """
+        Count unique values for categorical columns.
+        """
+
+        categorical_columns = self._get_categorical_columns(dataframe)
+
+        return {
+            column: int(dataframe[column].nunique(dropna=True))
+            for column in dataframe.columns
+        }
+
+    def _get_missing_percentages(
+        self,
+        dataframe,
+    ) -> dict[str, float]:
+        """
+        Calculate missing value percentages.
+        """
+
+        total_rows = len(dataframe)
+
+        return {
+            column: float(
+                round(
+                    dataframe[column].isna().sum() / total_rows * 100,
+                    2,
+                )
+            )
+            for column in dataframe.columns
+        }
+
+    def _get_column_types(
+        self,
+        dataframe: pd.DataFrame,
+    ) -> dict[str, str]:
+        """
+        Determine the type of each column.
+        """
+
+        column_types = {}
+
+        for column in dataframe.columns:
+
+            if column in self._get_numerical_columns(dataframe):
+                column_types[column] = "numerical"
+            else:
+                column_types[column] = "categorical"
+
+        return column_types

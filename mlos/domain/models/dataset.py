@@ -33,3 +33,11 @@ class Dataset(BaseModel):
     numerical_columns: list[str] = field(default_factory=list)
 
     missing_values: dict[str, int] = field(default_factory=dict)
+
+    duplicate_rows: int = 0
+
+    unique_values: dict[str, int] = field(default_factory=dict)
+
+    missing_percentages: dict[str, float] = field(default_factory=dict)
+
+    column_types: dict[str, str] = field(default_factory=dict)

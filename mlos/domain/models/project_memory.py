@@ -1,7 +1,7 @@
 """
-Project State.
+Project Memory.
 
-Represents the complete state of an ML project.
+Stores everything ML-OS knows about a project.
 
 Author: Vikram Tanakala
 License: MIT
@@ -10,30 +10,23 @@ License: MIT
 from dataclasses import dataclass, field
 
 from mlos.domain.models.base import BaseModel
+from mlos.domain.models.dataset import Dataset
 
 
 @dataclass
-class ProjectState(BaseModel):
+class ProjectMemory(BaseModel):
     """
-    Represents everything ML-OS knows about a project.
+    Stores project knowledge.
     """
 
     project_name: str
 
-    goal: str
+    project_goal: str
 
-    dataset_path: str | None = None
+    dataset: Dataset | None = None
 
-    problem_type: str | None = None
-
-    current_stage: str = "Project Creation"
-
-    next_action: str = "Load dataset"
+    current_stage: str = "Project Initialization"
 
     completed_tasks: list[str] = field(default_factory=list)
 
-    pending_tasks: list[str] = field(default_factory=list)
-
-    observations: list[str] = field(default_factory=list)
-
-    decisions: list[str] = field(default_factory=list)
+    notes: list[str] = field(default_factory=list)
