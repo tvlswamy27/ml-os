@@ -68,7 +68,7 @@ class MLOSEngine:
       Analyze a dataset.
       """
 
-        if self.memory is None:
+        if self.project_memory is None:
             raise RuntimeError(
               "Create a project before analyzing a dataset."
           )
@@ -78,9 +78,17 @@ class MLOSEngine:
         dataset = self.dataset_analyzer.analyze(dataframe)
 
         self.project_memory_service.update_dataset(
-          self.memory,
-          dataset,
-      )
+                  self.project_memory,
+                  dataset,   
+              )
+
+        profile = self.intelligence_engine.analyze(
+            self.project_memory,
+        )
+
+        self.project_memory.profile = profile
+
+        
 
     def reason(self):
         """Reason about the current project."""
@@ -129,6 +137,13 @@ class MLOSEngine:
             self.project_memory,
             dataset,
         )
+
+        profile = self.intelligence_engine.analyze(
+            self.project_memory,
+        )
+
+        self.project_memory.profile = profile
+        
         decisions = self.decision_engine.decide(
             self.project_memory,
         )

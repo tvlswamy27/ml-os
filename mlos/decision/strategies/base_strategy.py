@@ -25,3 +25,16 @@ class BaseStrategy(ABC):
         Generate decisions.
         """
         pass
+
+
+from abc import ABC, abstractmethod
+
+
+class DecisionStrategy(ABC):
+
+    @abstractmethod
+    def decide(
+        self,
+        memory,
+    ):
+        pass

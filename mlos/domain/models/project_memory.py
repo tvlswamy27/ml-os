@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 
 from mlos.domain.models.base import BaseModel
 from mlos.domain.models.dataset import Dataset
-
+from mlos.domain.models.project_profile import ProjectProfile
 
 @dataclass
 class ProjectMemory(BaseModel):
@@ -30,3 +30,5 @@ class ProjectMemory(BaseModel):
     completed_tasks: list[str] = field(default_factory=list)
 
     notes: list[str] = field(default_factory=list)
+
+    project_profile: ProjectProfile | None = None

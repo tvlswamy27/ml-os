@@ -14,7 +14,7 @@ from mlos.knowledge.thresholds import (
     HIGH_MISSING_THRESHOLD,
 )
 
-class MissingValueStrategy(BaseStrategy):
+class MissingValueDecision(BaseStrategy):
 
     def decide(
         self,
