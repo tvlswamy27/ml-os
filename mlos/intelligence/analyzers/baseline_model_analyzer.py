@@ -14,11 +14,33 @@ class BaselineModelAnalyzer(BaseAnalyzer):
         """
         Analyze the project and enrich the ProjectProfile with baseline model assessment.
         """
-        pass
+        if profile.problem_type == "Binary Classification":
+            profile.baseline_models = self._binary_models()
+            return
 
-        profile.baseline_models.extend(
+        if profile.problem_type == "Multiclass Classification":
+            profile.baseline_models = self._multiclass_models()
+            return
+
+        if profile.problem_type == "Regression":
+            profile.baseline_models = self._regression_models()
+            return
+
+        '''profile.baseline_models.extend(
             [
                 "Logistic Regression",
                 "Random Forest",
             ]
-        )
+        )'''
+
+    def _binary_models(
+        self,
+    ) -> list[str]:
+
+        """
+        Return a list of baseline models suitable for binary classification problems.
+        """
+        return [
+            "Logistic Regression",
+            "Random Forest",
+        ]

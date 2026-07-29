@@ -8,7 +8,7 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-
+from mlos.domain.models.risk import Risk
 
 @dataclass
 class ProjectProfile:
@@ -22,4 +22,4 @@ class ProjectProfile:
 
     baseline_models: list[str] = field(default_factory=list)
 
-    risks: list[str] = field(default_factory=list)
+    risks: list[Risk] = field(default_factory=list)
