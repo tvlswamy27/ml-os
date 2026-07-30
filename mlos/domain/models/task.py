@@ -18,7 +18,7 @@ class Task(BaseModel):
     Represents a unit of work inside an ML project.
     """
 
-    id: str
+    task_id: str
 
     title: str
 

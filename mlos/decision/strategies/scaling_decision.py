@@ -19,6 +19,6 @@ class ScalingDecision(BaseStrategy):
         memory: ProjectMemory,
     ) -> list[Decision]:
 
-        decisions = []
+        decisions: list[Decision] = []
 
         return decisions

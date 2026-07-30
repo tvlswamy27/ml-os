@@ -19,7 +19,7 @@ class DuplicateDecision(BaseStrategy):
         memory: ProjectMemory,
     ) -> list[Decision]:
 
-        decisions = []
+        decisions: list[Decision] = []
         dataset = memory.dataset
 
         if dataset is None:

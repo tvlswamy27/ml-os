@@ -29,6 +29,9 @@ from mlos.domain.models.generated_code import GeneratedCode
 from mlos.evaluation.evaluation_engine import EvaluationEngine
 from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
 from mlos.domain.services.evaluation_service import EvaluationService
+from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.workflow.workflow_hooks import HookRegistry
+from mlos.domain.models.workflow_result import WorkflowResult
 
 class MLOSEngine:
     """
@@ -62,6 +65,8 @@ class MLOSEngine:
             self.evaluation_engine,
             self.project_memory_service,
         )
+        self.hooks = HookRegistry()
+        self.workflow_engine = WorkflowEngine(self, self.hooks)
         self.project_memory = None
 
     def create_project(
@@ -102,6 +107,7 @@ class MLOSEngine:
         dataframe = self.data_loader.load(dataset_path)
 
         dataset = self.dataset_analyzer.analyze(dataframe)
+        dataset.path = dataset_path
 
         self.project_memory_service.update_dataset(
                   self.project_memory,
@@ -152,6 +158,16 @@ class MLOSEngine:
                 "Create or load a project before running evaluation."
             )
         self.evaluation_service.run_evaluation(self.project_memory)
+
+    def run(self, dataset_path: str, target: str | None = None) -> WorkflowResult:
+        """
+        Executes the complete machine learning engineering lifecycle automatically.
+        """
+        if self.project_memory is None:
+            raise RuntimeError(
+                "Create or load a project before running a workflow."
+            )
+        return self.workflow_engine.run(dataset_path, target)
 
     def explain(self):
         """Explain ML-OS decisions."""

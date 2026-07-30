@@ -216,3 +216,9 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ML-OS Playground output projects
+playground/*/
+!playground/sample.csv
+!playground/.gitkeep
+

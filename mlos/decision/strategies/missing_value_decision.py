@@ -24,7 +24,7 @@ class MissingValueDecision(BaseStrategy):
         Decide how to handle missing values.
         """
 
-        decisions = []
+        decisions: list[Decision] = []
 
         dataset = memory.dataset
 

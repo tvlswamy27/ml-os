@@ -33,7 +33,7 @@ class ReasoningEngine:
         """
         Generate recommendations based on project memory.
         """
-        recommendations = []
+        recommendations: list[Recommendation] = []
 
         if memory.dataset is None:
             return recommendations

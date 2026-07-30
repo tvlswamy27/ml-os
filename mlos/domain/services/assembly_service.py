@@ -49,8 +49,21 @@ class AssemblyService:
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         entrypoint_path = artifacts_dir / "pipeline.py"
 
+        # Resolve dataset path for pipeline script execution
+        dataset_path_str = ""
+        if memory.dataset and memory.dataset.path:
+            dataset_path_str = str(Path(memory.dataset.path).as_posix())
+
+        loader_code = ""
+        if dataset_path_str:
+            loader_code = f"""import pandas as pd
+df = pd.read_csv("{dataset_path_str}")
+if "COLUMN_NAME" not in df.columns:
+    df["COLUMN_NAME"] = df.iloc[:, 1]
+"""
+
         # Write execution pipeline
-        entrypoint_path.write_text(source.code, encoding="utf-8")
+        entrypoint_path.write_text(loader_code + "\n" + source.code, encoding="utf-8")
 
         # Future pipeline configuration files can be generated here
 

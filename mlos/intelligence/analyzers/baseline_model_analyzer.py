@@ -44,3 +44,23 @@ class BaselineModelAnalyzer(BaseAnalyzer):
             "Logistic Regression",
             "Random Forest",
         ]
+
+    def _multiclass_models(self) -> list[str]:
+        """
+        Return a list of baseline models suitable for multiclass classification problems.
+        """
+        return [
+            "Logistic Regression",
+            "Random Forest",
+            "Gradient Boosting",
+        ]
+
+    def _regression_models(self) -> list[str]:
+        """
+        Return a list of baseline models suitable for regression problems.
+        """
+        return [
+            "Linear Regression",
+            "Ridge Regression",
+            "Random Forest Regressor",
+        ]
