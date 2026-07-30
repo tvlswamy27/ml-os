@@ -10,10 +10,11 @@ from dataclasses import dataclass
 
 @dataclass
 class GeneratedCode:
-    """
-    Represents generated Python code.
-    """
 
     title: str
+
+    description: str
+
+    imports: list[str]
 
     code: str

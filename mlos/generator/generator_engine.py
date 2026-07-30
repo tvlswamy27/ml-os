@@ -1,14 +1,25 @@
+"""
+Generator Engine.
 
+Generates executable Python code.
 
-from mlos.generator.builders.missing_value_builder import MissingValueBuilder
+Author: Vikram Tanakala
+License: MIT
+"""
+
+from mlos.generator.generators.missing_value_generator import (
+    MissingValueGenerator,
+)
 
 
 class GeneratorEngine:
 
     def __init__(self):
 
-        self.builders = [
-            MissingValueBuilder(),
+        self.generators = [
+
+            MissingValueGenerator(),
+
         ]
 
     def generate(
@@ -20,8 +31,18 @@ class GeneratorEngine:
 
         for decision in decisions:
 
-            for builder in self.builders:
+            for generator in self.generators:
 
-                generated.append(builder.build(decision))
+                if generator.can_generate(
+                    decision,
+                ):
+
+                    generated.append(
+                        generator.generate(
+                            decision,
+                        )
+                    )
+
+                    break
 
         return generated

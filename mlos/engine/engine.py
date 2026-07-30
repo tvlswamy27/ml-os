@@ -19,6 +19,16 @@ from mlos.domain.models.analysis_report import AnalysisReport
 from mlos.reasoning.reasoning_engine import ReasoningEngine
 from mlos.generator.generator_engine import GeneratorEngine
 from mlos.intelligence.intelligence_engine import IntelligenceEngine
+from mlos.execution.execution_engine import ExecutionEngine
+from mlos.execution.runners.local_runner import LocalProcessPipelineRunner
+from mlos.domain.services.execution_service import ExecutionService
+from mlos.generator.assembler.code_assembler import CodeAssembler
+from mlos.generator.assembler.pipeline_assembly_engine import PipelineAssemblyEngine
+from mlos.domain.services.assembly_service import AssemblyService
+from mlos.domain.models.generated_code import GeneratedCode
+from mlos.evaluation.evaluation_engine import EvaluationEngine
+from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
+from mlos.domain.services.evaluation_service import EvaluationService
 
 class MLOSEngine:
     """
@@ -36,6 +46,22 @@ class MLOSEngine:
         self.reasoning_engine = ReasoningEngine()
         self.generator_engine = GeneratorEngine()
         self.intelligence_engine = IntelligenceEngine()
+        self.execution_engine = ExecutionEngine(LocalProcessPipelineRunner())
+        self.execution_service = ExecutionService(
+            self.execution_engine,
+            self.project_memory_service,
+        )
+        self.assembly_engine = PipelineAssemblyEngine(CodeAssembler())
+        self.assembly_service = AssemblyService(
+            self.assembly_engine,
+            self.project_memory_service,
+        )
+        self.evaluation_engine = EvaluationEngine()
+        self.evaluation_engine.register_evaluator(SimpleEvaluator())
+        self.evaluation_service = EvaluationService(
+            self.evaluation_engine,
+            self.project_memory_service,
+        )
         self.project_memory = None
 
     def create_project(
@@ -102,6 +128,30 @@ class MLOSEngine:
     def generate(self):
         """Generate code for the next step."""
         raise NotImplementedError
+
+    def execute(self):
+        """Execute the generated pipeline."""
+        if self.project_memory is None:
+            raise RuntimeError(
+                "Create or load a project before running execution."
+            )
+        self.execution_service.run_execution(self.project_memory)
+
+    def assemble(self, generated_codes: list[GeneratedCode]) -> None:
+        """Assemble transient GeneratedCode blocks into a Pipeline."""
+        if self.project_memory is None:
+            raise RuntimeError(
+                "Create or load a project before running assembly."
+            )
+        self.assembly_service.run_assembly(self.project_memory, generated_codes)
+
+    def evaluate(self) -> None:
+        """Evaluate the execution outputs of the pipeline."""
+        if self.project_memory is None:
+            raise RuntimeError(
+                "Create or load a project before running evaluation."
+            )
+        self.evaluation_service.run_evaluation(self.project_memory)
 
     def explain(self):
         """Explain ML-OS decisions."""
