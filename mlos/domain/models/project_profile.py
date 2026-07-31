@@ -10,6 +10,7 @@ License: MIT
 from dataclasses import dataclass, field
 from mlos.domain.models.risk import Risk
 
+
 @dataclass
 class ProjectProfile:
     """

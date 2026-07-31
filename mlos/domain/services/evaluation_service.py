@@ -1,24 +1,22 @@
 """
 Evaluation Service.
 
-Orchestrates loading execution artifacts and executing the evaluation run.
+Translates ProjectMemory to EvaluationContext and orchestrates performance evaluation.
 
 Author: Vikram Tanakala
 License: MIT
 """
 
-import json
-from pathlib import Path
-
 from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.evaluation_context import EvaluationContext
+from mlos.domain.models.evaluation_session import EvaluationSession
 from mlos.evaluation.evaluation_engine import EvaluationEngine
+from mlos.domain.services.project_memory_service import ProjectMemoryService
 
 
 class EvaluationService:
     """
-    Coordinates metrics extraction and validation checks registration.
+    Coordinates metrics extraction, context building, and chronological session persistence.
     """
 
     def __init__(
@@ -29,32 +27,38 @@ class EvaluationService:
         self.evaluation_engine = evaluation_engine
         self.project_memory_service = project_memory_service
 
-    def run_evaluation(self, memory: ProjectMemory) -> None:
+    def build_context(self, memory: ProjectMemory) -> EvaluationContext:
         """
-        Loads artifacts, evaluates performance, and updates ProjectMemory.
+        Translate ProjectMemory into an immutable EvaluationContext.
         """
-        if not memory.execution_result:
-            raise RuntimeError("No execution result exists in ProjectMemory to evaluate.")
-
-        # Attempt to load structured metrics.json from artifacts folder
-        project_dir = Path("playground") / memory.project_name
-        metrics_file = project_dir / "artifacts" / "metrics.json"
-
-        metrics_dict = {}
-        if metrics_file.exists():
-            try:
-                metrics_dict = json.loads(metrics_file.read_text(encoding="utf-8"))
-            except Exception:
-                pass
-
-        # Construct strongly typed EvaluationArtifacts
-        artifacts = EvaluationArtifacts(metrics=metrics_dict)
-
-        # Run Stateless Evaluation
-        result = self.evaluation_engine.evaluate(
-            artifacts=artifacts,
-            execution_result=memory.execution_result,
+        execution_session = (
+            memory.execution_sessions[-1] if memory.execution_sessions else None
+        )
+        return EvaluationContext(
+            project_memory=memory, execution_session=execution_session
         )
 
-        # Update ProjectMemory
-        self.project_memory_service.update_evaluation_result(memory, result)
+    def run_evaluation(
+        self, context: EvaluationContext | ProjectMemory
+    ) -> EvaluationSession:
+        """
+        Accept only EvaluationContext, delegate to EvaluationEngine, and return EvaluationSession.
+        Supports ProjectMemory backward compatibly.
+        """
+        if isinstance(context, ProjectMemory):
+            # Legacy call: orchestrate and persist
+            return self.evaluate(context)
+
+        from typing import cast
+
+        res = self.evaluation_engine.evaluate(context)
+        return cast(EvaluationSession, res)
+
+    def evaluate(self, memory: ProjectMemory) -> EvaluationSession:
+        """
+        Orchestrate the complete evaluation flow.
+        """
+        context = self.build_context(memory)
+        session = self.run_evaluation(context)
+        self.project_memory_service.add_evaluation_session(memory, session)
+        return session

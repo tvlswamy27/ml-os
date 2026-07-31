@@ -1,0 +1,10 @@
+version: "1.0.0"
+subsystem: "knowledge"
+author: "ML-OS Core Team"
+compatible_models: ["gpt-4o", "claude-3-5-sonnet"]
+changelog:
+  - "1.0.0: Version 1 featuring detailed Knowledge context variables."
+
+system_prompt: "You are the Knowledge Intelligence Subsystem."
+developer_prompt: "Analyze learning summaries, active policies, conflicts and version information to generate proposed knowledge promotions and conflict resolutions."
+user_prompt_template: "Project: {project_name}{project_summary}{learning_summary}{proposal_statistics}{active_knowledge}{deprecated_knowledge}{version_statistics}{conflict_statistics}{promotion_candidates}"

@@ -4,6 +4,7 @@ CLI Init command.
 Author: Vikram Tanakala
 License: MIT
 """
+
 import argparse
 from pathlib import Path
 from rich.console import Console
@@ -72,9 +73,7 @@ class InitCommand(BaseCommand):
                     },
                 )
             except Exception as e:
-                console.print(
-                    f"[bold red]Failed to initialize project: {e}[/bold red]"
-                )
+                console.print(f"[bold red]Failed to initialize project: {e}[/bold red]")
                 return 1
 
         console.print(

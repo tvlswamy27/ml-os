@@ -32,14 +32,14 @@ def test_evaluation_result_passed_flag():
     # All checks True -> passes
     res_pass = EvaluationResult(
         metrics={"accuracy": 0.85, "loss": 0.2},
-        checks={"accuracy_gate": True, "loss_gate": True}
+        checks={"accuracy_gate": True, "loss_gate": True},
     )
     assert res_pass.passed is True
 
     # One check False -> fails
     res_fail = EvaluationResult(
         metrics={"accuracy": 0.72, "loss": 0.2},
-        checks={"accuracy_gate": False, "loss_gate": True}
+        checks={"accuracy_gate": False, "loss_gate": True},
     )
     assert res_fail.passed is False
 
@@ -66,7 +66,7 @@ def test_simple_evaluator_stdout_fallback():
     exec_result = ExecutionResult(
         status="SUCCESS",
         start_time=datetime.now(),
-        stdout="Epoch 1/5\nAccuracy: 0.78\nLoss: 0.58\n"
+        stdout="Epoch 1/5\nAccuracy: 0.78\nLoss: 0.58\n",
     )
 
     evaluator = SimpleEvaluator()
@@ -94,14 +94,18 @@ def test_evaluation_engine_consolidation():
 
 
 def test_evaluation_service_structured_file(tmp_path):
-    memory = ProjectMemory(project_name="EvaluationProj", project_goal="Test evaluation")
-    memory.execution_result = ExecutionResult(status="SUCCESS", start_time=datetime.now())
+    memory = ProjectMemory(
+        project_name="EvaluationProj", project_goal="Test evaluation"
+    )
+    memory.execution_result = ExecutionResult(
+        status="SUCCESS", start_time=datetime.now()
+    )
 
     # Build workspace artifacts metrics.json
     project_dir = Path("playground") / "EvaluationProj"
     artifacts_dir = project_dir / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
-    
+
     metrics_file = artifacts_dir / "metrics.json"
     metrics_file.write_text(json.dumps({"accuracy": 0.82, "loss": 0.35}))
 
@@ -109,8 +113,7 @@ def test_evaluation_service_structured_file(tmp_path):
     engine.register_evaluator(SimpleEvaluator())
     memory_service = ProjectMemoryService()
     service = EvaluationService(
-        evaluation_engine=engine,
-        project_memory_service=memory_service
+        evaluation_engine=engine, project_memory_service=memory_service
     )
 
     service.run_evaluation(memory)
@@ -124,6 +127,7 @@ def test_evaluation_service_structured_file(tmp_path):
     # Clean up project dir
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)
 
 
@@ -134,7 +138,7 @@ def test_full_pipeline_assemble_execute_evaluate_integration(tmp_path):
 
     # We will generate a python script that writes a structured metrics.json file to its own artifacts path!
     project_dir = Path("playground") / "FullRunProj"
-    
+
     script_code = f"""
 import os
 import json
@@ -155,7 +159,7 @@ print("Stdout accuracy: 0.91")
         title="TrainingStep",
         description="Fit model and save stats",
         imports=[],
-        code=script_code
+        code=script_code,
     )
 
     # 1. Assemble
@@ -179,4 +183,5 @@ print("Stdout accuracy: 0.91")
     # Clean up
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)

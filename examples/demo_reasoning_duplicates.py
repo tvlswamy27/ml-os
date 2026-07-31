@@ -8,15 +8,11 @@ engine.create_project(
     "Predict passenger survival",
 )
 
-engine.analyze(
-    "playground/sample.csv"
-)
+engine.analyze("playground/sample.csv")
 
 reasoning = ReasoningEngine()
 
-recommendations = reasoning.reason(
-    engine.get_memory()
-)
+recommendations = reasoning.reason(engine.get_memory())
 
 for recommendation in recommendations:
     print(recommendation)

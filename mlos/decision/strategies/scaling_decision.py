@@ -16,9 +16,23 @@ class ScalingDecision(BaseStrategy):
 
     def decide(
         self,
-        memory: ProjectMemory,
+        context,
     ) -> list[Decision]:
+        from mlos.domain.models.decision_context import DecisionContext
 
         decisions: list[Decision] = []
+
+        active_rule = self.get_active_rule(context, "scaling")
+        if active_rule:
+            strategy = active_rule.parameters.get("strategy")
+            if strategy:
+                decisions.append(
+                    Decision(
+                        title="Scaling Strategy: global",
+                        strategy=strategy,
+                        confidence=f"{active_rule.confidence_score * 100:.0f}%",
+                        reason=f"Overridden by active knowledge rule (version {active_rule.version_number}).",
+                    )
+                )
 
         return decisions

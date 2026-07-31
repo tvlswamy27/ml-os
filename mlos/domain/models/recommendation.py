@@ -13,6 +13,7 @@ from mlos.domain.models.base import BaseModel
 from mlos.domain.enums.recommendation_priority import RecommendationPriority
 from mlos.domain.enums.recommendation_priority import RecommendationPriority
 
+
 @dataclass
 class Recommendation(BaseModel):
     """

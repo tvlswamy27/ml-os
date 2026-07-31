@@ -4,6 +4,7 @@ Base command specification.
 Author: Vikram Tanakala
 License: MIT
 """
+
 from abc import ABC, abstractmethod
 import argparse
 from mlos.engine.engine import MLOSEngine

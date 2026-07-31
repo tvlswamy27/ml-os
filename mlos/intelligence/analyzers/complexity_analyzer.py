@@ -2,6 +2,7 @@ from mlos.intelligence.analyzers.base_analyzer import BaseAnalyzer
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.project_profile import ProjectProfile
 
+
 class ComplexityAnalyzer(BaseAnalyzer):
 
     def analyze(
@@ -34,12 +35,12 @@ class ComplexityAnalyzer(BaseAnalyzer):
     def _is_easy(
         self,
         dataset,
-    ) -> bool:    
+    ) -> bool:
 
         if dataset.columns < 10 and dataset.rows < 1000:
             return True
         return False
-        
+
     def _is_medium(
         self,
         dataset,
@@ -59,5 +60,3 @@ class ComplexityAnalyzer(BaseAnalyzer):
         Determine whether the dataset has high complexity.
         """
         return True
-    
-    

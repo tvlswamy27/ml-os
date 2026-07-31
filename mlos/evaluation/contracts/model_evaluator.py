@@ -11,7 +11,9 @@ from abc import ABC, abstractmethod
 
 from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
-from mlos.domain.models.evaluation_result import EvaluationResult as DomainEvaluationResult
+from mlos.domain.models.evaluation_result import (
+    EvaluationResult as DomainEvaluationResult,
+)
 
 
 class ModelEvaluator(ABC):

@@ -1,11 +1,10 @@
 from abc import ABC, abstractmethod
 
+
 class Storage(ABC):
 
     @abstractmethod
-    def save(self):
-        ...
+    def save(self): ...
 
     @abstractmethod
-    def load(self):
-        ...
+    def load(self): ...

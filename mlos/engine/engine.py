@@ -6,9 +6,24 @@ Main orchestrator for ML-OS.
 Author: Vikram Tanakala
 License: MIT
 """
-from mlos.planning.planner import PlanningEngine
+
+from mlos.planning.planning_engine import PlanningEngine
+from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm
+from mlos.domain.services.planning_service import PlanningService
+from mlos.domain.models.planning.planning_session import PlanningSession
+from mlos.domain.models.decision import Decision
+from mlos.domain.services.decision_service import DecisionService
+from mlos.generator.generators.missing_value_generator import MissingValueGenerator
+from mlos.generator.generators.encoding_generator import EncodingGenerator
+from mlos.generator.generators.scaling_generator import ScalingGenerator
+from mlos.generator.generators.split_generator import SplitGenerator
+from mlos.generator.generators.model_generator import ModelGenerator
+from mlos.domain.services.generation_service import GenerationService
+from mlos.domain.models.pipeline_source import PipelineSource
 from mlos.domain.services.workspace_service import WorkspaceService
 from mlos.domain.services.project_service import ProjectService
+from mlos.domain.models.execution_session import ExecutionSession
+from mlos.domain.models.evaluation_session import EvaluationSession
 from mlos.io.data_loader import DataLoader
 from mlos.analysis.dataset_analyzer import DatasetAnalyzer
 from mlos.domain.services.project_memory_service import (
@@ -29,9 +44,28 @@ from mlos.domain.models.generated_code import GeneratedCode
 from mlos.evaluation.evaluation_engine import EvaluationEngine
 from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
 from mlos.domain.services.evaluation_service import EvaluationService
+from mlos.reflection.reflection_engine import ReflectionEngine
+from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
+    RuleBasedReflectionAlgorithm,
+)
+from mlos.domain.services.reflection_service import ReflectionService
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.learning.learning_engine import LearningEngine
+from mlos.learning.algorithms.rule_based_learning_algorithm import (
+    RuleBasedLearningAlgorithm,
+)
+from mlos.domain.services.learning_service import LearningService
+from mlos.domain.models.learning.learning_session import LearningSession
+from mlos.knowledge.knowledge_engine import KnowledgeEngine
+from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
+    RuleBasedKnowledgeAlgorithm,
+)
+from mlos.domain.services.knowledge_service import KnowledgeService
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.workflow.workflow_hooks import HookRegistry
 from mlos.domain.models.workflow_result import WorkflowResult
+
 
 class MLOSEngine:
     """
@@ -41,13 +75,38 @@ class MLOSEngine:
     def __init__(self):
         self.workspace_service = WorkspaceService()
         self.project_service = ProjectService()
-        self.planner = PlanningEngine()
+        self.project_memory_service = ProjectMemoryService()
+
+        # Build and wire the Planning subsystem
+        self.planning_algorithm = RuleBasedPlanningAlgorithm()
+        self.planning_engine = PlanningEngine(self.planning_algorithm)
+        self.planning_service = PlanningService(
+            self.planning_engine,
+            self.project_memory_service,
+        )
+
         self.data_loader = DataLoader()
         self.dataset_analyzer = DatasetAnalyzer()
-        self.project_memory_service = ProjectMemoryService()
         self.decision_engine = DecisionEngine()
+        self.decision_service = DecisionService(
+            self.decision_engine,
+            self.project_memory_service,
+        )
         self.reasoning_engine = ReasoningEngine()
-        self.generator_engine = GeneratorEngine()
+
+        # Build and wire the Generation subsystem
+        self.generators = [
+            MissingValueGenerator(),
+            EncodingGenerator(),
+            ScalingGenerator(),
+            SplitGenerator(),
+            ModelGenerator(),
+        ]
+        self.generator_engine = GeneratorEngine(self.generators)
+        self.generation_service = GenerationService(
+            self.generator_engine,
+            self.project_memory_service,
+        )
         self.intelligence_engine = IntelligenceEngine()
         self.execution_engine = ExecutionEngine(LocalProcessPipelineRunner())
         self.execution_service = ExecutionService(
@@ -65,18 +124,50 @@ class MLOSEngine:
             self.evaluation_engine,
             self.project_memory_service,
         )
+        # Build and wire the Reflection subsystem
+        self.reflection_algorithm = RuleBasedReflectionAlgorithm()
+        self.reflection_engine = ReflectionEngine(self.reflection_algorithm)
+        self.reflection_service = ReflectionService(
+            self.reflection_engine,
+            self.project_memory_service,
+        )
+        # Build and wire the Learning subsystem
+        self.learning_algorithm = RuleBasedLearningAlgorithm()
+        self.learning_engine = LearningEngine(self.learning_algorithm)
+        self.learning_service = LearningService(
+            self.learning_engine,
+            self.project_memory_service,
+        )
+        # Build and wire the Knowledge subsystem
+        self.knowledge_algorithm = RuleBasedKnowledgeAlgorithm()
+        self.knowledge_engine = KnowledgeEngine(self.knowledge_algorithm)
+        self.knowledge_service = KnowledgeService(
+            self.knowledge_engine,
+            self.project_memory_service,
+        )
         self.hooks = HookRegistry()
-        self.workflow_engine = WorkflowEngine(self, self.hooks)
+        self.workflow_engine = WorkflowEngine(
+            self,
+            self.hooks,
+            self.planning_service,
+            self.decision_service,
+            self.generation_service,
+            self.execution_service,
+            self.evaluation_service,
+            self.reflection_service,
+            self.learning_service,
+            self.knowledge_service,
+        )
         self.project_memory = None
 
     def create_project(
         self,
         name: str,
         goal: str,
-   ):  
+    ):
         """
-      Create a new project.
-      """
+        Create a new project.
+        """
 
         project_path = self.project_service.create_project(name)
 
@@ -94,15 +185,13 @@ class MLOSEngine:
     def analyze(
         self,
         dataset_path: str,
-   ):
+    ):
         """
-      Analyze a dataset.
-      """
+        Analyze a dataset.
+        """
 
         if self.project_memory is None:
-            raise RuntimeError(
-              "Create a project before analyzing a dataset."
-          )
+            raise RuntimeError("Create a project before analyzing a dataset.")
 
         dataframe = self.data_loader.load(dataset_path)
 
@@ -110,9 +199,9 @@ class MLOSEngine:
         dataset.path = dataset_path
 
         self.project_memory_service.update_dataset(
-                  self.project_memory,
-                  dataset,   
-              )
+            self.project_memory,
+            dataset,
+        )
 
         profile = self.intelligence_engine.analyze(
             self.project_memory,
@@ -120,53 +209,80 @@ class MLOSEngine:
 
         self.project_memory.profile = profile
 
-        
-
     def reason(self):
         """Reason about the current project."""
         raise NotImplementedError
 
-    def plan(self):
+    def plan(self) -> PlanningSession:
         """Generate a plan for the current project."""
+        if self.project_memory is None:
+            raise RuntimeError("No project is currently loaded.")
 
-        return self.planner.create_plan()
+        return self.planning_service.plan(self.project_memory)
 
-    def generate(self):
+    def decide(self) -> list[Decision]:
+        """Generate decisions for the current project."""
+        if self.project_memory is None:
+            raise RuntimeError("No project is currently loaded.")
+
+        return self.decision_service.decide(self.project_memory)
+
+    def generate(self) -> list[GeneratedCode]:
         """Generate code for the next step."""
-        raise NotImplementedError
+        if self.project_memory is None:
+            raise RuntimeError("No project is currently loaded.")
+        return self.generation_service.generate(self.project_memory)
 
-    def execute(self):
+    def execute(self) -> ExecutionSession:
         """Execute the generated pipeline."""
         if self.project_memory is None:
-            raise RuntimeError(
-                "Create or load a project before running execution."
-            )
-        self.execution_service.run_execution(self.project_memory)
+            raise RuntimeError("Create or load a project before running execution.")
+        return self.execution_service.execute(self.project_memory)
 
-    def assemble(self, generated_codes: list[GeneratedCode]) -> None:
+    def assemble(
+        self, generated_codes: list[GeneratedCode] | None = None
+    ) -> PipelineSource:
         """Assemble transient GeneratedCode blocks into a Pipeline."""
         if self.project_memory is None:
-            raise RuntimeError(
-                "Create or load a project before running assembly."
+            raise RuntimeError("Create or load a project before running assembly.")
+        if generated_codes is not None:
+            self.project_memory_service.update_generated_codes(
+                self.project_memory, generated_codes
             )
-        self.assembly_service.run_assembly(self.project_memory, generated_codes)
+        return self.assembly_service.assemble(self.project_memory)
 
-    def evaluate(self) -> None:
+    def evaluate(self) -> EvaluationSession:
         """Evaluate the execution outputs of the pipeline."""
         if self.project_memory is None:
+            raise RuntimeError("Create or load a project before running evaluation.")
+        return self.evaluation_service.evaluate(self.project_memory)
+
+    def reflect(self) -> ReflectionSession:
+        """Run the reflection phase over the project history."""
+        if self.project_memory is None:
+            raise RuntimeError("Create or load a project before running reflection.")
+        return self.reflection_service.reflect(self.project_memory)
+
+    def learn(self) -> LearningSession:
+        """Run the learning phase over the project history."""
+        if self.project_memory is None:
+            raise RuntimeError("Create or load a project before running learning.")
+        return self.learning_service.learn(self.project_memory)
+
+    def manage_knowledge(self) -> KnowledgeSession:
+        """Run the knowledge management phase over the project history."""
+        if self.project_memory is None:
             raise RuntimeError(
-                "Create or load a project before running evaluation."
+                "Create or load a project before running knowledge management."
             )
-        self.evaluation_service.run_evaluation(self.project_memory)
+        return self.knowledge_service.manage(self.project_memory)
 
     def run(self, dataset_path: str, target: str | None = None) -> WorkflowResult:
         """
         Executes the complete machine learning engineering lifecycle automatically.
         """
         if self.project_memory is None:
-            raise RuntimeError(
-                "Create or load a project before running a workflow."
-            )
+            raise RuntimeError("Create or load a project before running a workflow.")
         return self.workflow_engine.run(dataset_path, target)
 
     def explain(self):
@@ -175,8 +291,8 @@ class MLOSEngine:
 
     def get_memory(self):
         """
-      Return the current project memory.
-      """
+        Return the current project memory.
+        """
 
         return self.project_memory
 
@@ -190,9 +306,7 @@ class MLOSEngine:
         """
 
         if self.project_memory is None:
-            raise RuntimeError(
-              "Create a project before analyzing a dataset."
-          )
+            raise RuntimeError("Create a project before analyzing a dataset.")
 
         dataframe = self.data_loader.load(dataset_path)
 
@@ -209,8 +323,8 @@ class MLOSEngine:
         )
 
         self.project_memory.profile = profile
-        
-        decisions = self.decision_engine.decide(
+
+        decisions = self.decision_service.decide(
             self.project_memory,
         )
 

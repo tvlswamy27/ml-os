@@ -4,6 +4,7 @@ CLI Run command.
 Author: Vikram Tanakala
 License: MIT
 """
+
 import argparse
 from pathlib import Path
 from rich.console import Console
@@ -76,14 +77,22 @@ class RunCommand(BaseCommand):
             console.print("[bold blue][Info][/bold blue] Starting analysis...")
 
         def after_analysis(mem):
-            console.print("[bold green][Success][/bold green] Dataset analysis complete.")
-            console.print("[bold blue][Info][/bold blue] Formulating decisions and generating code...")
+            console.print(
+                "[bold green][Success][/bold green] Dataset analysis complete."
+            )
+            console.print(
+                "[bold blue][Info][/bold blue] Formulating decisions and generating code..."
+            )
 
         def before_execution(mem):
-            console.print("[bold blue][Info][/bold blue] Executing the assembled pipeline...")
+            console.print(
+                "[bold blue][Info][/bold blue] Executing the assembled pipeline..."
+            )
 
         def after_execution(mem):
-            console.print("[bold green][Success][/bold green] Pipeline execution completed successfully.")
+            console.print(
+                "[bold green][Success][/bold green] Pipeline execution completed successfully."
+            )
             console.print("[bold blue][Info][/bold blue] Evaluating results...")
 
         engine.hooks.subscribe(WorkflowHook.BEFORE_ANALYSIS, before_analysis)
@@ -91,10 +100,17 @@ class RunCommand(BaseCommand):
         engine.hooks.subscribe(WorkflowHook.BEFORE_EXECUTION, before_execution)
         engine.hooks.subscribe(WorkflowHook.AFTER_EXECUTION, after_execution)
 
-        console.print(Panel(f"[bold green]Running ML-OS Workflow on {dataset_path}...[/bold green]", expand=False))
+        console.print(
+            Panel(
+                f"[bold green]Running ML-OS Workflow on {dataset_path}...[/bold green]",
+                expand=False,
+            )
+        )
 
         # Run the workflow using the engine
-        with console.status("[bold green]Orchestrating workflow stages...[/bold green]") as status:
+        with console.status(
+            "[bold green]Orchestrating workflow stages...[/bold green]"
+        ) as status:
             result = engine.run(dataset_path, target)
 
             # Sync the memory back to the configuration file
@@ -103,27 +119,44 @@ class RunCommand(BaseCommand):
         if result.status == "FAILED":
             console.print("[bold red]Workflow execution failed![/bold red]")
             for step, error in result.errors.items():
-                console.print(Panel(f"[bold red]Error in stage '{step}':[/bold red]\n{error}"))
+                console.print(
+                    Panel(f"[bold red]Error in stage '{step}':[/bold red]\n{error}")
+                )
             return 1
 
-        console.print(Panel("[bold green]✓ Workflow completed successfully![/bold green]", expand=False))
+        console.print(
+            Panel(
+                "[bold green]✓ Workflow completed successfully![/bold green]",
+                expand=False,
+            )
+        )
 
         # Display Pipeline and Evaluation details
         mem = engine.project_memory
         if mem.pipeline:
-            console.print(f"[bold cyan]Pipeline generated at:[/bold cyan] {mem.pipeline.entrypoint_path}")
+            console.print(
+                f"[bold cyan]Pipeline generated at:[/bold cyan] {mem.pipeline.entrypoint_path}"
+            )
 
         if mem.evaluation_result:
-            eval_table = Table(title="Evaluation Results Summary", show_header=True, header_style="bold magenta")
+            eval_table = Table(
+                title="Evaluation Results Summary",
+                show_header=True,
+                header_style="bold magenta",
+            )
             eval_table.add_column("Metric / Check", style="bold")
             eval_table.add_column("Status / Score")
-            
+
             for metric, score in mem.evaluation_result.metrics.items():
                 eval_table.add_row(metric, f"{score:.4f}")
             for check, passed in mem.evaluation_result.checks.items():
-                status_str = "[bold green]PASS[/bold green]" if passed else "[bold red]FAIL[/bold red]"
+                status_str = (
+                    "[bold green]PASS[/bold green]"
+                    if passed
+                    else "[bold red]FAIL[/bold red]"
+                )
                 eval_table.add_row(f"Check: {check}", status_str)
-                
+
             console.print(eval_table)
 
         return 0

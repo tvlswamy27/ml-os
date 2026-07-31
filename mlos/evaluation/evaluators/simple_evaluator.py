@@ -10,7 +10,9 @@ License: MIT
 import re
 from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
-from mlos.domain.models.evaluation_result import EvaluationResult as DomainEvaluationResult
+from mlos.domain.models.evaluation_result import (
+    EvaluationResult as DomainEvaluationResult,
+)
 from mlos.evaluation.contracts.model_evaluator import ModelEvaluator
 
 
@@ -33,7 +35,7 @@ class SimpleEvaluator(ModelEvaluator):
         execution_result: ExecutionResult,
     ) -> DomainEvaluationResult:
         metrics = {}
-        
+
         # Load from artifacts first
         if artifacts.metrics:
             metrics.update(artifacts.metrics)

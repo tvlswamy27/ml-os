@@ -1,0 +1,10 @@
+version: "1.0.0"
+subsystem: "learning"
+author: "ML-OS Core Team"
+compatible_models: ["gpt-4o", "claude-3-5-sonnet"]
+changelog:
+  - "1.0.0: Version 1 featuring detailed Learning context variables."
+
+system_prompt: "You are the Learning Intelligence Subsystem."
+developer_prompt: "Analyze feedback statistics, reflection summaries, and history to generate proposed learning updates."
+user_prompt_template: "Project: {project_name}{project_summary}{reflection_summary}{feedback_statistics}{action_statistics}{trend_statistics}{learning_history}{knowledge_summary}"

@@ -20,7 +20,7 @@ def test_pipeline_source_instantiation():
     source = PipelineSource(
         imports="import pandas as pd",
         body="print('Hello')",
-        code="import pandas as pd\n\nprint('Hello')"
+        code="import pandas as pd\n\nprint('Hello')",
     )
     assert source.imports == "import pandas as pd"
     assert source.body == "print('Hello')"
@@ -32,13 +32,16 @@ def test_code_assembler_merges_and_deduplicates():
         title="Imputation",
         description="Missing values",
         imports=["import pandas as pd", "from sklearn.impute import SimpleImputer"],
-        code="df['A'] = imputer.fit_transform(df[['A']])"
+        code="df['A'] = imputer.fit_transform(df[['A']])",
     )
     gc2 = GeneratedCode(
         title="Scaling",
         description="Standard scaler",
-        imports=["import pandas as pd", "from sklearn.preprocessing import StandardScaler"],
-        code="df['B'] = scaler.fit_transform(df[['B']])"
+        imports=[
+            "import pandas as pd",
+            "from sklearn.preprocessing import StandardScaler",
+        ],
+        code="df['B'] = scaler.fit_transform(df[['B']])",
     )
 
     assembler = CodeAssembler()
@@ -65,7 +68,7 @@ def test_pipeline_assembly_engine():
         title="Dummy",
         description="Dummy test",
         imports=["import sys"],
-        code="print('Dummy')"
+        code="print('Dummy')",
     )
 
     source = engine.assemble([gc])
@@ -82,20 +85,19 @@ def test_assembly_service_execution(tmp_path):
     # We can temporarily patch the target path in tests or let it write to a specific location.
     # To keep it robust, let's mock or use the relative 'playground' path which pytest allows.
     # Wait, we can let it write to `playground/TestAssemblyProj` and then clean up the directory.
-    
+
     gc = GeneratedCode(
         title="Step1",
         description="Goal description",
         imports=["import math"],
-        code="print(math.sqrt(16))"
+        code="print(math.sqrt(16))",
     )
 
     assembler = CodeAssembler()
     engine = PipelineAssemblyEngine(assembler=assembler)
     memory_service = ProjectMemoryService()
     assembly_service = AssemblyService(
-        assembly_engine=engine,
-        project_memory_service=memory_service
+        assembly_engine=engine, project_memory_service=memory_service
     )
 
     assembly_service.run_assembly(memory, [gc])
@@ -104,7 +106,7 @@ def test_assembly_service_execution(tmp_path):
     assert memory.pipeline is not None
     assert memory.pipeline.entrypoint_path.exists()
     assert memory.pipeline.entrypoint_path.name == "pipeline.py"
-    
+
     # Assert code file matches
     content = memory.pipeline.entrypoint_path.read_text(encoding="utf-8")
     assert "import math" in content
@@ -114,6 +116,7 @@ def test_assembly_service_execution(tmp_path):
     project_dir = Path("playground") / "TestAssemblyProj"
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)
 
 
@@ -127,13 +130,13 @@ def test_full_generate_assemble_execute_integration(tmp_path):
         title="Setup",
         description="Print greeting",
         imports=["import sys"],
-        code="print('Execution Start')"
+        code="print('Execution Start')",
     )
     gc2 = GeneratedCode(
         title="Math",
         description="Perform calculation",
         imports=["import math"],
-        code="print(f'Result: {math.pow(2, 3)}')"
+        code="print(f'Result: {math.pow(2, 3)}')",
     )
 
     # 1. Assemble the generated codes
@@ -157,4 +160,5 @@ def test_full_generate_assemble_execute_integration(tmp_path):
     project_dir = Path("playground") / "IntegrationFlowProj"
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)

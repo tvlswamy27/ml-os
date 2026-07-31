@@ -11,10 +11,12 @@ from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.recommendation import Recommendation
 from mlos.domain.enums.recommendation_priority import RecommendationPriority
 
+
 class ReasoningEngine:
     """
     Generates ML recommendations.
     """
+
     def __init__(self):
         """
         Initialize the reasoning engine.
@@ -42,7 +44,7 @@ class ReasoningEngine:
             rule(
                 memory,
                 recommendations,
-    )
+            )
 
         return recommendations
 
@@ -50,7 +52,6 @@ class ReasoningEngine:
         self,
         memory: ProjectMemory,
         recommendations: list[Recommendation],
-  
     ) -> None:
         """
         Recommend removing duplicate rows.
@@ -77,7 +78,7 @@ class ReasoningEngine:
     def _apply_missing_value_rule(
         self,
         memory: ProjectMemory,
-    recommendations: list[Recommendation],
+        recommendations: list[Recommendation],
     ) -> None:
         """
         Recommend handling missing values.
@@ -98,9 +99,8 @@ class ReasoningEngine:
             return
 
         details = "\n".join(
-            f"- {column}: {count} missing value(s)"
-            for column, count in missing.items()
-       )
+            f"- {column}: {count} missing value(s)" for column, count in missing.items()
+        )
 
         recommendations.append(
             Recommendation(
@@ -129,10 +129,7 @@ class ReasoningEngine:
         if not dataset.categorical_columns:
             return
 
-        columns = "\n".join(
-            f"- {column}"
-            for column in dataset.categorical_columns
-        )
+        columns = "\n".join(f"- {column}" for column in dataset.categorical_columns)
 
         recommendations.append(
             Recommendation(

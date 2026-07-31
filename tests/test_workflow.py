@@ -38,7 +38,9 @@ def test_workflow_engine_error_capture():
     # Setup a mock MLOSEngine that fails during analyze()
     class BrokenMLOSEngine:
         def __init__(self):
-            self.project_memory = ProjectMemory(project_name="Broken", project_goal="Fail")
+            self.project_memory = ProjectMemory(
+                project_name="Broken", project_goal="Fail"
+            )
 
         def analyze(self, path):
             raise ValueError("Invalid dataset format")
@@ -86,7 +88,9 @@ def test_workflow_engine_hooks_execution(tmp_path):
 
     mlos_engine.execute = lambda: hooks_triggered.append(("executed", True))
     mlos_engine.evaluate = lambda: hooks_triggered.append(("evaluated", True))
-    mlos_engine.assemble = lambda codes: hooks_triggered.append(("assembled", len(codes)))
+    mlos_engine.assemble = lambda codes=None: hooks_triggered.append(
+        ("assembled", len(codes) if codes is not None else 0)
+    )
 
     # Run the workflow
     res = mlos_engine.run("playground/sample.csv")
@@ -103,6 +107,7 @@ def test_workflow_engine_hooks_execution(tmp_path):
     project_dir = Path("playground") / "HookProj"
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)
 
 
@@ -115,7 +120,7 @@ def test_full_mlos_engine_run_integration(tmp_path):
     # Since GeneratorEngine currently only supports MissingValue decisions, running on playground/sample.csv
     # will trigger MissingValue decisions and generate imputation code.
     # The pipeline.py will execute and finish successfully.
-    
+
     # Run the workflow end-to-end
     result = engine.run("playground/sample.csv")
 
@@ -136,4 +141,5 @@ def test_full_mlos_engine_run_integration(tmp_path):
     project_dir = Path("playground") / "FullWorkflowProj"
     if project_dir.exists():
         import shutil
+
         shutil.rmtree(project_dir)

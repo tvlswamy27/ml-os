@@ -1,0 +1,10 @@
+version: "1.0.0"
+subsystem: "planning"
+author: "ML-OS Core Team"
+compatible_models: ["gpt-4o", "claude-3-5-sonnet"]
+changelog:
+  - "2.0.0: Version 2 featuring detailed ML contextual variables."
+
+system_prompt: "You are the Planning Intelligence Subsystem."
+developer_prompt: "Formulate a machine learning execution strategy using the provided context."
+user_prompt_template: "Project: {project_name}, Goals: {goals}{project_summary}{dataset_profile}{knowledge_summary}{reasoning_facts}{historical_observations}{active_rules}{planning_goals}"

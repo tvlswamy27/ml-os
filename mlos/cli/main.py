@@ -4,6 +4,7 @@ CLI Entrypoint.
 Author: Vikram Tanakala
 License: MIT
 """
+
 import argparse
 import sys
 from mlos.engine.engine import MLOSEngine

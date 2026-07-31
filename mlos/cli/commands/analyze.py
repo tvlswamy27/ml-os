@@ -4,6 +4,7 @@ CLI Analyze command.
 Author: Vikram Tanakala
 License: MIT
 """
+
 import argparse
 from pathlib import Path
 from rich.console import Console
@@ -77,9 +78,7 @@ class AnalyzeCommand(BaseCommand):
                 # Synchronize memory back to config
                 update_project_config_from_memory(project_root, engine.project_memory)
             except Exception as e:
-                console.print(
-                    f"[bold red]Failed to execute analysis: {e}[/bold red]"
-                )
+                console.print(f"[bold red]Failed to execute analysis: {e}[/bold red]")
                 return 1
 
         # Print Analysis Report using Rich
@@ -92,7 +91,9 @@ class AnalyzeCommand(BaseCommand):
 
         # Dataset Metadata Table
         dataset = report.dataset
-        meta_table = Table(title="Dataset Summary", show_header=True, header_style="bold magenta")
+        meta_table = Table(
+            title="Dataset Summary", show_header=True, header_style="bold magenta"
+        )
         meta_table.add_column("Property", style="dim")
         meta_table.add_column("Value")
         meta_table.add_row("Path", str(dataset.path))
@@ -104,12 +105,22 @@ class AnalyzeCommand(BaseCommand):
         console.print(meta_table)
 
         # Columns Summary
-        console.print(f"[bold cyan]Numerical Columns ({len(dataset.numerical_columns)}):[/bold cyan] {', '.join(dataset.numerical_columns[:10])}" + ("..." if len(dataset.numerical_columns) > 10 else ""))
-        console.print(f"[bold cyan]Categorical Columns ({len(dataset.categorical_columns)}):[/bold cyan] {', '.join(dataset.categorical_columns[:10])}" + ("..." if len(dataset.categorical_columns) > 10 else ""))
+        console.print(
+            f"[bold cyan]Numerical Columns ({len(dataset.numerical_columns)}):[/bold cyan] {', '.join(dataset.numerical_columns[:10])}"
+            + ("..." if len(dataset.numerical_columns) > 10 else "")
+        )
+        console.print(
+            f"[bold cyan]Categorical Columns ({len(dataset.categorical_columns)}):[/bold cyan] {', '.join(dataset.categorical_columns[:10])}"
+            + ("..." if len(dataset.categorical_columns) > 10 else "")
+        )
 
         # Decisions Table
         if report.decisions:
-            dec_table = Table(title="Decisions Formulated", show_header=True, header_style="bold yellow")
+            dec_table = Table(
+                title="Decisions Formulated",
+                show_header=True,
+                header_style="bold yellow",
+            )
             dec_table.add_column("Title", style="bold")
             dec_table.add_column("Strategy")
             dec_table.add_column("Confidence")
@@ -118,16 +129,24 @@ class AnalyzeCommand(BaseCommand):
                 dec_table.add_row(dec.title, dec.strategy, dec.confidence, dec.reason)
             console.print(dec_table)
         else:
-            console.print("[yellow]No preprocessing/modeling decisions formulated.[/yellow]")
+            console.print(
+                "[yellow]No preprocessing/modeling decisions formulated.[/yellow]"
+            )
 
         # Recommendations Table
         if report.recommendations:
-            rec_table = Table(title="Recommendations", show_header=True, header_style="bold blue")
+            rec_table = Table(
+                title="Recommendations", show_header=True, header_style="bold blue"
+            )
             rec_table.add_column("Priority", style="bold")
             rec_table.add_column("Title", style="bold")
             rec_table.add_column("Description")
             for rec in report.recommendations:
-                priority_color = "red" if rec.priority.value == "HIGH" else ("yellow" if rec.priority.value == "MEDIUM" else "green")
+                priority_color = (
+                    "red"
+                    if rec.priority.value == "HIGH"
+                    else ("yellow" if rec.priority.value == "MEDIUM" else "green")
+                )
                 rec_table.add_row(
                     f"[{priority_color}]{rec.priority.value}[/{priority_color}]",
                     rec.title,

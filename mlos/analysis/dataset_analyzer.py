@@ -97,9 +97,7 @@ class DatasetAnalyzer:
             List of numerical column names.
         """
 
-        return dataframe.select_dtypes(
-            include="number"
-        ).columns.tolist()
+        return dataframe.select_dtypes(include="number").columns.tolist()
 
     def _get_categorical_columns(
         self,
@@ -119,9 +117,7 @@ class DatasetAnalyzer:
             List of categorical column names.
         """
 
-        return dataframe.select_dtypes(
-            exclude="number"
-        ).columns.tolist()
+        return dataframe.select_dtypes(exclude="number").columns.tolist()
 
     def _get_missing_values(
         self,

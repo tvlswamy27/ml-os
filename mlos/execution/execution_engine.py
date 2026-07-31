@@ -7,6 +7,12 @@ Author: Vikram Tanakala
 License: MIT
 """
 
+from datetime import datetime
+import hashlib
+from pathlib import Path
+
+from mlos.domain.models.execution_context import ExecutionContext
+from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.execution_result import ExecutionResult
 from mlos.execution.contracts.pipeline_runner import PipelineRunner
@@ -20,8 +26,63 @@ class ExecutionEngine:
     def __init__(self, runner: PipelineRunner):
         self.runner = runner
 
-    def execute(self, pipeline: Pipeline) -> ExecutionResult:
+    def execute(
+        self, context: ExecutionContext | Pipeline
+    ) -> ExecutionSession | ExecutionResult:
         """
         Executes a pipeline and returns the run result.
         """
-        return self.runner.run(pipeline)
+        from mlos.domain.models.pipeline import Pipeline
+
+        if isinstance(context, Pipeline):
+            return self.runner.run(context)
+
+        pipeline = context.project_memory.pipeline
+        if not pipeline:
+            raise RuntimeError("No pipeline is registered in memory to execute.")
+
+        start_time = datetime.now()
+        res = self.runner.run(pipeline)
+        end_time = datetime.now()
+
+        duration = (end_time - start_time).total_seconds()
+
+        # Calculate pipeline hash
+        pipeline_hash = None
+        if context.pipeline_source and context.pipeline_source.code:
+            pipeline_hash = hashlib.sha256(
+                context.pipeline_source.code.encode("utf-8")
+            ).hexdigest()
+
+        # Artifact discovery
+        artifacts = {}
+        model_path = None
+        metrics_path = None
+
+        project_dir = Path("playground") / context.project_memory.project_name
+        artifacts_dir = project_dir / "artifacts"
+
+        if artifacts_dir.exists():
+            for p in artifacts_dir.glob("*"):
+                # Register all files found in the artifacts directory
+                p_abs = str(p.resolve())
+                artifacts[p.name] = p_abs
+                if "model" in p.name.lower():
+                    model_path = p_abs
+                elif "metric" in p.name.lower():
+                    metrics_path = p_abs
+
+        return ExecutionSession(
+            pipeline_source=context.pipeline_source,
+            status=res.status,
+            start_time=start_time,
+            end_time=end_time,
+            stdout=res.stdout,
+            stderr=res.stderr,
+            exit_code=res.exit_code,
+            duration_seconds=duration,
+            artifacts=artifacts,
+            model_path=model_path,
+            metrics_path=metrics_path,
+            pipeline_hash=pipeline_hash,
+        )

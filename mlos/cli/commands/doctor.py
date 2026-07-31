@@ -4,6 +4,7 @@ CLI Doctor command.
 Author: Vikram Tanakala
 License: MIT
 """
+
 import argparse
 import os
 import platform
@@ -88,9 +89,7 @@ class DoctorCommand(BaseCommand):
         table.add_column("Status")
         table.add_column("Details")
 
-        table.add_row(
-            "Python Version >= 3.11", py_status, f"Python {py_version_str}"
-        )
+        table.add_row("Python Version >= 3.11", py_status, f"Python {py_version_str}")
 
         for dep, (ok, ver) in dependencies.items():
             status = "[bold green]✓[/bold green]" if ok else "[bold red]✗[/bold red]"

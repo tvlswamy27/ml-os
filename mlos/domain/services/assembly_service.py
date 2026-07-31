@@ -12,6 +12,7 @@ from pathlib import Path
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.generated_code import GeneratedCode
+from mlos.domain.models.pipeline_source import PipelineSource
 from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.generator.assembler.pipeline_assembly_engine import PipelineAssemblyEngine
 
@@ -29,16 +30,17 @@ class AssemblyService:
         self.assembly_engine = assembly_engine
         self.project_memory_service = project_memory_service
 
-    def run_assembly(
-        self,
-        memory: ProjectMemory,
-        generated_codes: list[GeneratedCode],
-    ) -> None:
+    def assemble(self, memory: ProjectMemory) -> PipelineSource:
         """
-        Assemble code list, save python pipeline, and update ProjectMemory.
+        Assemble code list stored in ProjectMemory.generated_codes, save python pipeline,
+        and update ProjectMemory.
         """
+        generated_codes = memory.generated_codes
         if not generated_codes:
-            raise RuntimeError("No generated code exists to assemble.")
+            # Empty decisions/generated_codes -> return empty PipelineSource with no exceptions
+            source = PipelineSource(imports="", body="", code="")
+            self.project_memory_service.update_pipeline_source(memory, source)
+            return source
 
         # Compile in-memory pipeline source code
         source = self.assembly_engine.assemble(generated_codes)
@@ -65,8 +67,20 @@ if "COLUMN_NAME" not in df.columns:
         # Write execution pipeline
         entrypoint_path.write_text(loader_code + "\n" + source.code, encoding="utf-8")
 
-        # Future pipeline configuration files can be generated here
-
         # Instantiate Pipeline domain model and record to ProjectMemory
         pipeline = Pipeline(entrypoint_path=entrypoint_path.resolve())
         self.project_memory_service.update_pipeline(memory, pipeline)
+        self.project_memory_service.update_pipeline_source(memory, source)
+
+        return source
+
+    def run_assembly(
+        self,
+        memory: ProjectMemory,
+        generated_codes: list[GeneratedCode],
+    ) -> None:
+        """
+        Backward compatible run_assembly delegation.
+        """
+        self.project_memory_service.update_generated_codes(memory, generated_codes)
+        self.assemble(memory)

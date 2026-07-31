@@ -16,6 +16,14 @@ class BaseGenerator(ABC):
     Base class for all code generators.
     """
 
+    @property
+    @abstractmethod
+    def supported_decision_type(self) -> str:
+        """
+        The decision type string matched by the registry (e.g. 'impute').
+        """
+        pass
+
     @abstractmethod
     def can_generate(
         self,

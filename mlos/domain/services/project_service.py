@@ -20,19 +20,12 @@ class ProjectService:
         project_root = Path("playground") / name
 
         folders = [
-
             "data",
-
             "notebooks",
-
             "models",
-
             "reports",
-
             "artifacts",
-
             ".mlos",
-
         ]
 
         project_root.mkdir(parents=True, exist_ok=True)

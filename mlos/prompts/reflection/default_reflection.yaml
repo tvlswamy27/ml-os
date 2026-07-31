@@ -1,0 +1,10 @@
+version: "1.0.0"
+subsystem: "reflection"
+author: "ML-OS Core Team"
+compatible_models: ["gpt-4o", "claude-3-5-sonnet"]
+changelog:
+  - "1.0.0: Version 1 featuring detailed Reflection context variables."
+
+system_prompt: "You are the Reflection Intelligence Subsystem."
+developer_prompt: "Analyze the historical metrics, trend statistics, execution statistics, and project memory to generate insights and feedback."
+user_prompt_template: "Project: {project_name}{project_summary}{metric_statistics}{execution_statistics}{planning_statistics}{trend_statistics}{reflection_history}{knowledge_summary}"

@@ -7,8 +7,6 @@ engine.create_project(
     "Predict passenger survival",
 )
 
-engine.analyze(
-    "playground/sample.csv"
-)
+engine.analyze("playground/sample.csv")
 
 print(engine.get_memory())

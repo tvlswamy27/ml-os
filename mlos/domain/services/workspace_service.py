@@ -41,7 +41,7 @@ class WorkspaceService:
         workspace.root_path.mkdir(parents=True, exist_ok=True)
         data = workspace.to_dict()
         data["root_path"] = str(data["root_path"])
-        
+
         self.storage.save(
             workspace.root_path / ".mlos" / "workspace.yaml",
             data,

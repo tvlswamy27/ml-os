@@ -5,6 +5,7 @@ from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.project_profile import ProjectProfile
 from mlos.domain.models.risk import Risk
 
+
 class RiskAnalyzer(BaseAnalyzer):
 
     def analyze(
@@ -38,8 +39,7 @@ class RiskAnalyzer(BaseAnalyzer):
                 )
             )
 
-
-        #profile.risks.append("Missing Values")
+        # profile.risks.append("Missing Values")
 
     def _has_missing_values(
         self,
@@ -51,4 +51,3 @@ class RiskAnalyzer(BaseAnalyzer):
                 return True
 
         return False
-        

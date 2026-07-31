@@ -37,7 +37,7 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
         ):
             return
 
-        '''if dataset is None:
+        """if dataset is None:
             return
 
         if dataset.target is None:
@@ -65,15 +65,14 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
                 profile.problem_type = "Multi-class Classification"
 
             else:
-                profile.problem_type = "Regression"   '''
-
+                profile.problem_type = "Regression"   """
 
     def _is_binary_classification(
         self,
         dataset,
         profile,
-    ) -> bool:   
-        
+    ) -> bool:
+
         target_column = dataset.target
         unique_count = dataset.unique_values.get(target_column)
 
@@ -84,8 +83,7 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
             profile.problem_type = "Binary Classification"
             return True
 
-        return False        
-
+        return False
 
     def _is_multiclass_classification(
         self,
@@ -100,19 +98,16 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
 
         if unique_count > 2:
 
-            target_type = dataset.column_types.get(
-                target_column
-            )
+            target_type = dataset.column_types.get(target_column)
 
             if target_type is None:
-                return False   
+                return False
 
             if target_type == "categorical":
                 profile.problem_type = "Multi-class Classification"
                 return True
 
         return False
-
 
     def _is_regression(
         self,
@@ -125,19 +120,15 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
 
         target_column = dataset.target
 
-        unique_count = dataset.unique_values.get(
-            target_column
-        )
+        unique_count = dataset.unique_values.get(target_column)
 
         if unique_count is None:
             return False
 
         if unique_count <= 2:
-             return False
+            return False
 
-        target_type = dataset.column_types.get(
-            target_column
-        )
+        target_type = dataset.column_types.get(target_column)
 
         if target_type is None:
             return False
@@ -147,4 +138,3 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
             return True
 
         return False
-        

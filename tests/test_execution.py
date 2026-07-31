@@ -27,11 +27,7 @@ def test_domain_models():
     # Verify ExecutionResult instantiation
     start = datetime.now()
     result = ExecutionResult(
-        status="SUCCESS",
-        start_time=start,
-        stdout="Hello",
-        stderr="Error",
-        exit_code=0
+        status="SUCCESS", start_time=start, stdout="Hello", stderr="Error", exit_code=0
     )
     assert result.status == "SUCCESS"
     assert result.stdout == "Hello"
@@ -76,7 +72,7 @@ def test_execution_engine_delegates():
                 status="SUCCESS",
                 start_time=datetime.now(),
                 stdout="dummy stdout",
-                exit_code=0
+                exit_code=0,
             )
 
     pipeline = Pipeline(entrypoint_path=Path("dummy.py"))
@@ -98,8 +94,7 @@ def test_execution_service(tmp_path):
     engine = ExecutionEngine(runner=runner)
     memory_service = ProjectMemoryService()
     execution_service = ExecutionService(
-        execution_engine=engine,
-        project_memory_service=memory_service
+        execution_engine=engine, project_memory_service=memory_service
     )
 
     execution_service.run_execution(memory)

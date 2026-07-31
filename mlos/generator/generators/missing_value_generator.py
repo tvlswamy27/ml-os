@@ -15,14 +15,16 @@ from mlos.domain.models.generated_code import GeneratedCode
 
 class MissingValueGenerator(BaseGenerator):
 
+    @property
+    def supported_decision_type(self) -> str:
+        return "impute"
+
     def can_generate(
         self,
         decision: Decision,
     ) -> bool:
 
-        return decision.title.startswith(
-            "Missing Value"
-        )
+        return decision.title.startswith("Missing Value")
 
     def generate(
         self,
