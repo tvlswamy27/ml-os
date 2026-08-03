@@ -16,6 +16,9 @@ from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
+from mlos.domain.models.meta_reasoning.meta_session import MetaSession
+from mlos.domain.models.meta_reasoning.execution_snapshot import ExecutionSnapshot
 
 
 class ProjectMemoryService:
@@ -216,4 +219,37 @@ class ProjectMemoryService:
         Attach pipeline source to project memory.
         """
         memory.pipeline_source = pipeline_source
+        return memory
+
+    def add_feature_session(
+        self,
+        memory: ProjectMemory,
+        feature_session: FeatureSession,
+    ) -> ProjectMemory:
+        """
+        Append feature session to project memory.
+        """
+        memory.feature_sessions.append(feature_session)
+        return memory
+
+    def add_meta_session(
+        self,
+        memory: ProjectMemory,
+        meta_session: MetaSession,
+    ) -> ProjectMemory:
+        """
+        Append meta session to project memory.
+        """
+        memory.meta_sessions.append(meta_session)
+        return memory
+
+    def add_execution_snapshot(
+        self,
+        memory: ProjectMemory,
+        snapshot: ExecutionSnapshot,
+    ) -> ProjectMemory:
+        """
+        Append execution snapshot to project memory.
+        """
+        memory.execution_snapshots.append(snapshot)
         return memory

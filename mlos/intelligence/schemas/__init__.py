@@ -5,6 +5,7 @@ from mlos.intelligence.schemas.planning_output import LLMPlanningOutput
 from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
 from mlos.intelligence.schemas.learning_output import LLMLearningOutput
 from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
+from mlos.intelligence.schemas.feature_output import LLMFeatureOutput
 
 __all__ = [
     "StructuredOutputSchema",
@@ -14,4 +15,5 @@ __all__ = [
     "LLMReflectionOutput",
     "LLMLearningOutput",
     "LLMKnowledgeOutput",
+    "LLMFeatureOutput",
 ]

@@ -18,6 +18,10 @@ class WorkflowHook(Enum):
 
     BEFORE_ANALYSIS = "before_analysis"
     AFTER_ANALYSIS = "after_analysis"
+    BEFORE_FEATURE_INTEL = "before_feature_intel"
+    AFTER_FEATURE_INTEL = "after_feature_intel"
+    BEFORE_META_REASONING = "before_meta_reasoning"
+    AFTER_META_REASONING = "after_meta_reasoning"
     BEFORE_EXECUTION = "before_execution"
     AFTER_EXECUTION = "after_execution"
 

@@ -63,6 +63,18 @@ from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
 from mlos.domain.services.knowledge_service import KnowledgeService
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.feature_intelligence.feature_engine import FeatureEngine
+from mlos.domain.services.feature_service import FeatureService
+from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
+from mlos.domain.models.meta_reasoning.meta_session import MetaSession
+from mlos.meta_reasoning.meta_planner import MetaPlanner, RuleBasedMetaAlgorithm
+from mlos.meta_reasoning.optimization.optimization_strategy import (
+    WeightedScoreOptimization,
+)
+from mlos.meta_reasoning.routing.provider_selection_strategy import (
+    HybridProviderSelector,
+)
+from mlos.domain.services.meta_service import MetaService
 from mlos.workflow.workflow_hooks import HookRegistry
 from mlos.domain.models.workflow_result import WorkflowResult
 
@@ -76,6 +88,23 @@ class MLOSEngine:
         self.workspace_service = WorkspaceService()
         self.project_service = ProjectService()
         self.project_memory_service = ProjectMemoryService()
+
+        # Build and wire the Feature Intelligence subsystem
+        self.feature_engine = FeatureEngine()
+        self.feature_service = FeatureService(
+            self.feature_engine,
+            self.project_memory_service,
+        )
+
+        # Build and wire the Meta-Reasoning subsystem
+        provider_selector = HybridProviderSelector()
+        optimizer = WeightedScoreOptimization(provider_selector)
+        meta_algo = RuleBasedMetaAlgorithm(optimizer)
+        self.meta_planner = MetaPlanner(meta_algo)
+        self.meta_service = MetaService(
+            self.meta_planner,
+            self.project_memory_service,
+        )
 
         # Build and wire the Planning subsystem
         self.planning_algorithm = RuleBasedPlanningAlgorithm()
@@ -149,14 +178,15 @@ class MLOSEngine:
         self.workflow_engine = WorkflowEngine(
             self,
             self.hooks,
-            self.planning_service,
-            self.decision_service,
-            self.generation_service,
-            self.execution_service,
-            self.evaluation_service,
-            self.reflection_service,
-            self.learning_service,
-            self.knowledge_service,
+            feature_service=self.feature_service,
+            planning_service=self.planning_service,
+            decision_service=self.decision_service,
+            generation_service=self.generation_service,
+            execution_service=self.execution_service,
+            evaluation_service=self.evaluation_service,
+            reflection_service=self.reflection_service,
+            learning_service=self.learning_service,
+            knowledge_service=self.knowledge_service,
         )
         self.project_memory = None
 
@@ -212,6 +242,20 @@ class MLOSEngine:
     def reason(self):
         """Reason about the current project."""
         raise NotImplementedError
+
+    def analyze_features(self) -> FeatureSession:
+        """Run feature intelligence analysis on the current project."""
+        if self.project_memory is None:
+            raise RuntimeError("No project is currently loaded.")
+
+        return self.feature_service.analyze_features(self.project_memory)
+
+    def orchestrate_cognition(self) -> MetaSession:
+        """Run meta-reasoning cognitive orchestration on the current project."""
+        if self.project_memory is None:
+            raise RuntimeError("No project is currently loaded.")
+
+        return self.meta_service.orchestrate_cognition(self.project_memory)
 
     def plan(self) -> PlanningSession:
         """Generate a plan for the current project."""

@@ -25,6 +25,9 @@ from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
+from mlos.domain.models.meta_reasoning.meta_session import MetaSession
+from mlos.domain.models.meta_reasoning.execution_snapshot import ExecutionSnapshot
 
 
 @dataclass
@@ -68,6 +71,12 @@ class ProjectMemory(BaseModel):
     knowledge_sessions: list[KnowledgeSession] = field(default_factory=list)
 
     knowledge_entries: list[KnowledgeEntry] = field(default_factory=list)
+
+    feature_sessions: list[FeatureSession] = field(default_factory=list)
+
+    meta_sessions: list[MetaSession] = field(default_factory=list)
+
+    execution_snapshots: list[ExecutionSnapshot] = field(default_factory=list)
 
     @property
     def evaluation_result(self) -> EvaluationResult | None:
@@ -197,3 +206,41 @@ class ProjectMemory(BaseModel):
             self.knowledge_sessions.clear()
             return
         self.knowledge_sessions.append(value)
+
+    @property
+    def feature_session(self) -> FeatureSession | None:
+        """
+        Backward compatible access to the latest feature session.
+        """
+        if not self.feature_sessions:
+            return None
+        return self.feature_sessions[-1]
+
+    @feature_session.setter
+    def feature_session(self, value: FeatureSession | None) -> None:
+        """
+        Backward compatible setter that appends FeatureSession.
+        """
+        if value is None:
+            self.feature_sessions.clear()
+            return
+        self.feature_sessions.append(value)
+
+    @property
+    def meta_session(self) -> MetaSession | None:
+        """
+        Access to the latest meta session.
+        """
+        if not self.meta_sessions:
+            return None
+        return self.meta_sessions[-1]
+
+    @meta_session.setter
+    def meta_session(self, value: MetaSession | None) -> None:
+        """
+        Setter that appends MetaSession.
+        """
+        if value is None:
+            self.meta_sessions.clear()
+            return
+        self.meta_sessions.append(value)

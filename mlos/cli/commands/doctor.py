@@ -37,74 +37,222 @@ class DoctorCommand(BaseCommand):
         console = Console()
         console.print(
             Panel(
-                "[bold green]ML-OS Doctor - Environment Diagnostics[/bold green]",
+                "[bold green]ML-OS Doctor - Environment & Architecture Diagnostics[/bold green]",
                 expand=False,
             )
         )
 
-        # Check Python Version
+        # 1. Check Python Version
         py_version = sys.version_info
         py_version_str = f"{py_version.major}.{py_version.minor}.{py_version.micro}"
         py_ok = py_version.major == 3 and py_version.minor >= 11
-        py_status = "[bold green]✓[/bold green]" if py_ok else "[bold red]✗[/bold red]"
 
-        # Check Dependencies
-        dependencies = {}
-        # Pandas
+        # 2. Check Required Packages
+        packages = {
+            "numpy": "numpy",
+            "pandas": "pandas",
+            "scikit-learn": "sklearn",
+            "rich": "rich",
+            "PyYAML": "yaml",
+        }
+        package_checks = {}
+        for name, import_name in packages.items():
+            try:
+                mod = __import__(import_name)
+                package_checks[name] = (True, getattr(mod, "__version__", "Installed"))
+            except ImportError:
+                package_checks[name] = (False, "Not installed")
+
+        # 3. Check SDK API
         try:
-            import pandas
+            from mlos.sdk import MLProject
 
-            dependencies["pandas"] = (True, getattr(pandas, "__version__", "Installed"))
-        except ImportError:
-            dependencies["pandas"] = (False, "Not installed")
+            sdk_ok = True
+        except Exception as e:
+            sdk_ok = False
 
-        # PyYAML
+        # 4. Check Serialization Engine
         try:
-            import yaml
+            from mlos.serialization.serializers.project_memory_serializer import (
+                ProjectMemorySerializer,
+            )
+            from mlos.domain.models.project_memory import ProjectMemory
 
-            dependencies["PyYAML"] = (True, getattr(yaml, "__version__", "Installed"))
-        except ImportError:
-            dependencies["PyYAML"] = (False, "Not installed")
+            serializer = ProjectMemorySerializer()
+            dummy = ProjectMemory(project_name="DummyTest", project_goal="Validation")
+            serialized = serializer.serialize(dummy)
+            deserialized = serializer.deserialize(serialized)
+            serialization_ok = deserialized.project_name == "DummyTest"
+        except Exception:
+            serialization_ok = False
 
-        # Rich
+        # 5. Check Plugins / Stages
         try:
-            import rich
+            from mlos.execution_intelligence.stage import DataLoadingStage
 
-            dependencies["rich"] = (True, getattr(rich, "__version__", "Installed"))
-        except ImportError:
-            dependencies["rich"] = (False, "Not installed")
+            stage = DataLoadingStage()
+            plugin_ok = stage.name == "Data Loading"
+        except Exception:
+            plugin_ok = False
 
-        # Check Project Root
+        # 6. Check Event Bus
+        try:
+            from mlos.communication.event_bus import GlobalEventBus
+
+            bus = GlobalEventBus()
+            events_received = []
+            bus.subscribe("DoctorCheck", lambda ev: events_received.append(ev))
+            bus.publish("DoctorCheck", "Doctor", {})
+            event_bus_ok = len(events_received) == 1
+        except Exception:
+            event_bus_ok = False
+
+        # 7. Check Artifact Registry
+        try:
+            from mlos.registry.artifact_registry import ArtifactRegistry
+
+            reg = ArtifactRegistry(".")
+            artifact_ok = True
+        except Exception:
+            artifact_ok = False
+
+        # 8. Check Workspace Write Permissions
+        from pathlib import Path
+
+        try:
+            temp_check_file = Path("doctor_permissions_test.tmp")
+            temp_check_file.write_text("ok")
+            assert temp_check_file.read_text() == "ok"
+            temp_check_file.unlink()
+            permissions_ok = True
+        except Exception:
+            permissions_ok = False
+
+        # 9. Check Prompt Templates Folder & Loader
+        try:
+            from mlos.intelligence.prompts.prompt_loader import PromptLoader
+
+            loader = PromptLoader()
+            prompts_ok = True
+        except Exception:
+            prompts_ok = False
+
+        # 10. Check Intelligence Providers
+        try:
+            from mlos.intelligence.config import ProviderConfig
+            from mlos.intelligence.providers.mock_provider import MockProvider
+
+            config_p = ProviderConfig(provider="mock", model="mock-model")
+            prov = MockProvider(config_p)
+            intel_ok = prov is not None
+        except Exception:
+            intel_ok = False
+
+        # 11. Check Configuration Integrity
         project_root = find_project_root()
         project_root_str = str(project_root) if project_root else "None"
-        project_status = (
-            "[bold green]✓ (Found)[/bold green]"
-            if project_root
-            else "[yellow]? (Not inside a project)[/yellow]"
-        )
+        if project_root:
+            try:
+                from mlos.cli.persistence import load_project_config
 
-        # Create diagnostic table
+                cfg = load_project_config(project_root)
+                config_ok = cfg is not None
+            except Exception:
+                config_ok = False
+        else:
+            config_ok = True
+
+        # Build diagnostics table
         table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Check", style="bold")
-        table.add_column("Status")
+        table.add_column("Component", style="bold")
+        table.add_column("Status", justify="center")
         table.add_column("Details")
 
-        table.add_row("Python Version >= 3.11", py_status, f"Python {py_version_str}")
+        table.add_row(
+            "Python (>=3.11)",
+            "[bold green]✓[/bold green]" if py_ok else "[bold red]✗[/bold red]",
+            f"Python {py_version_str}",
+        )
 
-        for dep, (ok, ver) in dependencies.items():
-            status = "[bold green]✓[/bold green]" if ok else "[bold red]✗[/bold red]"
-            table.add_row(f"Dependency: {dep}", status, ver)
+        for pkg, (ok, ver) in package_checks.items():
+            table.add_row(
+                f"Package: {pkg}",
+                "[bold green]✓[/bold green]" if ok else "[bold red]✗[/bold red]",
+                ver,
+            )
 
-        table.add_row("Active ML-OS Project", project_status, project_root_str)
+        table.add_row(
+            "SDK API Layer",
+            "[bold green]✓[/bold green]" if sdk_ok else "[bold red]✗[/bold red]",
+            "from mlos.sdk import MLProject",
+        )
+
+        table.add_row(
+            "Serialization Engine",
+            (
+                "[bold green]✓[/bold green]"
+                if serialization_ok
+                else "[bold red]✗[/bold red]"
+            ),
+            "ProjectMemorySerializer validation",
+        )
+
+        table.add_row(
+            "Plugin Stages System",
+            "[bold green]✓[/bold green]" if plugin_ok else "[bold red]✗[/bold red]",
+            "ExecutionStage topological registry",
+        )
+
+        table.add_row(
+            "Global Event Bus",
+            "[bold green]✓[/bold green]" if event_bus_ok else "[bold red]✗[/bold red]",
+            "PubSub message delivery broker",
+        )
+
+        table.add_row(
+            "Artifact Registry",
+            "[bold green]✓[/bold green]" if artifact_ok else "[bold red]✗[/bold red]",
+            "Lineage storage engine",
+        )
+
+        table.add_row(
+            "Workspace Permissions",
+            (
+                "[bold green]✓[/bold green]"
+                if permissions_ok
+                else "[bold red]✗[/bold red]"
+            ),
+            "Local file read/write checks",
+        )
+
+        table.add_row(
+            "Prompt Templates Assets",
+            "[bold green]✓[/bold green]" if prompts_ok else "[bold red]✗[/bold red]",
+            "Intelligence context rules load",
+        )
+
+        table.add_row(
+            "Intelligence Providers",
+            "[bold green]✓[/bold green]" if intel_ok else "[bold red]✗[/bold red]",
+            "LLM provider initialization",
+        )
+
+        table.add_row(
+            "Workspace Configuration",
+            "[bold green]✓[/bold green]" if config_ok else "[bold red]✗[/bold red]",
+            f"Active Project Path: {project_root_str}",
+        )
 
         console.print(table)
 
-        # Print project config summary if inside a project
-        if project_root:
+        # Print detailed project settings table if inside project
+        if project_root and config_ok:
+            from mlos.cli.persistence import load_project_config
+
             config = load_project_config(project_root)
             if config:
                 config_table = Table(
-                    title="Active Project Configuration",
+                    title="Active Project Settings",
                     show_header=True,
                     header_style="bold yellow",
                 )
@@ -114,15 +262,34 @@ class DoctorCommand(BaseCommand):
                     config_table.add_row(key, str(val))
                 console.print(config_table)
 
-        # Overall Status
-        all_ok = py_ok and all(ok for ok, _ in dependencies.values())
+        # Check overall success
+        all_ok = (
+            py_ok
+            and all(ok for ok, _ in package_checks.values())
+            and sdk_ok
+            and serialization_ok
+            and plugin_ok
+            and event_bus_ok
+            and artifact_ok
+            and permissions_ok
+            and prompts_ok
+            and intel_ok
+            and config_ok
+        )
+
         if all_ok:
             console.print(
-                "[bold green]All environment checks passed successfully![/bold green]"
+                Panel(
+                    "[bold green]Everything looks good. ML-OS is ready.[/bold green]",
+                    expand=False,
+                )
             )
             return 0
         else:
             console.print(
-                "[bold red]Some environment checks failed. Please fix the issues above.[/bold red]"
+                Panel(
+                    "[bold red]Some diagnostic checks failed. Please inspect the failures above.[/bold red]",
+                    expand=False,
+                )
             )
             return 1

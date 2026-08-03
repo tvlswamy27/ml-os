@@ -15,6 +15,8 @@ from mlos.cli.commands.learn import LearnCommand
 from mlos.cli.commands.knowledge import KnowledgeCommand
 from mlos.cli.commands.benchmark import BenchmarkCommand
 from mlos.cli.commands.telemetry_cmd import TelemetryCommand
+from mlos.cli.commands.feature import FeatureCommand
+from mlos.cli.commands.meta_cmd import MetaCommand
 
 # Explicit command registry for initial release
 COMMANDS = [
@@ -22,6 +24,8 @@ COMMANDS = [
     AnalyzeCommand(),
     RunCommand(),
     DoctorCommand(),
+    FeatureCommand(),
+    MetaCommand(),
     PlanCommand(),
     ReflectCommand(),
     LearnCommand(),

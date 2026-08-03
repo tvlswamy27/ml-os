@@ -384,6 +384,28 @@ def test_long_running_adaptation_integration():
 
     # Iteration 2
     # Configure mock prompts to simulate the second iteration promoting version 2 of the rule
+    MockProvider.mock_structured_responses[LLMLearningOutput] = LLMLearningOutput(
+        summary="Learned successfully version 2.",
+        patterns=[],
+        proposals=[
+            LLMLearningProposal(
+                proposal_id="prop_002",
+                update_type="ENABLE_GENERATOR",
+                target_subsystem="planning",
+                target_component="HeuristicPlanningAlgorithm",
+                parameters={"allowed_scalers": "robust"},
+                priority="CRITICAL",
+                evidence=LLMLearningEvidence(
+                    reflection_session_ids=["ref_002"],
+                    evaluation_session_ids=[],
+                    execution_session_ids=[],
+                ),
+            )
+        ],
+        confidence_score=0.9,
+        uncertainty_score=0.1,
+        explanation="Explain",
+    )
     MockProvider.mock_structured_responses[LLMKnowledgeOutput] = LLMKnowledgeOutput(
         summary="Knowledge updated version 2.",
         promotions=[

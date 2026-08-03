@@ -241,10 +241,26 @@ class HybridKnowledgeAlgorithm(KnowledgeAlgorithm):
             # 10. Parent reference lineage checks
             parent_id = dec.target_entry_id
             if parent_id:
-                # Orphan parent references
-                if parent_id not in active_entries:
+                from uuid import UUID
+                from typing import Union
+
+                parent_uuid: Union[UUID, str] = parent_id
+                if isinstance(parent_id, str):
+                    try:
+                        parent_uuid = UUID(parent_id)
+                    except ValueError:
+                        parent_uuid = parent_id
+
+                # Check key existence in active_entries mapping (which can use UUID or str)
+                matched_key = None
+                for k in active_entries:
+                    if str(k) == str(parent_uuid):
+                        matched_key = k
+                        break
+
+                if matched_key is None:
                     return False
-                parent = active_entries[parent_id]
+                parent = active_entries[matched_key]
 
                 # Circular parent references
                 if parent.version.parent_entry_id == parent_id:

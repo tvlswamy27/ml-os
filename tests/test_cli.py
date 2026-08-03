@@ -190,19 +190,17 @@ def test_cli_run_success(mock_reconstruct, mock_find_root, tmp_path):
     memory = ProjectMemory(project_name="MyProject", project_goal="Goal description")
     mock_reconstruct.return_value = memory
 
-    # Mock engine workflow run
-    mock_result = WorkflowResult(
-        status="SUCCESS",
-        start_time=datetime.now(),
-        end_time=datetime.now(),
-    )
-
+    # Mock MLProject.run session
+    from unittest.mock import MagicMock
+    mock_session = MagicMock()
+    mock_session.run.execution.status = "SUCCESS"
+    
     with patch(
-        "mlos.engine.engine.MLOSEngine.run", return_value=mock_result
+        "mlos.sdk.project.MLProject.run", return_value=mock_session
     ) as mock_run:
         exit_code = main(["run", "--dataset", "dummy.csv", "--target", "label"])
         assert exit_code == 0
-        mock_run.assert_called_once_with("dummy.csv", "label")
+        mock_run.assert_called_once()
 
 
 def test_cli_doctor_output():

@@ -15,6 +15,13 @@ def main(argv: list[str] | None = None) -> int:
     """
     Main entry point for ML-OS CLI.
     """
+    import sys
+
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")  # type: ignore[union-attr, attr-defined]
+        sys.stderr.reconfigure(encoding="utf-8")  # type: ignore[union-attr, attr-defined]
+    except AttributeError:
+        pass
     parser = argparse.ArgumentParser(
         prog="mlos",
         description="ML-OS: Command Line Interface for ML Engineering Orchestration",
