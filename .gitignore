@@ -222,3 +222,25 @@ playground/*/
 !playground/sample.csv
 !playground/.gitkeep
 
+# ML-OS generated outputs and runtime artifacts
+.mlos/
+artifacts/
+playground/*_project/
+playground/data/
+*.joblib
+*.pkl
+*.zip
+metrics.json
+explainability_importance.json
+events.yaml
+experiments.yaml
+artifacts_registry.yaml
+
+# ML-OS reports and validation outputs in playground
+playground/*_benchmark_report*
+playground/*_acceptance_report*
+playground/validation_summary_*
+playground/regression_report*
+playground/failure_report_*
+playground/benchmark_summary_*
+release_readiness.*
