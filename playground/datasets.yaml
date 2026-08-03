@@ -1,0 +1,254 @@
+datasets:
+  titanic:
+    version: "1.0"
+    source: "DataScienceDojo"
+    url: "https://raw.githubusercontent.com/datasciencedojo/datasets/master/titanic.csv"
+    target: "Survived"
+    task: "classification"
+    expected_rows: 891
+    expected_columns: 12
+    required_columns:
+      - "PassengerId"
+      - "Pclass"
+      - "Name"
+      - "Sex"
+      - "Age"
+      - "Survived"
+
+  house_prices:
+    version: "1.0"
+    source: "AlexeyGrigorev"
+    url: "https://raw.githubusercontent.com/alexeygrigorev/datasets/master/housing.csv"
+    target: "median_house_value"
+    task: "regression"
+    expected_rows: 20640
+    expected_columns: 10
+    required_columns:
+      - "longitude"
+      - "latitude"
+      - "housing_median_age"
+      - "median_house_value"
+
+  churn:
+    version: "1.0"
+    source: "SharmaRoshan"
+    url: "https://raw.githubusercontent.com/sharmaroshan/Churn-Modelling-Dataset/master/Churn_Modelling.csv"
+    target: "Exited"
+    task: "classification"
+    expected_rows: 10000
+    expected_columns: 14
+    required_columns:
+      - "CustomerId"
+      - "CreditScore"
+      - "Geography"
+      - "Gender"
+      - "Exited"
+
+  credit_card_fraud:
+    version: "1.0"
+    source: "NSethi"
+    url: "https://raw.githubusercontent.com/nsethi31/Kaggle-Data-Credit-Card-Fraud-Detection/master/creditcard.csv"
+    target: "Class"
+    task: "classification"
+    expected_rows: 284807
+    expected_columns: 31
+    downsample: 10000
+    required_columns:
+      - "Time"
+      - "V1"
+      - "Amount"
+      - "Class"
+
+  sales_forecasting:
+    version: "1.0"
+    source: "SethiNik"
+    url: "https://raw.githubusercontent.com/SethiNik/Walmart-Store-sales-Forecasting/master/data/train.csv"
+    target: "Weekly_Sales"
+    task: "regression"
+    expected_rows: 421570
+    expected_columns: 5
+    downsample: 10000
+    required_columns:
+      - "Store"
+      - "Dept"
+      - "Date"
+      - "Weekly_Sales"
+
+  iris:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/iris.csv"
+    target: "4"
+    task: "classification"
+    expected_rows: 150
+    expected_columns: 5
+    required_columns:
+      - "0"
+      - "4"
+
+  diabetes:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/pima-indians-diabetes.csv"
+    target: "8"
+    task: "classification"
+    expected_rows: 768
+    expected_columns: 9
+    required_columns:
+      - "0"
+      - "8"
+
+  breast_cancer:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/breast-cancer.csv"
+    target: "9"
+    task: "classification"
+    expected_rows: 286
+    expected_columns: 10
+    required_columns:
+      - "0"
+      - "9"
+
+  boston_housing:
+    version: "1.0"
+    source: "SelvaPrabhakaran"
+    url: "https://raw.githubusercontent.com/selva86/datasets/master/BostonHousing.csv"
+    target: "medv"
+    task: "regression"
+    expected_rows: 506
+    expected_columns: 14
+    required_columns:
+      - "crim"
+      - "medv"
+
+  sonar_mines:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/sonar.csv"
+    target: "60"
+    task: "classification"
+    expected_rows: 208
+    expected_columns: 61
+    required_columns:
+      - "0"
+      - "60"
+
+  ionosphere:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/ionosphere.csv"
+    target: "34"
+    task: "classification"
+    expected_rows: 351
+    expected_columns: 35
+    required_columns:
+      - "0"
+      - "34"
+
+  wheat_seeds:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/wheat-seeds.csv"
+    target: "7"
+    task: "classification"
+    expected_rows: 210
+    expected_columns: 8
+    required_columns:
+      - "0"
+      - "7"
+
+  glass_types:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/glass.csv"
+    target: "9"
+    task: "classification"
+    expected_rows: 214
+    expected_columns: 10
+    required_columns:
+      - "0"
+      - "9"
+
+  abalone_rings:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/abalone.csv"
+    target: "8"
+    task: "regression"
+    expected_rows: 4177
+    expected_columns: 9
+    required_columns:
+      - "0"
+      - "8"
+
+  shampoo_sales:
+    version: "1.0"
+    source: "JasonBrownlee"
+    url: "https://raw.githubusercontent.com/jbrownlee/Datasets/master/shampoo.csv"
+    target: "Sales"
+    task: "regression"
+    expected_rows: 36
+    expected_columns: 2
+    required_columns:
+      - "Month"
+      - "Sales"
+
+  auto_mpg:
+    version: "1.0"
+    source: "devdio"
+    url: "https://raw.githubusercontent.com/devdio/flyai_datasets/main/auto-mpg.csv"
+    target: "mpg"
+    task: "regression"
+    expected_rows: 398
+    expected_columns: 9
+    required_columns:
+      - "mpg"
+      - "cylinders"
+
+  car_evaluation:
+    version: "1.0"
+    source: "AryanIITJ"
+    url: "https://raw.githubusercontent.com/AryanIITJ/pyscriptTut/main/car.csv"
+    target: "score"
+    task: "classification"
+    expected_rows: 1728
+    expected_columns: 7
+    required_columns:
+      - "buying"
+      - "score"
+
+  mall_customers:
+    version: "1.0"
+    source: "TirthajyotiSarkar"
+    url: "https://raw.githubusercontent.com/tirthajyoti/Machine-Learning-with-Python/master/Datasets/Mall_Customers.csv"
+    target: "CustomerID"
+    task: "clustering"
+    expected_rows: 200
+    expected_columns: 5
+    required_columns:
+      - "CustomerID"
+
+  mushroom_edibility:
+    version: "1.0"
+    source: "Packt"
+    url: "https://raw.githubusercontent.com/PacktPublishing/Machine-Learning-with-R-Third-Edition/master/Chapter05/mushrooms.csv"
+    target: "type"
+    task: "classification"
+    expected_rows: 8124
+    expected_columns: 23
+    required_columns:
+      - "type"
+      - "cap_shape"
+
+  red_wine_quality:
+    version: "1.0"
+    source: "AniruddhaChoudhury"
+    url: "https://raw.githubusercontent.com/aniruddhachoudhury/Red-Wine-Quality/master/winequality-red.csv"
+    target: "quality"
+    task: "regression"
+    expected_rows: 1599
+    expected_columns: 12
+    required_columns:
+      - "fixed acidity"
+      - "quality"
