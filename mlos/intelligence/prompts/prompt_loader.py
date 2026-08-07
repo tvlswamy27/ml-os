@@ -1,6 +1,8 @@
 import os
 from dataclasses import dataclass
+
 import yaml  # type: ignore[import-untyped]
+
 from mlos.intelligence.prompts.prompt_version import PromptVersion
 
 

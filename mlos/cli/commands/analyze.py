@@ -6,18 +6,18 @@ License: MIT
 """
 
 import argparse
-from pathlib import Path
+
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from rich.columns import Columns
-from mlos.engine.engine import MLOSEngine
+from rich.table import Table
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
 )
+from mlos.engine.engine import MLOSEngine
 
 
 class AnalyzeCommand(BaseCommand):
@@ -33,6 +33,14 @@ class AnalyzeCommand(BaseCommand):
     def help(self) -> str:
         return "Analyze a dataset and profile its structure."
 
+    @property
+    def epilog(self) -> str:
+        return (
+            "Examples:\n"
+            "  mlos analyze --dataset data.csv --target target_col\n"
+            "  mlos analyze --dataset dataset.parquet"
+        )
+
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "--dataset", type=str, help="Path to the dataset file (CSV/Parquet)"
@@ -45,7 +53,8 @@ class AnalyzeCommand(BaseCommand):
 
         if not project_root:
             console.print(
-                "[bold red]Error: No active ML-OS project found. Run 'mlos init' first.[/bold red]"
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
             )
             return 1
 

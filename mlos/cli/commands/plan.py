@@ -6,15 +6,17 @@ License: MIT
 """
 
 import argparse
+
 from rich.console import Console
 from rich.panel import Panel
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
 )
+from mlos.engine.engine import MLOSEngine
 
 
 class PlanCommand(BaseCommand):
@@ -29,6 +31,10 @@ class PlanCommand(BaseCommand):
     @property
     def help(self) -> str:
         return "Generate an execution plan based on current observations."
+
+    @property
+    def epilog(self) -> str:
+        return "Examples:\n" "  mlos plan --rule\n" "  mlos plan --hybrid"
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
@@ -54,7 +60,8 @@ class PlanCommand(BaseCommand):
 
         if not project_root:
             console.print(
-                "[bold red]Error: No active ML-OS project found. Run 'mlos init' first.[/bold red]"
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
             )
             return 1
 
@@ -66,14 +73,14 @@ class PlanCommand(BaseCommand):
             return 1
 
         # Determine planning algorithm
-        from mlos.planning.config import AlgorithmMode, get_planner_config
-        from mlos.planning.algorithms.rule_based_algorithm import (
-            RuleBasedPlanningAlgorithm,
-        )
-        from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
         from mlos.planning.algorithms.hybrid_planning_algorithm import (
             HybridPlanningAlgorithm,
         )
+        from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
+        from mlos.planning.algorithms.rule_based_algorithm import (
+            RuleBasedPlanningAlgorithm,
+        )
+        from mlos.planning.config import AlgorithmMode, get_planner_config
 
         if args.rule:
             mode = AlgorithmMode.RULE

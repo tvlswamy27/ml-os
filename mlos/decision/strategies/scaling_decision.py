@@ -8,7 +8,6 @@ License: MIT
 """
 
 from mlos.decision.strategies.base_strategy import BaseStrategy
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.decision import Decision
 
 
@@ -18,7 +17,6 @@ class ScalingDecision(BaseStrategy):
         self,
         context,
     ) -> list[Decision]:
-        from mlos.domain.models.decision_context import DecisionContext
 
         decisions: list[Decision] = []
 

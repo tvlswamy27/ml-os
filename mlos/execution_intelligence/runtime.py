@@ -5,7 +5,9 @@ Author: Antigravity
 License: MIT
 """
 
-from typing import Dict, List, Set, Any
+from pathlib import Path
+from typing import Any
+
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.execution_intelligence.stage import ExecutionStage
 
@@ -16,9 +18,9 @@ class ExecutionGraph:
     """
 
     def __init__(self) -> None:
-        self.stages: Dict[str, ExecutionStage] = {}
+        self.stages: dict[str, ExecutionStage] = {}
         # node_id -> parent_node_ids (dependencies list)
-        self.dependencies: Dict[str, List[str]] = {}
+        self.dependencies: dict[str, list[str]] = {}
 
     def add_stage(self, stage: ExecutionStage) -> None:
         """Register a stage in the graph."""
@@ -34,13 +36,13 @@ class ExecutionGraph:
             raise ValueError(f"Stage '{parent_name}' is not registered in the graph.")
         self.dependencies[child_name].append(parent_name)
 
-    def topological_sort(self) -> List[str]:
+    def topological_sort(self) -> list[str]:
         """
         Sort the stages topologically using Kahn's algorithm.
         Detects dependency cycles.
         """
-        in_degree: Dict[str, int] = {name: 0 for name in self.stages}
-        adj: Dict[str, List[str]] = {name: [] for name in self.stages}
+        in_degree: dict[str, int] = {name: 0 for name in self.stages}
+        adj: dict[str, list[str]] = {name: [] for name in self.stages}
 
         for child, parents in self.dependencies.items():
             for p in parents:
@@ -49,7 +51,7 @@ class ExecutionGraph:
 
         # Queue contains nodes with in-degree 0
         queue = [name for name, deg in in_degree.items() if deg == 0]
-        topo_order: List[str] = []
+        topo_order: list[str] = []
 
         while queue:
             node = queue.pop(0)
@@ -77,7 +79,7 @@ class ExecutionRuntime:
         dataset_path: str,
         target: str,
         project_path: str | None = None,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Sort and run the stages topologically, sharing context and notifying the Event Bus.
         """
@@ -86,13 +88,18 @@ class ExecutionRuntime:
         event_bus = GlobalEventBus()
         topo_order = graph.topological_sort()
 
+        from mlos.cli.persistence import find_project_root
+
+        resolved_project_path = project_path or str(find_project_root() or Path.cwd())
+
         # Shared execution context across stages
-        context: Dict[str, Any] = {
+        context: dict[str, Any] = {
             "dataset_path": dataset_path,
             "target_column": target,
-            "project_path": project_path,
+            "project_path": resolved_project_path,
         }
-        results: Dict[str, Any] = {}
+
+        results: dict[str, Any] = {}
 
         event_bus.publish(
             event_type="ExecutionStarted",

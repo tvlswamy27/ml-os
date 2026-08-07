@@ -22,7 +22,6 @@ class BaseGenerator(ABC):
         """
         The decision type string matched by the registry (e.g. 'impute').
         """
-        pass
 
     @abstractmethod
     def can_generate(
@@ -33,7 +32,6 @@ class BaseGenerator(ABC):
         Returns True if this generator can generate code
         for the supplied decision.
         """
-        pass
 
     @abstractmethod
     def generate(
@@ -43,4 +41,3 @@ class BaseGenerator(ABC):
         """
         Generate executable code.
         """
-        pass

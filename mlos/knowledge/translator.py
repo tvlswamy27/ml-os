@@ -5,17 +5,16 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
+from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
 from mlos.domain.models.knowledge.knowledge_context import KnowledgeContext
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_promotion_decision import (
-    KnowledgePromotionType,
     KnowledgeImpact,
     KnowledgePromotionDecision,
+    KnowledgePromotionType,
 )
-from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
+from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
 
 
 class KnowledgeTranslator:

@@ -7,7 +7,6 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from dataclasses import asdict
 from pathlib import Path
 
 from mlos.domain.models.workspace import Workspace

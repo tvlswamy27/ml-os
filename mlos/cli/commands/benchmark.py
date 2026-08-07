@@ -7,13 +7,15 @@ License: MIT
 
 import argparse
 from pathlib import Path
+
 from rich.console import Console
-from rich.table import Table
 from rich.panel import Panel
-from mlos.engine.engine import MLOSEngine
+from rich.table import Table
+
+from mlos.benchmark.framework import BenchmarkRunner
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import find_project_root
-from mlos.benchmark.framework import BenchmarkRunner
+from mlos.engine.engine import MLOSEngine
 
 
 class BenchmarkCommand(BaseCommand):
@@ -29,11 +31,19 @@ class BenchmarkCommand(BaseCommand):
     def help(self) -> str:
         return "Compare RULE vs LLM vs HYBRID modes on datasets and log metrics."
 
+    @property
+    def epilog(self) -> str:
+        return (
+            "Examples:\n"
+            "  mlos benchmark data.csv\n"
+            "  mlos benchmark dataset1.csv dataset2.csv --output-dir reports/benchmark"
+        )
+
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
             "datasets",
             nargs="*",
-            help="Paths to dataset CSV files. If omitted, uses default playground/sample.csv.",
+            help="Paths to dataset CSV files.",
         )
         parser.add_argument(
             "--output-dir",
@@ -44,19 +54,32 @@ class BenchmarkCommand(BaseCommand):
     def handle(self, args: argparse.Namespace, engine: MLOSEngine) -> int:
         console = Console()
 
+        proj_root = find_project_root()
         datasets = args.datasets
         if not datasets:
-            # Check for playground/sample.csv as fallback
-            default_csv = Path("playground/sample.csv")
-            if default_csv.exists():
-                datasets = [str(default_csv)]
+            root_dir = proj_root or Path.cwd()
+            sample_candidates = [
+                root_dir / "sample.csv",
+                root_dir / "data" / "sample.csv",
+                Path.cwd() / "sample.csv",
+            ]
+            found_csv = next((p for p in sample_candidates if p.is_file()), None)
+            if found_csv:
+                datasets = [str(found_csv)]
             else:
                 console.print(
-                    "[bold red]Error: No datasets specified and playground/sample.csv not found.[/bold red]"
+                    "[bold red]Error: No datasets specified. Please provide dataset CSV path(s).[/bold red]\n"
+                    "[bold yellow]Suggested fix: Pass dataset paths as arguments, e.g., 'mlos benchmark data.csv'[/bold yellow]"
                 )
                 return 1
 
-        output_dir = Path(args.output_dir)
+        output_path = Path(args.output_dir)
+        if not output_path.is_absolute():
+            output_dir = (
+                (proj_root / output_path) if proj_root else (Path.cwd() / output_path)
+            )
+        else:
+            output_dir = output_path
 
         console.print(
             Panel(
@@ -76,9 +99,9 @@ class BenchmarkCommand(BaseCommand):
                 runner.save_outputs(output_dir)
             except Exception as e:
                 console.print(f"[bold red]Benchmark run failed: {e}[/bold red]")
-                import traceback
-
-                console.print(traceback.format_exc())
+                console.print(
+                    "[bold yellow]Suggested fix: Ensure dataset files exist and are valid CSV files with readable contents.[/bold yellow]"
+                )
                 return 1
 
         # Print results table

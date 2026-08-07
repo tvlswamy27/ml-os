@@ -1,6 +1,7 @@
 import os
 from typing import Any
-from mlos.intelligence.prompts.prompt_loader import PromptLoader, ParsedPrompt
+
+from mlos.intelligence.prompts.prompt_loader import ParsedPrompt, PromptLoader
 
 
 class PromptManager:

@@ -5,11 +5,11 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.feature_intelligence import FeatureContext, FeatureSession
 from mlos.domain.models.knowledge_summary import build_knowledge_summary
-from mlos.feature_intelligence.feature_engine import FeatureEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.feature_intelligence.feature_engine import FeatureEngine
 from mlos.io.data_loader import DataLoader
 
 

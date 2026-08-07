@@ -6,8 +6,9 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
-from typing import Any, Dict
 from pathlib import Path
+from typing import Any
+
 from mlos.domain.models.project_memory import ProjectMemory
 
 
@@ -20,12 +21,10 @@ class ExecutionStage(ABC):
     @abstractmethod
     def name(self) -> str:
         """The unique identifier name of this execution stage."""
-        pass
 
     @abstractmethod
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         """Execute the stage logic using the shared context."""
-        pass
 
 
 class DataLoadingStage(ExecutionStage):
@@ -33,7 +32,7 @@ class DataLoadingStage(ExecutionStage):
     def name(self) -> str:
         return "Data Loading"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         dataset_path = context.get("dataset_path") or (
             memory.dataset.path if memory.dataset else None
         )
@@ -53,7 +52,7 @@ class ValidationStage(ExecutionStage):
     def name(self) -> str:
         return "Validation"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         df = context.get("dataframe")
         if df is None:
             raise ValueError("Dataframe must be loaded before validation.")
@@ -73,7 +72,7 @@ class TransformationStage(ExecutionStage):
     def name(self) -> str:
         return "Transformation"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         df = context.get("dataframe")
         if df is None:
             raise ValueError("Dataframe must be loaded before transformation.")
@@ -142,7 +141,7 @@ class FeaturePipelineStage(ExecutionStage):
     def name(self) -> str:
         return "Feature Engineering"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         df = context.get("transformed_dataframe")
         if df is None:
             df = context.get("dataframe")
@@ -181,7 +180,7 @@ class TrainingStage(ExecutionStage):
     def name(self) -> str:
         return "Training"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         df = context.get("feature_dataframe")
         if df is None:
             df = context.get("transformed_dataframe") or context.get("dataframe")
@@ -255,7 +254,7 @@ class HyperparameterOptimizationStage(ExecutionStage):
     def name(self) -> str:
         return "Hyperparameter Optimization"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         model = context.get("model")
         X_train = context.get("X_train")
         y_train = context.get("y_train")
@@ -276,7 +275,7 @@ class EvaluationStage(ExecutionStage):
     def name(self) -> str:
         return "Evaluation"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         model = context.get("model")
         X_test = context.get("X_test")
         y_test = context.get("y_test")
@@ -302,8 +301,8 @@ class EvaluationStage(ExecutionStage):
                 recall_score(y_test, predictions, average="weighted", zero_division=0)
             )
         else:
-            from sklearn.metrics import mean_squared_error, r2_score
             import numpy as np
+            from sklearn.metrics import mean_squared_error, r2_score
 
             mse = mean_squared_error(y_test, predictions)
             metrics["rmse"] = float(np.sqrt(mse))
@@ -318,7 +317,7 @@ class ExplainabilityStage(ExecutionStage):
     def name(self) -> str:
         return "Explainability"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         model = context.get("model")
         X_test = context.get("X_test")
         if model is None or X_test is None:
@@ -327,9 +326,9 @@ class ExplainabilityStage(ExecutionStage):
             )
 
         # Calculate simple feature importance coefficients
-        import numpy as np
-        import pandas as pd
         import json
+
+        import numpy as np
 
         if hasattr(model, "feature_importances_"):
             importances = model.feature_importances_
@@ -355,7 +354,10 @@ class ExplainabilityStage(ExecutionStage):
         if project_dir_str:
             project_dir = Path(project_dir_str)
         else:
-            project_dir = Path("playground") / memory.project_name
+            from mlos.cli.persistence import find_project_root
+
+            project_dir = find_project_root() or Path.cwd()
+
         project_dir.mkdir(parents=True, exist_ok=True)
         report_file = project_dir / "explainability_importance.json"
         with open(report_file, "w") as f:
@@ -370,15 +372,19 @@ class ArtifactGenerationStage(ExecutionStage):
     def name(self) -> str:
         return "Artifact Generation"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
-        import joblib
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         import json
+
+        import joblib
 
         project_dir_str = context.get("project_path")
         if project_dir_str:
             project_dir = Path(project_dir_str)
         else:
-            project_dir = Path("playground") / memory.project_name
+            from mlos.cli.persistence import find_project_root
+
+            project_dir = find_project_root() or Path.cwd()
+
         project_dir.mkdir(parents=True, exist_ok=True)
 
         # Save model
@@ -406,12 +412,15 @@ class DeploymentPackagingStage(ExecutionStage):
     def name(self) -> str:
         return "Deployment Packaging"
 
-    def execute(self, memory: ProjectMemory, context: Dict[str, Any]) -> Any:
+    def execute(self, memory: ProjectMemory, context: dict[str, Any]) -> Any:
         project_dir_str = context.get("project_path")
         if project_dir_str:
             project_dir = Path(project_dir_str)
         else:
-            project_dir = Path("playground") / memory.project_name
+            from mlos.cli.persistence import find_project_root
+
+            project_dir = find_project_root() or Path.cwd()
+
         project_dir.mkdir(parents=True, exist_ok=True)
         deployment_zip = project_dir / "deployment.zip"
 

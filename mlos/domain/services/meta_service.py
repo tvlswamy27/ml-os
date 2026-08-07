@@ -6,15 +6,16 @@ License: MIT
 """
 
 from datetime import datetime
-from mlos.domain.models.project_memory import ProjectMemory
+
 from mlos.domain.models.knowledge_summary import build_knowledge_summary
+from mlos.domain.models.meta_reasoning.historical_evidence import HistoricalEvidence
 from mlos.domain.models.meta_reasoning.meta_context import MetaContext
 from mlos.domain.models.meta_reasoning.meta_session import MetaSession
 from mlos.domain.models.meta_reasoning.provider_capability import ProviderCapability
 from mlos.domain.models.meta_reasoning.resource_allocation import ResourceAllocation
-from mlos.domain.models.meta_reasoning.historical_evidence import HistoricalEvidence
-from mlos.meta_reasoning.meta_planner import MetaPlanner
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.meta_reasoning.meta_planner import MetaPlanner
 
 
 class MetaService:

@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+
 from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
 
 
 @dataclass(frozen=True)

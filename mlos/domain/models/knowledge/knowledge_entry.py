@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+
 from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
 from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 
 

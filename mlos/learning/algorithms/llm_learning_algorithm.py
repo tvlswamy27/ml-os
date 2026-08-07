@@ -6,18 +6,18 @@ License: MIT
 """
 
 import os
-from typing import Any
-from mlos.learning.algorithms.learning_algorithm import LearningAlgorithm
+
+from mlos.domain.models.learning.learning_confidence import LearningConfidence
 from mlos.domain.models.learning.learning_context import LearningContext
-from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_reasoning_state import (
     LearningReasoningState,
 )
-from mlos.domain.models.learning.learning_update import LearningUpdate
-from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.intelligence.intelligence_service import IntelligenceService
 from mlos.intelligence.schemas.learning_output import LLMLearningOutput
+from mlos.learning.algorithms.learning_algorithm import LearningAlgorithm
 from mlos.learning.translator import LearningTranslator
 
 
@@ -31,8 +31,8 @@ class LLMLearningAlgorithm(LearningAlgorithm):
         Initialize the LLM learner, constructing a default intelligence service if none provided.
         """
         if intelligence_service is None:
-            from mlos.planning.config import get_planner_config
             from mlos.intelligence.config import ProviderConfig
+            from mlos.planning.config import get_planner_config
 
             planner_cfg = get_planner_config()
             provider = planner_cfg.get("provider", "mock")

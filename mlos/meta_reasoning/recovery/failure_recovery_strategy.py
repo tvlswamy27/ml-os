@@ -6,6 +6,7 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 from mlos.domain.enums.subsystem_name import SubsystemName
 
 
@@ -31,7 +32,6 @@ class FailureRecoveryStrategy(ABC):
         """
         Calculates recovery actions on subsystem failure.
         """
-        pass
 
 
 class DefaultFailureRecoveryStrategy(FailureRecoveryStrategy):

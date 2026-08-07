@@ -4,31 +4,29 @@ Comprehensive tests for LLM planning algorithms and structures.
 
 import os
 import shutil
-import pytest
 from unittest.mock import MagicMock
 
-from mlos.planning.config import AlgorithmMode, get_planner_config
-from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
-from mlos.planning.algorithms.hybrid_planning_algorithm import (
-    HybridPlanningAlgorithm,
-    DEFAULT_VALIDATION_CONSTRAINTS,
-)
-from mlos.planning.translator import PlanningTranslator
+import pytest
+
+from mlos.domain.models.knowledge_summary import ActiveRuleSummary, KnowledgeSummary
 from mlos.domain.models.planning.planning_context import PlanningContext
 from mlos.domain.models.planning.planning_session import PlanningSession
 from mlos.domain.models.planning.planning_telemetry import PlanningTelemetry
-from mlos.domain.models.planning.observation import Observation
-from mlos.domain.models.planning.goal import Goal
-from mlos.domain.models.knowledge_summary import KnowledgeSummary, ActiveRuleSummary
+from mlos.intelligence.cache.llm_cache import LLMCache
 from mlos.intelligence.config import ProviderConfig
 from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.intelligence.prompts.prompt_manager import PromptManager
 from mlos.intelligence.providers.mock_provider import MockProvider
 from mlos.intelligence.schemas.planning_output import (
-    LLMPlanningOutput,
     LLMCandidateStrategy,
+    LLMPlanningOutput,
 )
-from mlos.intelligence.cache.llm_cache import LLMCache
-from mlos.intelligence.prompts.prompt_manager import PromptManager
+from mlos.planning.algorithms.hybrid_planning_algorithm import (
+    HybridPlanningAlgorithm,
+)
+from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
+from mlos.planning.config import AlgorithmMode, get_planner_config
+from mlos.planning.translator import PlanningTranslator
 
 
 @pytest.fixture
@@ -308,9 +306,10 @@ def test_backward_compatibility():
     assert session.telemetry is None
 
 
-from unittest.mock import patch
 import argparse
 from pathlib import Path
+from unittest.mock import patch
+
 from mlos.cli.commands.plan import PlanCommand
 from mlos.engine.engine import MLOSEngine
 from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm

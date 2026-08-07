@@ -9,11 +9,11 @@ License: MIT
 
 from abc import ABC, abstractmethod
 
-from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
 from mlos.domain.models.evaluation_result import (
     EvaluationResult as DomainEvaluationResult,
 )
+from mlos.domain.models.execution_result import ExecutionResult
 
 
 class ModelEvaluator(ABC):
@@ -30,7 +30,6 @@ class ModelEvaluator(ABC):
         """
         Returns True if this evaluator is suited for the run artifacts or log details.
         """
-        pass
 
     @abstractmethod
     def evaluate(
@@ -41,4 +40,3 @@ class ModelEvaluator(ABC):
         """
         Perform metric evaluation and validation checks.
         """
-        pass

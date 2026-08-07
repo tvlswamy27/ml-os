@@ -1,4 +1,4 @@
-from mlos.intelligence.validation.schema_validator import SchemaValidator
 from mlos.intelligence.validation.hybrid_validator import HybridValidator
+from mlos.intelligence.validation.schema_validator import SchemaValidator
 
-__all__ = ["SchemaValidator", "HybridValidator"]
+__all__ = ["HybridValidator", "SchemaValidator"]

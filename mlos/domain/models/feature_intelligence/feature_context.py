@@ -7,6 +7,7 @@ License: MIT
 
 from dataclasses import dataclass, field
 from datetime import datetime
+
 from mlos.domain.models.dataset import Dataset
 from mlos.domain.models.knowledge_summary import KnowledgeSummary
 

@@ -9,9 +9,8 @@ License: MIT
 
 from dataclasses import dataclass
 
+from mlos.domain.enums.recommendation_priority import RecommendationPriority
 from mlos.domain.models.base import BaseModel
-from mlos.domain.enums.recommendation_priority import RecommendationPriority
-from mlos.domain.enums.recommendation_priority import RecommendationPriority
 
 
 @dataclass

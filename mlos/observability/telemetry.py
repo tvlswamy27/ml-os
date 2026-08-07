@@ -6,7 +6,8 @@ License: MIT
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List
+from typing import Any
+
 from mlos.domain.models.project_memory import ProjectMemory
 
 
@@ -16,7 +17,7 @@ class TelemetryAggregator:
     """
 
     @staticmethod
-    def compile_timeline(memory: ProjectMemory) -> List[Dict[str, Any]]:
+    def compile_timeline(memory: ProjectMemory) -> list[dict[str, Any]]:
         """
         Builds a sorted chronological list of execution events across all subsystems.
         """
@@ -135,12 +136,12 @@ class TelemetryAggregator:
         return events
 
     @staticmethod
-    def get_summary(memory: ProjectMemory) -> Dict[str, Any]:
+    def get_summary(memory: ProjectMemory) -> dict[str, Any]:
         """
         Aggregates timeline metrics into a per-subsystem summary dict.
         """
         timeline = TelemetryAggregator.compile_timeline(memory)
-        summary: Dict[str, Any] = {
+        summary: dict[str, Any] = {
             "total_latency_sec": sum(e["duration"] for e in timeline),
             "total_tokens": sum(e["tokens"] for e in timeline),
             "total_cost": sum(e["estimated_cost"] for e in timeline),

@@ -6,19 +6,18 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime
-from uuid import UUID, uuid4
+
 from mlos.domain.models.base import BaseModel
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
+from mlos.domain.models.feature_intelligence.feature_engineering_proposal import (
+    FeatureEngineeringProposal,
+)
+from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
 from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
     FeatureReasoningState,
 )
-from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
 from mlos.domain.models.feature_intelligence.feature_recommendation import (
     FeatureRecommendation,
-)
-from mlos.domain.models.feature_intelligence.feature_engineering_proposal import (
-    FeatureEngineeringProposal,
 )
 
 # Patch BaseModel to appear frozen to the dataclasses compiler at runtime

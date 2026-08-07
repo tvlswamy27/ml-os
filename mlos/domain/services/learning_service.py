@@ -1,12 +1,12 @@
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.learning.learning_context import (
+    FeedbackSummary,
     LearningContext,
     ReflectionSummary,
-    FeedbackSummary,
 )
 from mlos.domain.models.learning.learning_session import LearningSession
-from mlos.learning.learning_engine import LearningEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.learning.learning_engine import LearningEngine
 
 
 class LearningService:

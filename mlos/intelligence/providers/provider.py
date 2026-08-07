@@ -1,8 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import Any
+
 from mlos.intelligence.config import ProviderConfig
-from mlos.intelligence.telemetry.call_metrics import CallMetrics
 from mlos.intelligence.schemas.structured_output import StructuredOutputSchema
+from mlos.intelligence.telemetry.call_metrics import CallMetrics
 
 
 class IntelligenceProvider(ABC):
@@ -22,7 +23,6 @@ class IntelligenceProvider(ABC):
         **kwargs: Any,
     ) -> tuple[str, CallMetrics]:
         """Generate free-form text response."""
-        pass
 
     @abstractmethod
     def structured_generate(
@@ -34,7 +34,6 @@ class IntelligenceProvider(ABC):
         **kwargs: Any,
     ) -> tuple[Any, CallMetrics]:
         """Generate structured data conforming to schema."""
-        pass
 
     def embeddings(self, text: str) -> list[float]:
         """Future placeholder for generating vector embeddings."""

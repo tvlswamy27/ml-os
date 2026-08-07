@@ -1,16 +1,17 @@
 from datetime import datetime
+
 from mlos.domain.models.knowledge.knowledge_context import (
     KnowledgeContext,
+    KnowledgeSummary,
     LearningSummary,
     LearningUpdateSummary,
-    KnowledgeSummary,
 )
 from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
 from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.knowledge.knowledge_engine import KnowledgeEngine
 from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
     RuleBasedKnowledgeAlgorithm,
 )
+from mlos.knowledge.knowledge_engine import KnowledgeEngine
 
 
 def test_rule_based_algorithm_no_history():
@@ -92,9 +93,9 @@ def test_versioning_and_parent_links():
     algo = RuleBasedKnowledgeAlgorithm()
     engine = KnowledgeEngine(algo)
 
+    from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
     from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
     from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-    from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
 
     # Existing active entry
     parent = KnowledgeEntry(

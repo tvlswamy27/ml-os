@@ -7,21 +7,20 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from datetime import datetime
 import traceback
+from datetime import datetime
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.workflow_result import WorkflowResult
-from mlos.workflow.workflow_hooks import HookRegistry, WorkflowHook
-from mlos.domain.services.planning_service import PlanningService
 from mlos.domain.services.decision_service import DecisionService
-from mlos.domain.services.generation_service import GenerationService
-from mlos.domain.services.execution_service import ExecutionService
 from mlos.domain.services.evaluation_service import EvaluationService
-from mlos.domain.services.reflection_service import ReflectionService
-from mlos.domain.services.learning_service import LearningService
-from mlos.domain.services.knowledge_service import KnowledgeService
+from mlos.domain.services.execution_service import ExecutionService
 from mlos.domain.services.feature_service import FeatureService
+from mlos.domain.services.generation_service import GenerationService
+from mlos.domain.services.knowledge_service import KnowledgeService
+from mlos.domain.services.learning_service import LearningService
+from mlos.domain.services.planning_service import PlanningService
+from mlos.domain.services.reflection_service import ReflectionService
+from mlos.workflow.workflow_hooks import HookRegistry, WorkflowHook
 
 
 class WorkflowEngine:
@@ -260,7 +259,7 @@ class WorkflowEngine:
 
         except Exception as e:
             errors["lifecycle_run"] = (
-                f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
+                f"{type(e).__name__}: {e!s}\n{traceback.format_exc()}"
             )
             return WorkflowResult(
                 status="FAILED",

@@ -1,6 +1,8 @@
 import json
 from typing import Any
+
 from pydantic import BaseModel
+
 from mlos.intelligence.schemas.structured_output import StructuredOutputSchema
 
 

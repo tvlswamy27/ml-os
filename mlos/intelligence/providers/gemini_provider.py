@@ -1,12 +1,14 @@
-from datetime import datetime
 import json
+from datetime import datetime
 from typing import Any
 from uuid import uuid4
+
 from pydantic import BaseModel
+
 from mlos.intelligence.providers.provider import IntelligenceProvider
+from mlos.intelligence.schemas.structured_output import StructuredOutputSchema
 from mlos.intelligence.telemetry.call_metrics import CallMetrics
 from mlos.intelligence.telemetry.token_usage import TokenUsage
-from mlos.intelligence.schemas.structured_output import StructuredOutputSchema
 
 
 class GeminiProvider(IntelligenceProvider):

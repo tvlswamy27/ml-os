@@ -5,14 +5,15 @@ Author: Antigravity
 License: MIT
 """
 
-import pandas as pd
 import numpy as np
-from mlos.feature_intelligence.algorithms.ranking.ranking_strategy import (
-    RankingStrategy,
-)
+import pandas as pd
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
 from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
     FeatureReasoningState,
+)
+from mlos.feature_intelligence.algorithms.ranking.ranking_strategy import (
+    RankingStrategy,
 )
 
 

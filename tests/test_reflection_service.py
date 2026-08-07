@@ -7,21 +7,22 @@ License: MIT
 
 from datetime import datetime
 from unittest.mock import MagicMock
+
 import pytest
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.evaluation_session import EvaluationSession
 from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.pipeline_source import PipelineSource
-from mlos.domain.models.evaluation_session import EvaluationSession
-from mlos.domain.services.reflection_service import ReflectionService
-from mlos.reflection.reflection_engine import ReflectionEngine
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.reflection.reflection_session import (
     ReflectionSession as MLOSReflectionSession,
 )
+from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.services.reflection_service import ReflectionService
+from mlos.reflection.reflection_engine import ReflectionEngine
 
 
 def test_build_context_mapping_and_slicing():

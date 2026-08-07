@@ -1,20 +1,17 @@
 from datetime import datetime
-from uuid import uuid4
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.decision_context import DecisionContext
-from mlos.domain.models.decision import Decision
-from mlos.domain.services.planning_service import PlanningService
-from mlos.domain.services.decision_service import DecisionService
-from mlos.planning.planning_engine import PlanningEngine
-from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm
+
 from mlos.decision.decision_engine import DecisionEngine
+from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.decision_service import DecisionService
+from mlos.domain.services.planning_service import PlanningService
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm
+from mlos.planning.planning_engine import PlanningEngine
 
 
 def test_empty_knowledge_repository_preserves_behavior():

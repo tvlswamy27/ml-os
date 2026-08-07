@@ -1,12 +1,11 @@
-from typing import Type
 from mlos.intelligence.config import ProviderConfig
-from mlos.intelligence.providers.provider import IntelligenceProvider
-from mlos.intelligence.providers.openai_provider import OpenAIProvider
 from mlos.intelligence.providers.anthropic_provider import AnthropicProvider
 from mlos.intelligence.providers.gemini_provider import GeminiProvider
-from mlos.intelligence.providers.ollama_provider import OllamaProvider
 from mlos.intelligence.providers.huggingface_provider import HuggingFaceLocalProvider
 from mlos.intelligence.providers.mock_provider import MockProvider
+from mlos.intelligence.providers.ollama_provider import OllamaProvider
+from mlos.intelligence.providers.openai_provider import OpenAIProvider
+from mlos.intelligence.providers.provider import IntelligenceProvider
 
 
 class ProviderFactory:
@@ -14,7 +13,7 @@ class ProviderFactory:
     Factory for instantiating the requested IntelligenceProvider subclass from configuration.
     """
 
-    _providers: dict[str, Type[IntelligenceProvider]] = {
+    _providers: dict[str, type[IntelligenceProvider]] = {
         "openai": OpenAIProvider,
         "anthropic": AnthropicProvider,
         "gemini": GeminiProvider,

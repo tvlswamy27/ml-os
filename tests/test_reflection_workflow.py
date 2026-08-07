@@ -5,18 +5,16 @@ Author: Antigravity
 License: MIT
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock
-import pytest
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.evaluation_session import EvaluationSession
 from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.pipeline_source import PipelineSource
-from mlos.workflow.workflow_hooks import HookRegistry
-from mlos.workflow.workflow_engine import WorkflowEngine
-from mlos.engine.engine import MLOSEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.engine.engine import MLOSEngine
+from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.workflow.workflow_hooks import HookRegistry
 
 
 def test_workflow_engine_triggers_reflection():

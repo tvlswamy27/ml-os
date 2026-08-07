@@ -6,9 +6,10 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+
 from mlos.domain.models.knowledge_summary import KnowledgeSummary
+from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.project_memory import ProjectMemory
 
 
 @dataclass(frozen=True)

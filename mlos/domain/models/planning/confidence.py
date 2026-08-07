@@ -6,8 +6,9 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-from mlos.domain.models.planning.evidence import Evidence
+
 from mlos.domain.models.planning.assumption import Assumption
+from mlos.domain.models.planning.evidence import Evidence
 
 
 @dataclass(frozen=True)

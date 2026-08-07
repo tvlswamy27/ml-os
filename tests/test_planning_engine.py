@@ -2,19 +2,18 @@
 Unit tests for the PlanningEngine and pluggable algorithms.
 """
 
+from datetime import datetime
 from unittest.mock import MagicMock
-import pytest
 
-from mlos.planning.planning_engine import PlanningEngine
-from mlos.planning.algorithms.planning_algorithm import PlanningAlgorithm
-from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm
+from mlos.domain.models.planning.observation import Observation
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
 from mlos.planning.algorithms.heuristic_planning_algorithm import (
     HeuristicPlanningAlgorithm,
 )
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.observation import Observation
-from datetime import datetime
+from mlos.planning.algorithms.planning_algorithm import PlanningAlgorithm
+from mlos.planning.algorithms.rule_based_algorithm import RuleBasedPlanningAlgorithm
+from mlos.planning.planning_engine import PlanningEngine
 
 
 def test_planning_engine_delegation():

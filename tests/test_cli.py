@@ -2,28 +2,20 @@
 Unit and integration tests for the ML-OS CLI Subsystem.
 """
 
-import argparse
-import sys
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-import pytest
-from rich.console import Console
 
 from mlos.cli.main import main
-from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     load_project_config,
-    save_project_config,
     reconstruct_project_memory,
+    save_project_config,
 )
+from mlos.domain.enums.recommendation_priority import RecommendationPriority
 from mlos.domain.models.analysis_report import AnalysisReport
 from mlos.domain.models.dataset import Dataset
 from mlos.domain.models.decision import Decision
 from mlos.domain.models.recommendation import Recommendation
-from mlos.domain.enums.recommendation_priority import RecommendationPriority
-from mlos.domain.models.workflow_result import WorkflowResult
-from datetime import datetime
 
 
 def test_command_persistence_load_save(tmp_path):
@@ -88,12 +80,17 @@ def test_cli_init_non_interactive_success(mock_save, tmp_path, monkeypatch):
         )
 
         assert exit_code == 0
-        mock_create.assert_called_once_with(name="TestProject", goal="Accuracy")
+        mock_create.assert_called_once_with(
+            name="TestProject",
+            goal="Accuracy",
+            destination=(tmp_path / "TestProject").resolve(),
+        )
         mock_save.assert_called_once()
 
 
-def test_cli_init_missing_args_error():
-    exit_code = main(["init", "--non-interactive"])
+def test_cli_init_missing_args_error(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    exit_code = main(["init", "--name", "", "--goal", "", "--non-interactive"])
     assert exit_code == 1
 
 
@@ -109,7 +106,9 @@ def test_cli_init_interactive_success(mock_save, mock_ask, tmp_path, monkeypatch
 
         assert exit_code == 0
         mock_create.assert_called_once_with(
-            name="InteractiveProj", goal="InteractiveGoal"
+            name="InteractiveProj",
+            goal="InteractiveGoal",
+            destination=(tmp_path / "InteractiveProj").resolve(),
         )
         mock_save.assert_called_once()
 
@@ -191,13 +190,10 @@ def test_cli_run_success(mock_reconstruct, mock_find_root, tmp_path):
     mock_reconstruct.return_value = memory
 
     # Mock MLProject.run session
-    from unittest.mock import MagicMock
     mock_session = MagicMock()
     mock_session.run.execution.status = "SUCCESS"
-    
-    with patch(
-        "mlos.sdk.project.MLProject.run", return_value=mock_session
-    ) as mock_run:
+
+    with patch("mlos.sdk.project.MLProject.run", return_value=mock_session) as mock_run:
         exit_code = main(["run", "--dataset", "dummy.csv", "--target", "label"])
         assert exit_code == 0
         mock_run.assert_called_once()
@@ -207,3 +203,77 @@ def test_cli_doctor_output():
     # Verify doctor runs and prints exit code 0 when all packages are installed
     exit_code = main(["doctor"])
     assert exit_code == 0
+
+
+def test_init_name_creates_folder_without_playground(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    exit_code = main(
+        ["init", "--name", "TestProject", "--goal", "Accuracy", "--non-interactive"]
+    )
+    assert exit_code == 0
+    assert (tmp_path / "TestProject" / ".mlos").is_dir()
+    assert not (tmp_path / "playground").exists()
+
+
+def test_init_dot_initializes_current_dir(tmp_path, monkeypatch):
+    proj_dir = tmp_path / "Titanic"
+    proj_dir.mkdir()
+    monkeypatch.chdir(proj_dir)
+    exit_code = main(["init", ".", "--goal", "Accuracy", "--non-interactive"])
+    assert exit_code == 0
+    assert (proj_dir / ".mlos").is_dir()
+    assert not (proj_dir / "playground").exists()
+
+
+def test_init_here_initializes_current_dir(tmp_path, monkeypatch):
+    proj_dir = tmp_path / "HousePrices"
+    proj_dir.mkdir()
+    monkeypatch.chdir(proj_dir)
+    exit_code = main(["init", "--here", "--goal", "Accuracy", "--non-interactive"])
+    assert exit_code == 0
+    assert (proj_dir / ".mlos").is_dir()
+    assert not (proj_dir / "playground").exists()
+
+
+def test_init_destination_creates_at_explicit_location(tmp_path, monkeypatch):
+    dest_dir = tmp_path / "Custom" / "Location"
+    monkeypatch.chdir(tmp_path)
+    exit_code = main(
+        ["init", "-d", str(dest_dir), "--goal", "Accuracy", "--non-interactive"]
+    )
+    assert exit_code == 0
+    assert (dest_dir / ".mlos").is_dir()
+    assert not (tmp_path / "playground").exists()
+
+
+def test_project_discovery_parent_and_child(tmp_path, monkeypatch):
+    proj_dir = tmp_path / "DiscoveredProject"
+    proj_dir.mkdir()
+    (proj_dir / ".mlos").mkdir()
+    sub_dir = proj_dir / "data" / "nested"
+    sub_dir.mkdir(parents=True)
+
+    # Search from root (same dir)
+    assert find_project_root(proj_dir).resolve() == proj_dir.resolve()
+
+    # Search from parent of sub_dir
+    assert find_project_root(sub_dir).resolve() == proj_dir.resolve()
+
+    # Search from parent dir of proj_dir (child search)
+    assert find_project_root(tmp_path).resolve() == proj_dir.resolve()
+
+
+def test_doctor_inside_and_outside_project(tmp_path, monkeypatch):
+    # Outside project
+    monkeypatch.chdir(tmp_path)
+    assert main(["doctor"]) == 0
+
+    # Inside project
+    proj_dir = tmp_path / "DoctorProj"
+    proj_dir.mkdir()
+    (proj_dir / ".mlos").mkdir()
+    save_project_config(
+        proj_dir, {"project_name": "DoctorProj", "project_goal": "Goal"}
+    )
+    monkeypatch.chdir(proj_dir)
+    assert main(["doctor"]) == 0

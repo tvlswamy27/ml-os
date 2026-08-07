@@ -11,8 +11,8 @@ import subprocess
 import sys
 from datetime import datetime
 
-from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.execution_result import ExecutionResult
+from mlos.domain.models.pipeline import Pipeline
 from mlos.execution.contracts.pipeline_runner import PipelineRunner
 
 

@@ -7,8 +7,9 @@ License: MIT
 
 import argparse
 import sys
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.commands import COMMANDS
+from mlos.engine.engine import MLOSEngine
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -33,7 +34,13 @@ def main(argv: list[str] | None = None) -> int:
     # Map command name to instance
     command_map = {}
     for cmd in COMMANDS:
-        cmd_parser = subparsers.add_parser(cmd.name, help=cmd.help)
+        cmd_parser = subparsers.add_parser(
+            cmd.name,
+            help=cmd.help,
+            description=cmd.description,
+            epilog=cmd.epilog,
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+        )
         cmd.register_args(cmd_parser)
         command_map[cmd.name] = cmd
 

@@ -6,6 +6,7 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
+
 from mlos.domain.models.meta_reasoning.execution_snapshot import ExecutionSnapshot
 
 

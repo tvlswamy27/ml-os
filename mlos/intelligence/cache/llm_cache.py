@@ -125,7 +125,7 @@ class LLMCache:
             if hasattr(parsed_output, "model_dump"):
                 serialized_output = parsed_output.model_dump()
             else:
-                from dataclasses import is_dataclass, asdict
+                from dataclasses import asdict, is_dataclass
 
                 if is_dataclass(parsed_output) and not isinstance(parsed_output, type):
                     serialized_output = asdict(parsed_output)

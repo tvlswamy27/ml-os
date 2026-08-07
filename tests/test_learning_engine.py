@@ -1,11 +1,12 @@
 from unittest.mock import MagicMock
-from mlos.learning.learning_engine import LearningEngine
-from mlos.learning.algorithms.rule_based_learning_algorithm import (
-    RuleBasedLearningAlgorithm,
-)
+
 from mlos.domain.models.learning.learning_context import LearningContext
 from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_update_type import LearningUpdateType
+from mlos.learning.algorithms.rule_based_learning_algorithm import (
+    RuleBasedLearningAlgorithm,
+)
+from mlos.learning.learning_engine import LearningEngine
 
 
 def test_learning_engine_delegates_to_algorithm():

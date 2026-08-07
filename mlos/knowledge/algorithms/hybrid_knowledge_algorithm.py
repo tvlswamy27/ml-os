@@ -5,26 +5,24 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.knowledge.algorithms.knowledge_algorithm import KnowledgeAlgorithm
-from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
-    RuleBasedKnowledgeAlgorithm,
-)
-from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
-    LLMKnowledgeAlgorithm,
-)
 from mlos.domain.models.knowledge.knowledge_context import KnowledgeContext
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+from mlos.domain.models.knowledge.knowledge_promotion_decision import (
+    KnowledgePromotionType,
+)
 from mlos.domain.models.knowledge.knowledge_reasoning_state import (
     KnowledgeReasoningState,
 )
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_promotion_decision import (
-    KnowledgePromotionType,
-    KnowledgePromotionDecision,
-)
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
 from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.knowledge.algorithms.knowledge_algorithm import KnowledgeAlgorithm
+from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
+    LLMKnowledgeAlgorithm,
+)
+from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
+    RuleBasedKnowledgeAlgorithm,
+)
 
 
 class HybridKnowledgeAlgorithm(KnowledgeAlgorithm):
@@ -242,9 +240,8 @@ class HybridKnowledgeAlgorithm(KnowledgeAlgorithm):
             parent_id = dec.target_entry_id
             if parent_id:
                 from uuid import UUID
-                from typing import Union
 
-                parent_uuid: Union[UUID, str] = parent_id
+                parent_uuid: UUID | str = parent_id
                 if isinstance(parent_id, str):
                     try:
                         parent_uuid = UUID(parent_id)

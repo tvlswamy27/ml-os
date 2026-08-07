@@ -5,12 +5,12 @@ Author: Antigravity
 License: MIT
 """
 
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.serialization.engine import SerializationEngine
-from mlos.serialization.version import SchemaVersion
 from mlos.serialization.serializers.project_memory_serializer import (
     ProjectMemorySerializer,
 )
-from mlos.domain.models.project_memory import ProjectMemory
+from mlos.serialization.version import SchemaVersion
 
 # Initialize default serialization engine instance
 serialization_engine = SerializationEngine()

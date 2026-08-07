@@ -5,20 +5,20 @@ Author: Antigravity
 License: MIT
 """
 
+from mlos.domain.models.reflection.reflection_context import ReflectionContext
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
+from mlos.domain.models.reflection.reflection_reasoning_state import (
+    ReflectionReasoningState,
+)
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
+from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.reflection.algorithms.llm_reflection_algorithm import LLMReflectionAlgorithm
 from mlos.reflection.algorithms.reflection_algorithm import ReflectionAlgorithm
 from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
     RuleBasedReflectionAlgorithm,
 )
-from mlos.reflection.algorithms.llm_reflection_algorithm import LLMReflectionAlgorithm
-from mlos.domain.models.reflection.reflection_context import ReflectionContext
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.domain.models.reflection.reflection_reasoning_state import (
-    ReflectionReasoningState,
-)
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
-from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
-from mlos.intelligence.intelligence_service import IntelligenceService
 
 
 class HybridReflectionAlgorithm(ReflectionAlgorithm):

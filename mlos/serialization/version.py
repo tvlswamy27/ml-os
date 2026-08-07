@@ -34,9 +34,7 @@ class VersionedSerializer(ABC):
     @abstractmethod
     def serialize(self, model: Any) -> dict[str, Any]:
         """Convert a model instance to a dictionary representation."""
-        pass
 
     @abstractmethod
     def deserialize(self, data: dict[str, Any]) -> Any:
         """Convert a dictionary representation back to a model instance."""
-        pass

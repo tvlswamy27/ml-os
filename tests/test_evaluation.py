@@ -3,20 +3,19 @@ Unit and integration tests for the ML-OS Evaluation Subsystem.
 """
 
 import json
-from pathlib import Path
 from datetime import datetime
-import pytest
+from pathlib import Path
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.generated_code import GeneratedCode
-from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
 from mlos.domain.models.evaluation_result import EvaluationResult
-from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
-from mlos.evaluation.evaluation_engine import EvaluationEngine
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.execution_result import ExecutionResult
+from mlos.domain.models.generated_code import GeneratedCode
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.evaluation_service import EvaluationService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.engine.engine import MLOSEngine
+from mlos.evaluation.evaluation_engine import EvaluationEngine
+from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
 
 
 def test_evaluation_artifacts():
@@ -139,7 +138,7 @@ def test_full_pipeline_assemble_execute_evaluate_integration(tmp_path):
     # We will generate a python script that writes a structured metrics.json file to its own artifacts path!
     project_dir = Path("playground") / "FullRunProj"
 
-    script_code = f"""
+    script_code = """
 import os
 import json
 
@@ -148,7 +147,7 @@ artifacts_dir = os.path.join("playground", "FullRunProj", "artifacts")
 os.makedirs(artifacts_dir, exist_ok=True)
 
 # Write output file
-metrics = {{"accuracy": 0.91, "loss": 0.19}}
+metrics = {"accuracy": 0.91, "loss": 0.19}
 with open(os.path.join(artifacts_dir, "metrics.json"), "w") as f:
     json.dump(metrics, f)
 

@@ -8,8 +8,9 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
-from mlos.domain.models.pipeline import Pipeline
+
 from mlos.domain.models.execution_result import ExecutionResult
+from mlos.domain.models.pipeline import Pipeline
 
 
 class PipelineRunner(ABC):
@@ -22,4 +23,3 @@ class PipelineRunner(ABC):
         """
         Execute the pipeline and return the result.
         """
-        pass

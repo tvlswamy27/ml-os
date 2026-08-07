@@ -8,11 +8,12 @@ License: MIT
 from dataclasses import dataclass, field
 from datetime import datetime
 from uuid import UUID
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
-from mlos.domain.models.meta_reasoning.policy_version import PolicyVersion
 from mlos.domain.models.meta_reasoning.execution_plan import ExecutionPlan
 from mlos.domain.models.meta_reasoning.execution_schedule import ExecutionSchedule
 from mlos.domain.models.meta_reasoning.meta_telemetry import MetaTelemetry
+from mlos.domain.models.meta_reasoning.policy_version import PolicyVersion
 
 
 @dataclass(frozen=True)

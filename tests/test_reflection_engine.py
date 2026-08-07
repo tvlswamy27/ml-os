@@ -6,20 +6,18 @@ License: MIT
 """
 
 from unittest.mock import MagicMock
-import pytest
 
-from mlos.reflection.reflection_engine import ReflectionEngine
+from mlos.domain.models.reflection.reflection_context import (
+    EvaluationSummary,
+    ExecutionSummary,
+    ReflectionContext,
+)
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.reflection.algorithms.reflection_algorithm import ReflectionAlgorithm
 from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
     RuleBasedReflectionAlgorithm,
 )
-from mlos.domain.models.reflection.reflection_context import (
-    ReflectionContext,
-    PlanningSummary,
-    ExecutionSummary,
-    EvaluationSummary,
-)
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.reflection.reflection_engine import ReflectionEngine
 
 
 def test_reflection_engine_delegation():

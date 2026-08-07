@@ -5,9 +5,10 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from uuid import UUID, uuid4
+
 from mlos.domain.models.pipeline_source import PipelineSource
 
 

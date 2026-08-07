@@ -6,13 +6,14 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-from typing import List, Tuple, Literal, Set, Dict
+from typing import Literal
+
+from mlos.domain.enums.subsystem_name import SubsystemName
 from mlos.domain.models.meta_reasoning.execution_schedule import (
     ExecutionSchedule,
-    ScheduleNode,
     ScheduleDependency,
+    ScheduleNode,
 )
-from mlos.domain.enums.subsystem_name import SubsystemName
 
 
 @dataclass(frozen=True)
@@ -22,14 +23,14 @@ class ExecutionMutation:
     action: Literal["ADD", "REMOVE", "REPLACE"]
     node_id: str
     subsystem: SubsystemName
-    dependencies: List[str] = field(default_factory=list)
+    dependencies: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
 class ExecutionDiff:
     """Collection of topological mutation patches."""
 
-    mutations: List[ExecutionMutation] = field(default_factory=list)
+    mutations: list[ExecutionMutation] = field(default_factory=list)
 
 
 class AdaptivePlanner:
@@ -82,8 +83,8 @@ class AdaptivePlanner:
         """
         Apply a collection of mutations directly to the active DAG schedule structure.
         """
-        nodes_dict: Dict[str, ScheduleNode] = {n.node_id: n for n in schedule.nodes}
-        deps_list: List[ScheduleDependency] = list(schedule.dependencies)
+        nodes_dict: dict[str, ScheduleNode] = {n.node_id: n for n in schedule.nodes}
+        deps_list: list[ScheduleDependency] = list(schedule.dependencies)
 
         for mutation in diff.mutations:
             node_id = mutation.node_id
@@ -142,14 +143,14 @@ class AdaptivePlanner:
 
     def validate_cycle(
         self,
-        nodes: Tuple[ScheduleNode, ...],
-        dependencies: Tuple[ScheduleDependency, ...],
+        nodes: tuple[ScheduleNode, ...],
+        dependencies: tuple[ScheduleDependency, ...],
     ) -> None:
         """
         Detect loops / cycle dependencies inside a schedule topology using Kahn's.
         """
         in_degree = {n.node_id: 0 for n in nodes}
-        adj: Dict[str, List[str]] = {n.node_id: [] for n in nodes}
+        adj: dict[str, list[str]] = {n.node_id: [] for n in nodes}
 
         for dep in dependencies:
             if dep.child_node_id in in_degree and dep.parent_node_id in adj:

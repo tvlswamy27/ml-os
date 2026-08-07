@@ -5,31 +5,31 @@ Author: Antigravity
 License: MIT
 """
 
-import pytest
 import shutil
 import tempfile
-import json
-from pathlib import Path
-from uuid import UUID, uuid4
 from datetime import datetime
+from pathlib import Path
+from uuid import uuid4
 
-from mlos.sdk.project import MLProject
-from mlos.registry.artifact_registry import ArtifactRegistry, ExecutionArtifact
-from mlos.experiment.models import Experiment, Run
-from mlos.experiment.tracker import ExperimentTracker
-from mlos.communication.event_bus import GlobalEventBus
-from mlos.communication.store import EventStore
+import pytest
+
 from mlos.adaptive_planning.planner import (
     AdaptivePlanner,
     ExecutionDiff,
     ExecutionMutation,
 )
+from mlos.communication.event_bus import GlobalEventBus
+from mlos.communication.store import EventStore
+from mlos.domain.enums.subsystem_name import SubsystemName
 from mlos.domain.models.meta_reasoning.execution_schedule import (
     ExecutionSchedule,
-    ScheduleNode,
     ScheduleDependency,
+    ScheduleNode,
 )
-from mlos.domain.enums.subsystem_name import SubsystemName
+from mlos.experiment.models import Run
+from mlos.experiment.tracker import ExperimentTracker
+from mlos.registry.artifact_registry import ArtifactRegistry
+from mlos.sdk.project import MLProject
 
 
 @pytest.fixture
@@ -86,11 +86,9 @@ def test_experiment_tracker(temp_project_dir):
 
     # Create fake execution, metrics, snapshots to build a Run
     from mlos.experiment.models import (
+        KnowledgeSnapshot,
         RunExecution,
         RunMetrics,
-        RunArtifact,
-        RunEvent,
-        KnowledgeSnapshot,
     )
 
     execution = RunExecution(

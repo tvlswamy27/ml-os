@@ -1,5 +1,5 @@
-from mlos.reasoning.reasoning_engine import ReasoningEngine
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.reasoning.reasoning_engine import ReasoningEngine
 
 memory = ProjectMemoryService().create(
     "Titanic",

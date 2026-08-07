@@ -5,31 +5,28 @@ Author: Antigravity
 License: MIT
 """
 
-import shutil
 import zipfile
-from pathlib import Path
-from uuid import UUID, uuid4
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
+from uuid import uuid4
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.cli.persistence import (
+    find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
-    find_project_root,
 )
-from mlos.registry.artifact_registry import ArtifactRegistry, ExecutionArtifact
-from mlos.experiment.tracker import ExperimentTracker
+from mlos.communication.store import EventStore
 from mlos.experiment.models import (
+    KnowledgeSnapshot,
     Run,
-    RunExecution,
-    RunMetrics,
     RunArtifact,
     RunEvent,
-    KnowledgeSnapshot,
+    RunExecution,
+    RunMetrics,
 )
-from mlos.communication.event_bus import GlobalEventBus
-from mlos.communication.store import EventStore
+from mlos.experiment.tracker import ExperimentTracker
+from mlos.registry.artifact_registry import ArtifactRegistry, ExecutionArtifact
 
 
 class MLProjectSession:
@@ -41,7 +38,7 @@ class MLProjectSession:
         self.run = run
         self._project = project
 
-    def get_evaluation_report(self) -> Dict[str, Any]:
+    def get_evaluation_report(self) -> dict[str, Any]:
         """Fetch evaluation results summary from the session."""
         return {
             "status": self.run.execution.status,
@@ -58,32 +55,26 @@ class MLProject:
 
     def __init__(
         self,
-        dataset_path: Optional[str] = None,
-        target_column: Optional[str] = None,
-        project_path: Optional[str] = None,
-        name: Optional[str] = None,
-        goal: Optional[str] = None,
+        dataset_path: str | None = None,
+        target_column: str | None = None,
+        project_path: str | None = None,
+        name: str | None = None,
+        goal: str | None = None,
         **kwargs: Any,
     ) -> None:
-        self.dataset_path: Optional[str] = None
-        self.target_column: Optional[str] = None
-        self.project_path = Path(project_path) if project_path else Path(".")
+        self.dataset_path: str | None = None
+        self.target_column: str | None = None
+        # Resolve project root using find_project_root
+        found_root = find_project_root(project_path)
+        if found_root:
+            self.project_path = found_root
+        elif project_path:
+            self.project_path = Path(project_path).resolve()
+        else:
+            self.project_path = Path.cwd().resolve()
+
         self.project_path.mkdir(parents=True, exist_ok=True)
-
-        # Load or initialize project configuration
-        is_explicit = project_path is not None
-        project_root = None
-        if is_explicit:
-            if (self.project_path / ".mlos").is_dir():
-                project_root = self.project_path
-        else:
-            project_root = find_project_root(self.project_path)
-
-        if project_root:
-            self.project_path = project_root
-            self.memory = reconstruct_project_memory(project_root)
-        else:
-            self.memory = None
+        self.memory = reconstruct_project_memory(self.project_path)
 
         if not self.memory:
             self.name = name or "DefaultProject"
@@ -165,19 +156,19 @@ class MLProject:
         Execute the stage-based pipeline, auto-organizing outputs and logging lineage metrics.
         """
         assert self.memory is not None
+        from mlos.execution_intelligence.runtime import ExecutionGraph, ExecutionRuntime
         from mlos.execution_intelligence.stage import (
+            ArtifactGenerationStage,
             DataLoadingStage,
-            ValidationStage,
-            TransformationStage,
-            FeaturePipelineStage,
-            TrainingStage,
-            HyperparameterOptimizationStage,
+            DeploymentPackagingStage,
             EvaluationStage,
             ExplainabilityStage,
-            ArtifactGenerationStage,
-            DeploymentPackagingStage,
+            FeaturePipelineStage,
+            HyperparameterOptimizationStage,
+            TrainingStage,
+            TransformationStage,
+            ValidationStage,
         )
-        from mlos.execution_intelligence.runtime import ExecutionGraph, ExecutionRuntime
 
         # Setup standard stage execution DAG
         graph = ExecutionGraph()
@@ -360,18 +351,18 @@ class MLProject:
 
         return MLProjectSession(run_record, self)
 
-    def metrics(self) -> Dict[str, float]:
+    def metrics(self) -> dict[str, float]:
         """Return the evaluation metrics associated with the last successful run."""
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         if not exp.runs:
             return {}
         return exp.runs[-1].metrics.metrics
 
-    def artifacts(self) -> List[ExecutionArtifact]:
+    def artifacts(self) -> list[ExecutionArtifact]:
         """Retrieve list of all registered outputs inside the ArtifactRegistry."""
         return self.artifact_registry.list_artifacts()
 
-    def explain(self) -> Dict[str, float]:
+    def explain(self) -> dict[str, float]:
         """Fetch model explainability importance map."""
         import json
 
@@ -386,7 +377,7 @@ class MLProject:
                 return json.load(f)
         return {}
 
-    def graph(self) -> Dict[str, Any]:
+    def graph(self) -> dict[str, Any]:
         """Fetch visual execution DAG layout details."""
         return {
             "nodes": [
@@ -414,30 +405,50 @@ class MLProject:
             ],
         }
 
-    def history(self) -> List[Dict[str, Any]]:
+    def history(self) -> list[dict[str, Any]]:
         """Return history metadata of all executed runs."""
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         return [
             {
-                "run_id": str(r.run_id),
-                "name": r.name,
-                "timestamp": r.timestamp.isoformat(),
-                "duration": r.execution.duration_seconds,
-                "metrics": r.metrics.metrics,
-                "status": r.execution.status,
+                "run_id": str(getattr(r, "run_id", "")),
+                "name": str(getattr(r, "name", "")),
+                "timestamp": (
+                    r.timestamp.isoformat()
+                    if hasattr(r, "timestamp") and hasattr(r.timestamp, "isoformat")
+                    else str(getattr(r, "timestamp", ""))
+                ),
+                "duration": getattr(
+                    getattr(r, "execution", None), "duration_seconds", 0.0
+                ),
+                "metrics": getattr(
+                    getattr(r, "metrics", None), "metrics", getattr(r, "metrics", {})
+                ),
+                "status": getattr(
+                    getattr(r, "execution", None), "status", "SUCCESS"
+                ),
             }
             for r in exp.runs
         ]
 
-    def compare_runs(self) -> Dict[str, Dict[str, Any]]:
+    def compare_runs(self) -> dict[str, dict[str, Any]]:
         """Compare evaluation metrics side-by-side across all historical runs."""
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         comparison = {}
         for r in exp.runs:
-            comparison[r.name] = {
-                "timestamp": r.timestamp.isoformat(),
-                "metrics": r.metrics.metrics,
-                "duration": r.execution.duration_seconds,
+            run_name = str(getattr(r, "name", "run"))
+            ts = (
+                r.timestamp.isoformat()
+                if hasattr(r, "timestamp") and hasattr(r.timestamp, "isoformat")
+                else str(getattr(r, "timestamp", ""))
+            )
+            met = getattr(
+                getattr(r, "metrics", None), "metrics", getattr(r, "metrics", {})
+            )
+            dur = getattr(getattr(r, "execution", None), "duration_seconds", 0.0)
+            comparison[run_name] = {
+                "timestamp": ts,
+                "metrics": met,
+                "duration": dur,
             }
         return comparison
 

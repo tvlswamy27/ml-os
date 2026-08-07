@@ -6,12 +6,13 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
+
 from mlos.domain.models.base import BaseModel
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.observation import Observation
-from mlos.domain.models.planning.hypothesis import Hypothesis
 from mlos.domain.models.planning.candidate_strategy import CandidateStrategy
 from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.planning.hypothesis import Hypothesis
+from mlos.domain.models.planning.observation import Observation
+from mlos.domain.models.planning.planning_context import PlanningContext
 from mlos.domain.models.planning.planning_telemetry import PlanningTelemetry
 
 # Patch BaseModel to appear frozen to the dataclasses compiler at runtime

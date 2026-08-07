@@ -1,10 +1,10 @@
 from abc import ABC, abstractmethod
+
 from mlos.domain.models.knowledge.knowledge_context import KnowledgeContext
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_reasoning_state import (
     KnowledgeReasoningState,
 )
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 
 
 class KnowledgeAlgorithm(ABC):
@@ -15,7 +15,6 @@ class KnowledgeAlgorithm(ABC):
     @abstractmethod
     def can_manage(self, context: KnowledgeContext) -> bool:
         """Determines if the algorithm can execute given the context."""
-        pass
 
     def manage(self, context: KnowledgeContext) -> KnowledgeSession:
         """
@@ -45,49 +44,42 @@ class KnowledgeAlgorithm(ABC):
     @abstractmethod
     def _analyze_updates(self, context: KnowledgeContext) -> KnowledgeReasoningState:
         """Parses incoming learning updates into strongly typed ProposedKnowledgeUpdate objects."""
-        pass
 
     @abstractmethod
     def _detect_conflicts(
         self, context: KnowledgeContext, state: KnowledgeReasoningState
     ) -> KnowledgeReasoningState:
         """Scans incoming updates and existing entries to identify competing parameter settings."""
-        pass
 
     @abstractmethod
     def _resolve_conflicts(
         self, context: KnowledgeContext, state: KnowledgeReasoningState
     ) -> KnowledgeReasoningState:
         """Resolves overlapping parameter configurations using V1 deterministic priority rules."""
-        pass
 
     @abstractmethod
     def _determine_promotions(
         self, context: KnowledgeContext, state: KnowledgeReasoningState
     ) -> KnowledgeReasoningState:
         """Decides which updates meet the promotional threshold (e.g. learning confidence)."""
-        pass
 
     @abstractmethod
     def _version_knowledge(
         self, context: KnowledgeContext, state: KnowledgeReasoningState
     ) -> KnowledgeReasoningState:
         """Increments version counters and assigns unique parent entry ID links."""
-        pass
 
     @abstractmethod
     def _build_confidence(
         self, context: KnowledgeContext, state: KnowledgeReasoningState
     ) -> dict:
         """Calculates final confidence for each promoted knowledge entry."""
-        pass
 
     @abstractmethod
     def _construct_session(
         self, state: KnowledgeReasoningState, confidence_details: dict
     ) -> KnowledgeSession:
         """Assembles variables into the final, frozen KnowledgeSession object."""
-        pass
 
 
 class_names = ["KnowledgeAlgorithm"]

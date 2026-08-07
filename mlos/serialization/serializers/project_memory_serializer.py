@@ -6,6 +6,7 @@ License: MIT
 """
 
 from typing import Any
+
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.serialization.version import VersionedSerializer
 
@@ -19,9 +20,9 @@ class ProjectMemorySerializer(VersionedSerializer):
 
         # Import helper serialization methods locally to avoid circular imports
         from mlos.cli.persistence import (
+            execution_snapshot_to_dict,
             feature_session_to_dict,
             meta_session_to_dict,
-            execution_snapshot_to_dict,
         )
 
         config: dict[str, Any] = {
@@ -35,6 +36,20 @@ class ProjectMemorySerializer(VersionedSerializer):
         if model.dataset:
             config["dataset_path"] = str(model.dataset.path)
             config["target_column"] = model.dataset.target
+            config["dataset"] = {
+                "path": str(model.dataset.path),
+                "rows": model.dataset.rows,
+                "columns": model.dataset.columns,
+                "target": model.dataset.target,
+                "problem_type": model.dataset.problem_type,
+                "categorical_columns": list(model.dataset.categorical_columns),
+                "numerical_columns": list(model.dataset.numerical_columns),
+                "missing_values": dict(model.dataset.missing_values),
+                "duplicate_rows": model.dataset.duplicate_rows,
+                "unique_values": dict(model.dataset.unique_values),
+                "missing_percentages": dict(model.dataset.missing_percentages),
+                "column_types": dict(model.dataset.column_types),
+            }
 
         if model.project_profile:
             serialized_risks = []
@@ -137,19 +152,19 @@ class ProjectMemorySerializer(VersionedSerializer):
 
     def deserialize(self, data: dict[str, Any]) -> Any:
         # Import helper deserialization methods locally to avoid circular imports
-        from mlos.domain.services.project_memory_service import ProjectMemoryService
-        from mlos.domain.models.dataset import Dataset
-        from mlos.domain.models.project_profile import ProjectProfile
-        from mlos.domain.models.pipeline import Pipeline
         from mlos.cli.persistence import (
-            dict_to_reflection_session,
-            dict_to_learning_session,
-            dict_to_knowledge_session,
-            dict_to_knowledge_entry,
-            dict_to_feature_session,
-            dict_to_meta_session,
             dict_to_execution_snapshot,
+            dict_to_feature_session,
+            dict_to_knowledge_entry,
+            dict_to_knowledge_session,
+            dict_to_learning_session,
+            dict_to_meta_session,
+            dict_to_reflection_session,
         )
+        from mlos.domain.models.dataset import Dataset
+        from mlos.domain.models.pipeline import Pipeline
+        from mlos.domain.models.project_profile import ProjectProfile
+        from mlos.domain.services.project_memory_service import ProjectMemoryService
 
         memory_service = ProjectMemoryService()
         memory = memory_service.create(
@@ -162,7 +177,23 @@ class ProjectMemorySerializer(VersionedSerializer):
         memory.notes = data.get("notes", [])
 
         dataset_path = data.get("dataset_path")
-        if dataset_path:
+        if "dataset" in data and isinstance(data["dataset"], dict):
+            ds = data["dataset"]
+            memory.dataset = Dataset(
+                path=ds.get("path", dataset_path or ""),
+                rows=ds.get("rows", 0),
+                columns=ds.get("columns", 0),
+                target=ds.get("target", data.get("target_column")),
+                problem_type=ds.get("problem_type"),
+                categorical_columns=list(ds.get("categorical_columns", [])),
+                numerical_columns=list(ds.get("numerical_columns", [])),
+                missing_values=dict(ds.get("missing_values", {})),
+                duplicate_rows=ds.get("duplicate_rows", 0),
+                unique_values=dict(ds.get("unique_values", {})),
+                missing_percentages=dict(ds.get("missing_percentages", {})),
+                column_types=dict(ds.get("column_types", {})),
+            )
+        elif dataset_path:
             memory.dataset = Dataset(
                 path=dataset_path,
                 target=data.get("target_column"),

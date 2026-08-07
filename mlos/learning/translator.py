@@ -5,14 +5,14 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.intelligence.schemas.learning_output import LLMLearningOutput
+from mlos.domain.models.learning.learning_confidence import LearningConfidence
 from mlos.domain.models.learning.learning_context import LearningContext
+from mlos.domain.models.learning.learning_evidence import LearningEvidence
 from mlos.domain.models.learning.learning_session import LearningSession
+from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
 from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.domain.models.learning.learning_update_type import LearningUpdateType
-from mlos.domain.models.learning.learning_evidence import LearningEvidence
-from mlos.domain.models.learning.learning_confidence import LearningConfidence
-from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+from mlos.intelligence.schemas.learning_output import LLMLearningOutput
 
 
 class LearningTranslator:

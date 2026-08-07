@@ -7,8 +7,8 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from mlos.domain.models.generated_code import GeneratedCode
 from mlos.domain.models.decision import Decision
+from mlos.domain.models.generated_code import GeneratedCode
 from mlos.domain.models.generation_context import GenerationContext
 from mlos.generator.generators.base_generator import BaseGenerator
 

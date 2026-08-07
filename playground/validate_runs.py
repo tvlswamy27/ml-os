@@ -5,19 +5,19 @@ Author: Antigravity
 License: MIT
 """
 
-import os
-import sys
-import yaml
-import json
-import time
 import ctypes
-import shutil
+import json
 import platform
+import shutil
 import subprocess
+import sys
+import time
 import traceback
-from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from pathlib import Path
+from typing import Any
+
+import yaml
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -28,9 +28,9 @@ except AttributeError:
 # Add parent directory to path so we can import mlos directly
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from mlos.sdk import MLProject
 from mlos.communication.event_bus import GlobalEventBus
-from playground.download_datasets import validate_dataset, download_datasets
+from mlos.sdk import MLProject
+from playground.download_datasets import download_datasets
 
 # Import optional machine learning libraries safely
 try:
@@ -137,7 +137,7 @@ def compute_mape(y_true, y_pred) -> float:
         return 0.0
 
 
-def load_and_preprocess_for_baseline(file_path: Path, meta: Dict[str, Any]):
+def load_and_preprocess_for_baseline(file_path: Path, meta: dict[str, Any]):
     """Replicates standard dataset preprocessing to match ML-OS input formats."""
     if pd is None or np is None:
         raise ImportError("Pandas and Numpy are required for baseline calculations.")
@@ -205,18 +205,18 @@ def load_and_preprocess_for_baseline(file_path: Path, meta: Dict[str, Any]):
 
 def run_baselines(
     X_train, X_test, y_train, y_test, task: str
-) -> Dict[str, Dict[str, float]]:
+) -> dict[str, dict[str, float]]:
     """Evaluates task-specific baselines and maps their performance."""
-    results: Dict[str, Dict[str, float]] = {}
+    results: dict[str, dict[str, float]] = {}
 
     if task == "classification":
-        from sklearn.linear_model import LogisticRegression
         from sklearn.ensemble import RandomForestClassifier
+        from sklearn.linear_model import LogisticRegression
         from sklearn.metrics import (
             accuracy_score,
+            f1_score,
             precision_score,
             recall_score,
-            f1_score,
         )
 
         # 1. Logistic Regression
@@ -293,9 +293,9 @@ def run_baselines(
             results["XGBoost"] = {"status": -1.0}
 
     else:
-        from sklearn.linear_model import LinearRegression
         from sklearn.ensemble import RandomForestRegressor
-        from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+        from sklearn.linear_model import LinearRegression
+        from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
         # 1. Linear Regression
         try:
@@ -343,6 +343,8 @@ def run_baselines(
             results["XGBoost"] = {"status": -1.0}
 
     return results
+
+
 def align_features(model, X_test):
     if not hasattr(model, "feature_names_in_"):
         return X_test
@@ -357,8 +359,8 @@ def align_features(model, X_test):
 
 
 def run_benchmark_on_dataset(
-    name: str, meta: Dict[str, Any], data_dir: Path
-) -> Dict[str, Any]:
+    name: str, meta: dict[str, Any], data_dir: Path
+) -> dict[str, Any]:
     """Runs ML-OS 3 times, profiles stage durations, and computes mean baseline benchmarks."""
     dataset_file = data_dir / f"{name}.csv"
     project_dir = Path("playground") / f"{name}_project"
@@ -378,8 +380,8 @@ def run_benchmark_on_dataset(
     baselines_out = run_baselines(X_train, X_test, y_train, y_test, meta["task"])
 
     runs_times = []
-    runs_metrics: List[Dict[str, float]] = []
-    runs_stage_timings: List[Dict[str, float]] = []
+    runs_metrics: list[dict[str, float]] = []
+    runs_stage_timings: list[dict[str, float]] = []
     runs_artifact_counts = []
     runs_event_counts = []
 
@@ -444,14 +446,15 @@ def run_benchmark_on_dataset(
             run_res_metrics["precision"] = float(eval_metrics.get("precision", 0.0))
             run_res_metrics["recall"] = float(eval_metrics.get("recall", 0.0))
             # Calculate F1 score manually
+
             from sklearn.metrics import f1_score
-            import pickle
 
             model_artifact = [
                 a for a in reloaded.artifacts() if a.artifact_type == "MODEL"
             ]
             if model_artifact:
                 import joblib
+
                 model = joblib.load(reloaded.project_path / model_artifact[0].file_path)
                 selected_model_name = type(model).__name__
                 preds = model.predict(align_features(model, X_test))
@@ -464,13 +467,13 @@ def run_benchmark_on_dataset(
             run_res_metrics["rmse"] = float(eval_metrics.get("rmse", 0.0))
             run_res_metrics["r2"] = float(eval_metrics.get("r2", 0.0))
             # Calculate MAE and MAPE manually
-            import pickle
 
             model_artifact = [
                 a for a in reloaded.artifacts() if a.artifact_type == "MODEL"
             ]
             if model_artifact:
                 import joblib
+
                 model = joblib.load(reloaded.project_path / model_artifact[0].file_path)
                 selected_model_name = type(model).__name__
                 preds = model.predict(align_features(model, X_test))
@@ -571,7 +574,7 @@ def run_benchmark_on_dataset(
     }
 
 
-def execute_release_checks() -> Dict[str, str]:
+def execute_release_checks() -> dict[str, str]:
     """Runs diagnostic verification of tests, types, formattings and engine subsystems."""
     checks = {}
 

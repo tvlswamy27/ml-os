@@ -5,8 +5,8 @@ Author: Antigravity
 License: MIT
 """
 
+from collections.abc import Callable
 from datetime import datetime
-from typing import Callable, Dict, List
 
 
 class ExecutionEvent:
@@ -26,7 +26,7 @@ class ExecutionEventBus:
     """
 
     def __init__(self) -> None:
-        self._subscribers: Dict[str, List[Callable[[ExecutionEvent], None]]] = {}
+        self._subscribers: dict[str, list[Callable[[ExecutionEvent], None]]] = {}
 
     def subscribe(
         self, event_type: str, callback: Callable[[ExecutionEvent], None]

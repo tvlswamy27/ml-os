@@ -6,11 +6,12 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
+
 from mlos.domain.models.feature_intelligence.feature_profile import FeatureProfile
+from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
 from mlos.domain.models.feature_intelligence.relationship_profile import (
     RelationshipProfile,
 )
-from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
 
 
 @dataclass(frozen=True)

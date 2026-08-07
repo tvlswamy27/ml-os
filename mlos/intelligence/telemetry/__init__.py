@@ -1,4 +1,4 @@
-from mlos.intelligence.telemetry.token_usage import TokenUsage
 from mlos.intelligence.telemetry.call_metrics import CallMetrics
+from mlos.intelligence.telemetry.token_usage import TokenUsage
 
-__all__ = ["TokenUsage", "CallMetrics"]
+__all__ = ["CallMetrics", "TokenUsage"]

@@ -2,16 +2,11 @@
 Unit tests for the Planning Subsystem Core and Algorithms.
 """
 
-from unittest.mock import MagicMock
-import pytest
-
-from mlos.planning.planning_engine import PlanningEngine
-from mlos.planning.algorithms.planning_algorithm import PlanningAlgorithm
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
 from mlos.planning.algorithms.heuristic_planning_algorithm import (
     HeuristicPlanningAlgorithm,
 )
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.planning_session import PlanningSession
 
 
 def test_heuristic_planning_algorithm_defaults():

@@ -2,14 +2,15 @@ import time
 from datetime import datetime
 from typing import Any
 from uuid import uuid4
+
+from mlos.intelligence.cache.llm_cache import LLMCache
 from mlos.intelligence.config import ProviderConfig
 from mlos.intelligence.provider_factory import ProviderFactory
-from mlos.intelligence.cache.llm_cache import LLMCache
-from mlos.intelligence.validation.schema_validator import SchemaValidator
 from mlos.intelligence.schemas.llm_request import LLMRequest
 from mlos.intelligence.schemas.llm_response import LLMResponse
 from mlos.intelligence.telemetry.call_metrics import CallMetrics
 from mlos.intelligence.telemetry.token_usage import TokenUsage
+from mlos.intelligence.validation.schema_validator import SchemaValidator
 
 
 class IntelligenceService:

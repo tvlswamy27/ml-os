@@ -5,14 +5,14 @@ Author: Antigravity
 License: MIT
 """
 
-import os
 import shutil
-import yaml
-from pathlib import Path
-from uuid import UUID, uuid4
-from datetime import datetime
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+from uuid import UUID, uuid4
+
+import yaml
 
 
 @dataclass(frozen=True)
@@ -25,9 +25,9 @@ class ExecutionArtifact:
     file_path: str
     version: str
     created_at: datetime
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "artifact_id": str(self.artifact_id),
             "name": self.name,
@@ -39,7 +39,7 @@ class ExecutionArtifact:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionArtifact":
+    def from_dict(cls, data: dict[str, Any]) -> "ExecutionArtifact":
         return cls(
             artifact_id=UUID(data["artifact_id"]),
             name=data["name"],
@@ -60,7 +60,7 @@ class ArtifactRegistry:
         self.project_path = Path(project_path)
         self.artifacts_dir = self.project_path / "artifacts"
         self.registry_file = self.project_path / ".mlos" / "artifacts_registry.yaml"
-        self._artifacts: Dict[str, ExecutionArtifact] = {}
+        self._artifacts: dict[str, ExecutionArtifact] = {}
         self.load()
 
     def register_artifact(
@@ -69,7 +69,7 @@ class ArtifactRegistry:
         artifact_type: str,  # e.g. MODEL, PREPROCESSOR, REPORT, EXPLAINABILITY, DATASET, CHECKPOINT, DEPLOYMENT
         source_file_path: Path,
         version: str = "1.0.0",
-        metadata: Optional[Dict[str, Any]] = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ExecutionArtifact:
         """
         Register a new output file, copying it into the organized artifacts folder,
@@ -126,13 +126,13 @@ class ArtifactRegistry:
 
         return artifact
 
-    def get_artifact(self, artifact_id: UUID) -> Optional[ExecutionArtifact]:
+    def get_artifact(self, artifact_id: UUID) -> ExecutionArtifact | None:
         """Fetch registered artifact by its unique ID."""
         return self._artifacts.get(str(artifact_id))
 
     def list_artifacts(
-        self, artifact_type: Optional[str] = None
-    ) -> List[ExecutionArtifact]:
+        self, artifact_type: str | None = None
+    ) -> list[ExecutionArtifact]:
         """List all artifacts, optionally filtering by type."""
         all_art = list(self._artifacts.values())
         if artifact_type:

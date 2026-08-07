@@ -5,13 +5,13 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
-from mlos.domain.models.reflection.reflection_context import ReflectionContext
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
 from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
+from mlos.domain.models.reflection.reflection_context import ReflectionContext
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
+from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
 
 
 class ReflectionTranslator:

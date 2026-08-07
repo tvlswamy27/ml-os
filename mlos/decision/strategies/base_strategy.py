@@ -7,7 +7,6 @@ License: MIT
 
 from abc import ABC, abstractmethod
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.decision import Decision
 from mlos.domain.models.decision_context import DecisionContext
 
@@ -25,7 +24,6 @@ class BaseStrategy(ABC):
         """
         Generate decisions.
         """
-        pass
 
     def get_active_rule(self, context, component_name: str):
         """

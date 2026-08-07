@@ -6,14 +6,15 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
 from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
     FeatureReasoningState,
 )
-from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
 from mlos.domain.models.feature_intelligence.feature_recommendation import (
     FeatureRecommendation,
 )
+from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
 
 
 class FeatureSelectionStage(ABC):
@@ -31,4 +32,3 @@ class FeatureSelectionStage(ABC):
         """
         Formulates selection recommendations (KEEP, REMOVE, etc.) with reasoning and confidence evidence.
         """
-        pass

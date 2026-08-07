@@ -1,18 +1,16 @@
-import os
 import pytest
 from pydantic import BaseModel, Field
+
+from mlos.intelligence.cache.llm_cache import LLMCache
 from mlos.intelligence.config import ProviderConfig
-from mlos.intelligence.provider_factory import ProviderFactory
-from mlos.intelligence.providers.mock_provider import MockProvider
-from mlos.intelligence.prompts.prompt_version import PromptVersion
+from mlos.intelligence.intelligence_service import IntelligenceService
 from mlos.intelligence.prompts.prompt_loader import PromptLoader
 from mlos.intelligence.prompts.prompt_manager import PromptManager
-from mlos.intelligence.cache.llm_cache import LLMCache
-from mlos.intelligence.validation.schema_validator import SchemaValidator
-from mlos.intelligence.validation.hybrid_validator import HybridValidator
+from mlos.intelligence.provider_factory import ProviderFactory
+from mlos.intelligence.providers.mock_provider import MockProvider
 from mlos.intelligence.schemas.llm_request import LLMRequest
-from mlos.intelligence.schemas.llm_response import LLMResponse
-from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.intelligence.validation.hybrid_validator import HybridValidator
+from mlos.intelligence.validation.schema_validator import SchemaValidator
 
 
 # Define a test Pydantic model for structured outputs

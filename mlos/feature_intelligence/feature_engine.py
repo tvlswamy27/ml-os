@@ -6,6 +6,7 @@ License: MIT
 """
 
 import pandas as pd
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
 from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
 from mlos.feature_intelligence.algorithms.feature_algorithm import FeatureAlgorithm

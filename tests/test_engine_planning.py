@@ -3,14 +3,15 @@ Unit and integration tests for Planning subsystem integration into MLOSEngine an
 """
 
 from unittest.mock import MagicMock
+
 import pytest
 
-from mlos.engine.engine import MLOSEngine
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.planning.planning_session import PlanningSession
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.planning_service import PlanningService
+from mlos.engine.engine import MLOSEngine
 from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.workflow.workflow_hooks import HookRegistry
-from mlos.domain.services.planning_service import PlanningService
 
 
 def test_mlos_engine_plan_requires_project():

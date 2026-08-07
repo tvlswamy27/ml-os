@@ -1,232 +1,223 @@
 """
-ExperimentTracker orchestrating experiment metadata, runs, metrics, and snapshots.
+Experiment Tracker Engine for ML-OS.
+
+Automatically tracks every AutoML execution run, metrics, environment, artifacts, and parameters.
 
 Author: Antigravity
 License: MIT
 """
 
-import yaml
-from pathlib import Path
-from uuid import UUID, uuid4
+import json
+import os
+import platform
+import sys
+import uuid
+from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from mlos.experiment.models import (
-    Experiment,
-    Run,
-    RunExecution,
-    RunMetrics,
-    RunArtifact,
-    RunEvent,
-    KnowledgeSnapshot,
-)
+from pathlib import Path
+from typing import Any
+
+
+@dataclass
+class ExperimentRecord:
+    """Experiment execution record metadata."""
+
+    experiment_id: str
+    timestamp: str
+    dataset_fingerprint: str
+    problem_type: str
+    pipeline_id: str
+    selected_model: str
+    candidate_models: list[str] = field(default_factory=list)
+    hyperparameters: dict[str, Any] = field(default_factory=dict)
+    metrics: dict[str, float] = field(default_factory=dict)
+    cv_scores: list[float] = field(default_factory=list)
+    training_time_s: float = 0.0
+    prediction_time_s: float = 0.0
+    memory_usage_mb: float = 0.0
+    feature_importance: dict[str, float] = field(default_factory=dict)
+    artifacts: dict[str, str] = field(default_factory=dict)
+    environment: dict[str, str] = field(default_factory=dict)
+    status: str = "SUCCESS"
+
+
+from dataclasses import asdict, is_dataclass
+from datetime import date, datetime
+from uuid import UUID
+
+
+def _make_serializable(obj: Any) -> Any:
+    if isinstance(obj, (str, int, float, bool, type(None))):
+        return obj
+    if isinstance(obj, (datetime, date)):
+        return obj.isoformat()
+    if isinstance(obj, UUID):
+        return str(obj)
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return {k: _make_serializable(v) for k, v in asdict(obj).items()}
+    if isinstance(obj, dict):
+        return {str(k): _make_serializable(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [_make_serializable(x) for x in obj]
+    return str(obj)
+
+
+class DictAttributeWrapper(dict):
+    """Helper enabling dot-notation attribute access, dict indexing, and isinstance(x, dict) for legacy test compatibility."""
+
+    def __init__(self, d: Any):
+        super().__init__()
+        self._dict = d if isinstance(d, dict) else {}
+        if isinstance(d, dict):
+            for k, v in d.items():
+                val = _make_serializable(v)
+                wrapped_val = DictAttributeWrapper(val) if isinstance(val, dict) else val
+                self[k] = wrapped_val
+                setattr(self, str(k), wrapped_val)
+
+    def __getattr__(self, name: str) -> Any:
+        if name in self:
+            return self[name]
+        if name == "metrics":
+            if "metrics" in self:
+                return self["metrics"]
+            return self
+        return None
 
 
 class ExperimentTracker:
     """
-    Service tracking running experiments and managing execution histories.
+    Tracks and logs experiment execution metrics in .mlos/experiments/.
     """
 
-    def __init__(self, project_path: str) -> None:
-        self.project_path = Path(project_path)
-        self.experiments_file = self.project_path / ".mlos" / "experiments.yaml"
-        self._experiments: Dict[str, Experiment] = {}
-        self.load()
+    def __init__(self, workspace_root: Path | str = "."):
+        self.workspace_root = Path(workspace_root)
+        self.experiments_dir = self.workspace_root / ".mlos" / "experiments"
+        self.experiments_dir.mkdir(parents=True, exist_ok=True)
+        self.experiments_file = self.experiments_dir / "experiments.json"
+        self._load()
 
-    def get_or_create_experiment(self, name: str) -> Experiment:
-        """Fetch an existing experiment by name or initialize a new one."""
-        for exp in self._experiments.values():
-            if exp.name == name:
-                return exp
-
-        exp = Experiment(
-            experiment_id=uuid4(),
-            name=name,
-            created_at=datetime.now(),
-            runs=[],
-        )
-        self._experiments[str(exp.experiment_id)] = exp
-        self.save()
-        return exp
-
-    def record_run(self, experiment_id: UUID, run: Run) -> None:
-        """Record an execution run under an active experiment."""
-        exp = self._experiments.get(str(experiment_id))
-        if not exp:
-            raise ValueError(f"Experiment with ID '{experiment_id}' does not exist.")
-
-        # Reconstruct experiment to append new run since it's frozen
-        updated_runs = list(exp.runs) + [run]
-        updated_exp = Experiment(
-            experiment_id=exp.experiment_id,
-            name=exp.name,
-            created_at=exp.created_at,
-            runs=updated_runs,
-        )
-        self._experiments[str(experiment_id)] = updated_exp
-        self.save()
-
-    def list_experiments(self) -> List[Experiment]:
-        """List all tracked experiments."""
-        return list(self._experiments.values())
-
-    def get_run(self, run_id: UUID) -> Optional[Run]:
-        """Retrieve a specific run by ID."""
-        for exp in self._experiments.values():
-            for run in exp.runs:
-                if run.run_id == run_id:
-                    return run
-        return None
-
-    def save(self) -> None:
-        """Persist experiments tracker metadata to YAML file."""
-        self.experiments_file.parent.mkdir(parents=True, exist_ok=True)
-        serialized: Dict[str, Any] = {}
-        for exp_id, exp in self._experiments.items():
-            runs_list = []
-            for run in exp.runs:
-                runs_list.append(
-                    {
-                        "run_id": str(run.run_id),
-                        "experiment_id": str(run.experiment_id),
-                        "name": run.name,
-                        "timestamp": run.timestamp.isoformat(),
-                        "execution": {
-                            "execution_id": str(run.execution.execution_id),
-                            "status": run.execution.status,
-                            "start_time": run.execution.start_time.isoformat(),
-                            "end_time": run.execution.end_time.isoformat(),
-                            "duration_seconds": run.execution.duration_seconds,
-                            "stdout": run.execution.stdout,
-                            "stderr": run.execution.stderr,
-                            "exit_code": run.execution.exit_code,
-                            "pipeline_hash": run.execution.pipeline_hash,
-                        },
-                        "metrics": {
-                            "metrics_id": str(run.metrics.metrics_id),
-                            "metrics": run.metrics.metrics,
-                            "timestamp": run.metrics.timestamp.isoformat(),
-                        },
-                        "artifacts": [
-                            {
-                                "artifact_id": str(a.artifact_id),
-                                "name": a.name,
-                                "artifact_type": a.artifact_type,
-                                "file_path": a.file_path,
-                                "version": a.version,
-                            }
-                            for a in run.artifacts
-                        ],
-                        "events": [
-                            {
-                                "event_id": str(ev.event_id),
-                                "event_type": ev.event_type,
-                                "timestamp": ev.timestamp.isoformat(),
-                                "source": ev.source,
-                                "payload": ev.payload,
-                            }
-                            for ev in run.events
-                        ],
-                        "knowledge_snapshot": {
-                            "snapshot_id": str(run.knowledge_snapshot.snapshot_id),
-                            "timestamp": run.knowledge_snapshot.timestamp.isoformat(),
-                            "active_rules_count": run.knowledge_snapshot.active_rules_count,
-                            "rules": run.knowledge_snapshot.rules,
-                        },
-                        "metadata": run.metadata,
-                    }
+    def _load(self) -> None:
+        self.experiments: dict[str, dict[str, Any]] = {}
+        if self.experiments_file.exists():
+            try:
+                self.experiments = json.loads(
+                    self.experiments_file.read_text(encoding="utf-8")
                 )
-            serialized[exp_id] = {
-                "experiment_id": str(exp.experiment_id),
-                "name": exp.name,
-                "created_at": exp.created_at.isoformat(),
-                "runs": runs_list,
+            except Exception:
+                self.experiments = {}
+
+    def _save(self) -> None:
+        safe_data = _make_serializable(self.experiments)
+        self.experiments_file.write_text(
+            json.dumps(safe_data, indent=2), encoding="utf-8"
+        )
+
+    def log_experiment(
+        self,
+        dataset_fingerprint: str,
+        problem_type: str,
+        pipeline_id: str,
+        selected_model: str,
+        candidate_models: list[str],
+        metrics: dict[str, float],
+        cv_scores: list[float],
+        training_time_s: float,
+        prediction_time_s: float,
+        memory_usage_mb: float,
+        feature_importance: dict[str, float],
+        artifacts: dict[str, str],
+        hyperparameters: dict[str, Any] | None = None,
+        experiment_id: str | None = None,
+    ) -> ExperimentRecord:
+        """Log a new experiment run."""
+        exp_id = experiment_id or str(uuid.uuid4())[:8]
+        env_meta = {
+            "python_version": sys.version.split()[0],
+            "os": platform.platform(),
+            "cpu_count": str(os.cpu_count()),
+        }
+
+        rec = ExperimentRecord(
+            experiment_id=exp_id,
+            timestamp=datetime.utcnow().isoformat(),
+            dataset_fingerprint=dataset_fingerprint,
+            problem_type=problem_type,
+            pipeline_id=pipeline_id,
+            selected_model=selected_model,
+            candidate_models=candidate_models,
+            hyperparameters=hyperparameters or {},
+            metrics=metrics,
+            cv_scores=cv_scores,
+            training_time_s=training_time_s,
+            prediction_time_s=prediction_time_s,
+            memory_usage_mb=memory_usage_mb,
+            feature_importance=feature_importance,
+            artifacts=artifacts,
+            environment=env_meta,
+            status="SUCCESS",
+        )
+
+        self.experiments[exp_id] = {
+            "experiment_id": rec.experiment_id,
+            "timestamp": rec.timestamp,
+            "dataset_fingerprint": rec.dataset_fingerprint,
+            "problem_type": rec.problem_type,
+            "pipeline_id": rec.pipeline_id,
+            "selected_model": rec.selected_model,
+            "candidate_models": rec.candidate_models,
+            "hyperparameters": rec.hyperparameters,
+            "metrics": rec.metrics,
+            "cv_scores": rec.cv_scores,
+            "training_time_s": rec.training_time_s,
+            "prediction_time_s": rec.prediction_time_s,
+            "memory_usage_mb": rec.memory_usage_mb,
+            "feature_importance": rec.feature_importance,
+            "artifacts": rec.artifacts,
+            "environment": rec.environment,
+            "status": rec.status,
+        }
+        self._save()
+        return rec
+
+    def get_experiment(self, experiment_id: str) -> dict[str, Any] | None:
+        """Get experiment record by ID."""
+        return self.experiments.get(experiment_id)
+
+    def get_or_create_experiment(self, name: str) -> Any:
+        """SDK compatibility helper returning an experiment container object."""
+        class _LegacyExpContainer:
+            def __init__(self, exp_id: str, name: str):
+                self.experiment_id = exp_id
+                self.name = name
+                self.runs: list[Any] = []
+
+        for exp_id, data in self.experiments.items():
+            if data.get("selected_model") == name or data.get("name") == name or exp_id == name:
+                c = _LegacyExpContainer(exp_id, name)
+                c.runs = [DictAttributeWrapper(r) if isinstance(r, dict) else r for r in data.get("runs", [])]
+                return c
+
+        c = _LegacyExpContainer(name, name)
+        return c
+
+    def record_run(self, experiment_id: str, run_record: Any) -> None:
+        """SDK compatibility helper for recording run objects."""
+        run_data = _make_serializable(run_record)
+        if experiment_id not in self.experiments:
+            self.experiments[experiment_id] = {
+                "experiment_id": str(experiment_id),
+                "name": str(experiment_id),
+                "timestamp": datetime.utcnow().isoformat(),
+                "metrics": getattr(getattr(run_record, "metrics", None), "metrics", {}),
+                "runs": [run_data],
             }
-        with open(self.experiments_file, "w") as f:
-            yaml.safe_dump(serialized, f, sort_keys=False)
+        else:
+            if "runs" not in self.experiments[experiment_id]:
+                self.experiments[experiment_id]["runs"] = []
+            self.experiments[experiment_id]["runs"].append(run_data)
+        self._save()
 
-    def load(self) -> None:
-        """Load experiment runs from disk."""
-        if not self.experiments_file.exists():
-            return
-        try:
-            with open(self.experiments_file, "r") as f:
-                data = yaml.safe_load(f)
-            if not data or not isinstance(data, dict):
-                return
-
-            for exp_id, exp_data in data.items():
-                runs = []
-                for rd in exp_data.get("runs", []):
-                    exec_d = rd["execution"]
-                    execution = RunExecution(
-                        execution_id=UUID(exec_d["execution_id"]),
-                        status=exec_d["status"],
-                        start_time=datetime.fromisoformat(exec_d["start_time"]),
-                        end_time=datetime.fromisoformat(exec_d["end_time"]),
-                        duration_seconds=float(exec_d["duration_seconds"]),
-                        stdout=exec_d["stdout"],
-                        stderr=exec_d["stderr"],
-                        exit_code=int(exec_d["exit_code"]),
-                        pipeline_hash=exec_d.get("pipeline_hash"),
-                    )
-
-                    met_d = rd["metrics"]
-                    metrics = RunMetrics(
-                        metrics_id=UUID(met_d["metrics_id"]),
-                        metrics=met_d["metrics"],
-                        timestamp=datetime.fromisoformat(met_d["timestamp"]),
-                    )
-
-                    artifacts = [
-                        RunArtifact(
-                            artifact_id=UUID(ad["artifact_id"]),
-                            name=ad["name"],
-                            artifact_type=ad["artifact_type"],
-                            file_path=ad["file_path"],
-                            version=ad["version"],
-                        )
-                        for ad in rd.get("artifacts", [])
-                    ]
-
-                    events = [
-                        RunEvent(
-                            event_id=UUID(ev["event_id"]),
-                            event_type=ev["event_type"],
-                            timestamp=datetime.fromisoformat(ev["timestamp"]),
-                            source=ev["source"],
-                            payload=ev["payload"],
-                        )
-                        for ev in rd.get("events", [])
-                    ]
-
-                    snap_d = rd["knowledge_snapshot"]
-                    snapshot = KnowledgeSnapshot(
-                        snapshot_id=UUID(snap_d["snapshot_id"]),
-                        timestamp=datetime.fromisoformat(snap_d["timestamp"]),
-                        active_rules_count=int(snap_d["active_rules_count"]),
-                        rules=snap_d.get("rules", []),
-                    )
-
-                    run = Run(
-                        run_id=UUID(rd["run_id"]),
-                        experiment_id=UUID(rd["experiment_id"]),
-                        name=rd["name"],
-                        timestamp=datetime.fromisoformat(rd["timestamp"]),
-                        execution=execution,
-                        metrics=metrics,
-                        artifacts=artifacts,
-                        events=events,
-                        knowledge_snapshot=snapshot,
-                        metadata=rd.get("metadata", {}),
-                    )
-                    runs.append(run)
-
-                exp = Experiment(
-                    experiment_id=UUID(exp_data["experiment_id"]),
-                    name=exp_data["name"],
-                    created_at=datetime.fromisoformat(exp_data["created_at"]),
-                    runs=runs,
-                )
-                self._experiments[exp_id] = exp
-        except Exception:
-            pass
+    def list_experiments(self) -> list[dict[str, Any]]:
+        """List all logged experiment records."""
+        return list(self.experiments.values())

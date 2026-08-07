@@ -9,10 +9,11 @@ License: MIT
 
 from pathlib import Path
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.pipeline import Pipeline
+from mlos.cli.persistence import find_project_root
 from mlos.domain.models.generated_code import GeneratedCode
+from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.pipeline_source import PipelineSource
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.generator.assembler.pipeline_assembly_engine import PipelineAssemblyEngine
 
@@ -30,7 +31,9 @@ class AssemblyService:
         self.assembly_engine = assembly_engine
         self.project_memory_service = project_memory_service
 
-    def assemble(self, memory: ProjectMemory) -> PipelineSource:
+    def assemble(
+        self, memory: ProjectMemory, project_root: Path | str | None = None
+    ) -> PipelineSource:
         """
         Assemble code list stored in ProjectMemory.generated_codes, save python pipeline,
         and update ProjectMemory.
@@ -46,8 +49,11 @@ class AssemblyService:
         source = self.assembly_engine.assemble(generated_codes)
 
         # Resolve paths
-        project_dir = Path("playground") / memory.project_name
+        project_dir = (
+            Path(project_root) if project_root else (find_project_root() or Path.cwd())
+        )
         artifacts_dir = project_dir / "artifacts"
+
         artifacts_dir.mkdir(parents=True, exist_ok=True)
         entrypoint_path = artifacts_dir / "pipeline.py"
 

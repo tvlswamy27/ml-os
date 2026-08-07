@@ -7,8 +7,8 @@ License: MIT
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 from uuid import UUID
-from typing import Any, Dict, List, Optional
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,7 @@ class RunExecution:
     stdout: str
     stderr: str
     exit_code: int
-    pipeline_hash: Optional[str] = None
+    pipeline_hash: str | None = None
 
 
 @dataclass(frozen=True)
@@ -31,7 +31,7 @@ class RunMetrics:
     """Target evaluation metrics logged for a run."""
 
     metrics_id: UUID
-    metrics: Dict[str, float]
+    metrics: dict[str, float]
     timestamp: datetime
 
 
@@ -54,7 +54,7 @@ class RunEvent:
     event_type: str
     timestamp: datetime
     source: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
 
 @dataclass(frozen=True)
@@ -64,7 +64,7 @@ class KnowledgeSnapshot:
     snapshot_id: UUID
     timestamp: datetime
     active_rules_count: int
-    rules: List[Dict[str, Any]]
+    rules: list[dict[str, Any]]
 
 
 @dataclass(frozen=True)
@@ -77,10 +77,10 @@ class Run:
     timestamp: datetime
     execution: RunExecution
     metrics: RunMetrics
-    artifacts: List[RunArtifact]
-    events: List[RunEvent]
+    artifacts: list[RunArtifact]
+    events: list[RunEvent]
     knowledge_snapshot: KnowledgeSnapshot
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -90,4 +90,4 @@ class Experiment:
     experiment_id: UUID
     name: str
     created_at: datetime
-    runs: List[Run] = field(default_factory=list)
+    runs: list[Run] = field(default_factory=list)

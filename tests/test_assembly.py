@@ -3,17 +3,15 @@ Unit and integration tests for the ML-OS Artifact Assembly Subsystem.
 """
 
 from pathlib import Path
-import pytest
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.generated_code import GeneratedCode
-from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.pipeline_source import PipelineSource
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.assembly_service import AssemblyService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.engine.engine import MLOSEngine
 from mlos.generator.assembler.code_assembler import CodeAssembler
 from mlos.generator.assembler.pipeline_assembly_engine import PipelineAssemblyEngine
-from mlos.domain.services.project_memory_service import ProjectMemoryService
-from mlos.domain.services.assembly_service import AssemblyService
-from mlos.engine.engine import MLOSEngine
 
 
 def test_pipeline_source_instantiation():

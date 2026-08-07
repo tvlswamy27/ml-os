@@ -6,6 +6,7 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 from mlos.domain.enums.subsystem_name import SubsystemName
 from mlos.domain.models.meta_reasoning.meta_context import MetaContext
 from mlos.domain.models.meta_reasoning.provider_capability import ProviderCapability
@@ -46,7 +47,6 @@ class CostEstimator(ABC):
         """
         Produce a resource estimation profile.
         """
-        pass
 
 
 class DefaultCostEstimator(CostEstimator):

@@ -5,17 +5,16 @@ Author: Antigravity
 License: MIT
 """
 
-import os
-from pathlib import Path
-import pytest
-from mlos.engine.engine import MLOSEngine
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.engine.engine import MLOSEngine
 
 
 def test_meta_service_orchestration():
     engine = MLOSEngine()
-    memory = ProjectMemory(project_name="ServiceTestProject", project_goal="ServiceTestGoal")
+    memory = ProjectMemory(
+        project_name="ServiceTestProject", project_goal="ServiceTestGoal"
+    )
     engine.project_memory = memory
 
     # Building context

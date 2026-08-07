@@ -1,21 +1,20 @@
 from datetime import datetime
 from uuid import uuid4
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+
 from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
-from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
 from mlos.domain.models.knowledge.knowledge_context import (
     KnowledgeContext,
-    LearningSummary,
-    LearningUpdateSummary,
 )
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
 from mlos.domain.models.knowledge.knowledge_reasoning_state import (
-    ProposedKnowledgeUpdate,
     KnowledgeReasoningState,
+    ProposedKnowledgeUpdate,
 )
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 from mlos.knowledge.algorithms.knowledge_algorithm import KnowledgeAlgorithm
 
 

@@ -6,11 +6,12 @@ License: MIT
 """
 
 from dataclasses import dataclass
+
 from mlos.domain.enums.feature_type import FeatureType
-from mlos.domain.models.feature_intelligence.feature_statistics import FeatureStatistics
 from mlos.domain.models.feature_intelligence.feature_quality_score import (
     FeatureQualityScore,
 )
+from mlos.domain.models.feature_intelligence.feature_statistics import FeatureStatistics
 
 
 @dataclass(frozen=True)

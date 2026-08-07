@@ -6,11 +6,12 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
-from mlos.domain.models.planning.goal import Goal
-from mlos.domain.models.planning.constraint import Constraint
-from mlos.domain.models.planning.observation import Observation
-from mlos.domain.models.planning.assumption import Assumption
+
 from mlos.domain.models.knowledge_summary import KnowledgeSummary
+from mlos.domain.models.planning.assumption import Assumption
+from mlos.domain.models.planning.constraint import Constraint
+from mlos.domain.models.planning.goal import Goal
+from mlos.domain.models.planning.observation import Observation
 
 
 @dataclass(frozen=True)

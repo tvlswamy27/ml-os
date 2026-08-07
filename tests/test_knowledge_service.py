@@ -1,14 +1,14 @@
 from uuid import uuid4
-from mlos.domain.models.project_memory import ProjectMemory
+
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.learning.learning_evidence import LearningEvidence
 from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.domain.models.learning.learning_update_type import LearningUpdateType
-from mlos.domain.models.learning.learning_evidence import LearningEvidence
-from mlos.domain.models.learning.learning_confidence import LearningConfidence
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.knowledge_service import KnowledgeService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.knowledge.knowledge_engine import KnowledgeEngine
 
 

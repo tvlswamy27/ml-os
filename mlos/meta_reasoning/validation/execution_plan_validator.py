@@ -5,17 +5,15 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.domain.models.meta_reasoning.execution_plan import ExecutionPlan
-from mlos.domain.models.meta_reasoning.execution_constraints import ExecutionConstraints
 from mlos.domain.enums.execution_mode import ExecutionMode
+from mlos.domain.models.meta_reasoning.execution_constraints import ExecutionConstraints
+from mlos.domain.models.meta_reasoning.execution_plan import ExecutionPlan
 
 
 class PlanValidationError(ValueError):
     """
     Raised when an ExecutionPlan contract fails structural or constraint validations.
     """
-
-    pass
 
 
 class ExecutionPlanValidator:

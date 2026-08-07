@@ -6,11 +6,13 @@ License: MIT
 """
 
 import json
-from typing import Any, Type
+from typing import Any
+
 import yaml
-from mlos.serialization.version import SchemaVersion
-from mlos.serialization.registry import SerializationRegistry
+
 from mlos.serialization.migration import MigrationManager
+from mlos.serialization.registry import SerializationRegistry
+from mlos.serialization.version import SchemaVersion
 
 
 class SerializationEngine:
@@ -34,6 +36,8 @@ class SerializationEngine:
         else:
             data = serializer.serialize(model)
 
+        data = self._make_yaml_safe(data)
+
         # Inject version meta header
         data["schema_version"] = str(schema_version)
         data["model_class_name"] = model.__class__.__name__
@@ -43,10 +47,31 @@ class SerializationEngine:
         else:
             return yaml.safe_dump(data, sort_keys=False)
 
+    def _make_yaml_safe(self, obj: Any) -> Any:
+        """Recursively convert UUIDs, datetimes, paths, enums, sets to PyYAML safe primitive types."""
+        import uuid
+        from datetime import datetime
+        from enum import Enum
+        from pathlib import Path
+
+        if isinstance(obj, uuid.UUID):
+            return str(obj)
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        if isinstance(obj, Enum):
+            return obj.value
+        if isinstance(obj, Path):
+            return str(obj)
+        if isinstance(obj, dict):
+            return {str(k): self._make_yaml_safe(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple, set)):
+            return [self._make_yaml_safe(x) for x in obj]
+        return obj
+
     def deserialize(
         self,
         data_str: str,
-        model_class: Type[Any],
+        model_class: type[Any],
         target_version: SchemaVersion,
         format: str = "yaml",
     ) -> Any:

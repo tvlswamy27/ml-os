@@ -5,13 +5,13 @@ Author: Antigravity
 License: MIT
 """
 
-import os
 import sys
-import yaml
 import urllib.request
-import pandas as pd
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any
+
+import pandas as pd
+import yaml
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -21,7 +21,7 @@ except AttributeError:
 
 
 def validate_dataset(
-    file_path: Path, meta: Dict[str, Any], is_downsampled: bool = False
+    file_path: Path, meta: dict[str, Any], is_downsampled: bool = False
 ) -> None:
     """
     Validate dataset existence, shape, target column, and required columns.

@@ -1,6 +1,5 @@
 from dataclasses import dataclass, field
 
-
 from mlos.domain.models.knowledge_summary import KnowledgeSummary
 
 

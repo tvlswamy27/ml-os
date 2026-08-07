@@ -5,11 +5,12 @@ Author: Antigravity
 License: MIT
 """
 
-import yaml
-from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
-from mlos.communication.event_bus import GlobalEventBus, ExecutionEvent
+from pathlib import Path
+
+import yaml
+
+from mlos.communication.event_bus import ExecutionEvent, GlobalEventBus
 
 
 class EventStore:
@@ -20,7 +21,7 @@ class EventStore:
     def __init__(self, project_path: str) -> None:
         self.project_path = Path(project_path)
         self.event_log_file = self.project_path / ".mlos" / "events.yaml"
-        self._events: List[ExecutionEvent] = []
+        self._events: list[ExecutionEvent] = []
         self.load()
         # Subscribe to all events globally to capture them automatically
         GlobalEventBus().subscribe("*", self.append_event)
@@ -35,8 +36,8 @@ class EventStore:
         self.save()
 
     def get_timeline(
-        self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
-    ) -> List[ExecutionEvent]:
+        self, start_time: datetime | None = None, end_time: datetime | None = None
+    ) -> list[ExecutionEvent]:
         """Query history timeline, optionally filtering by date range."""
         timeline = list(self._events)
         if start_time:
@@ -46,8 +47,8 @@ class EventStore:
         return sorted(timeline, key=lambda e: e.timestamp)
 
     def replay(
-        self, start_time: Optional[datetime] = None, end_time: Optional[datetime] = None
-    ) -> List[ExecutionEvent]:
+        self, start_time: datetime | None = None, end_time: datetime | None = None
+    ) -> list[ExecutionEvent]:
         """Return the execution timeline for audit replay or visualization updates."""
         return self.get_timeline(start_time, end_time)
 

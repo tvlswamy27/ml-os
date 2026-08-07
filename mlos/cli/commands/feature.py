@@ -6,16 +6,18 @@ License: MIT
 """
 
 import argparse
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
 )
+from mlos.engine.engine import MLOSEngine
 
 
 class FeatureCommand(BaseCommand):
@@ -30,6 +32,15 @@ class FeatureCommand(BaseCommand):
     @property
     def help(self) -> str:
         return "Discover, profile, rank, and select dataset features."
+
+    @property
+    def epilog(self) -> str:
+        return (
+            "Examples:\n"
+            "  mlos feature --rule\n"
+            "  mlos feature --llm\n"
+            "  mlos feature --hybrid"
+        )
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
@@ -55,7 +66,8 @@ class FeatureCommand(BaseCommand):
 
         if not project_root:
             console.print(
-                "[bold red]Error: No active ML-OS project found. Run 'mlos init' first.[/bold red]"
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
             )
             return 1
 
@@ -72,18 +84,20 @@ class FeatureCommand(BaseCommand):
             )
             return 1
 
+        engine.project_memory = memory
+
         # Determine feature algorithm mode
         from mlos.feature_intelligence.algorithms.feature_algorithm import (
             FeatureAlgorithm,
         )
-        from mlos.feature_intelligence.algorithms.rule_based_feature_algorithm import (
-            RuleBasedFeatureAlgorithm,
+        from mlos.feature_intelligence.algorithms.hybrid_feature_algorithm import (
+            HybridFeatureAlgorithm,
         )
         from mlos.feature_intelligence.algorithms.llm_feature_algorithm import (
             LLMFeatureAlgorithm,
         )
-        from mlos.feature_intelligence.algorithms.hybrid_feature_algorithm import (
-            HybridFeatureAlgorithm,
+        from mlos.feature_intelligence.algorithms.rule_based_feature_algorithm import (
+            RuleBasedFeatureAlgorithm,
         )
 
         algo: FeatureAlgorithm

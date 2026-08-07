@@ -3,27 +3,22 @@ Unit and integration tests for Planning, Decision, and Generation subsystem inte
 """
 
 from unittest.mock import MagicMock
-import pytest
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.generation_context import GenerationContext
-from mlos.domain.models.generated_code import GeneratedCode
 from mlos.domain.models.decision import Decision
+from mlos.domain.models.generated_code import GeneratedCode
+from mlos.domain.models.generation_context import GenerationContext
 from mlos.domain.models.pipeline_source import PipelineSource
-from mlos.generator.generator_engine import GeneratorEngine
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.assembly_service import AssemblyService
 from mlos.domain.services.generation_service import GenerationService
 from mlos.domain.services.project_memory_service import ProjectMemoryService
-from mlos.generator.generators.missing_value_generator import MissingValueGenerator
-from mlos.generator.generators.encoding_generator import EncodingGenerator
-from mlos.generator.generators.scaling_generator import ScalingGenerator
-from mlos.generator.generators.split_generator import SplitGenerator
-from mlos.generator.generators.model_generator import ModelGenerator
 from mlos.generator.assembler.code_assembler import CodeAssembler
 from mlos.generator.assembler.pipeline_assembly_engine import PipelineAssemblyEngine
-from mlos.domain.services.assembly_service import AssemblyService
+from mlos.generator.generator_engine import GeneratorEngine
+from mlos.generator.generators.encoding_generator import EncodingGenerator
+from mlos.generator.generators.missing_value_generator import MissingValueGenerator
 from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.workflow.workflow_hooks import HookRegistry
-from mlos.engine.engine import MLOSEngine
 
 
 def test_generation_context_construction():

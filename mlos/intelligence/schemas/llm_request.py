@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
 from typing import Any
+
 from mlos.intelligence.schemas.structured_output import StructuredOutputSchema
 
 

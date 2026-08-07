@@ -5,40 +5,39 @@ Author: Antigravity
 License: MIT
 """
 
-import math
 import numpy as np
 import pandas as pd
-from datetime import datetime
-from mlos.feature_intelligence.algorithms.feature_algorithm import FeatureAlgorithm
-from mlos.domain.models.feature_intelligence import (
-    FeatureContext,
-    FeatureSession,
-    FeatureReasoningState,
-    FeatureStatistics,
-    FeatureQualityScore,
-    FeatureProfile,
-    FeatureLineage,
-    FeatureEngineeringProposal,
-    FeatureInsight,
-    FeatureNode,
-    FeatureEdge,
-    FeatureGraph,
-    RankingProfile,
-    RelationshipProfile,
-    RecommendationEvidence,
-    FeatureRecommendation,
-    FeatureConfidence,
-)
+
 from mlos.domain.enums.feature_type import FeatureType
 from mlos.domain.enums.recommendation_action import RecommendationAction
+from mlos.domain.models.feature_intelligence import (
+    FeatureConfidence,
+    FeatureContext,
+    FeatureEdge,
+    FeatureEngineeringProposal,
+    FeatureGraph,
+    FeatureInsight,
+    FeatureLineage,
+    FeatureNode,
+    FeatureProfile,
+    FeatureQualityScore,
+    FeatureReasoningState,
+    FeatureRecommendation,
+    FeatureSession,
+    FeatureStatistics,
+    RankingProfile,
+    RecommendationEvidence,
+    RelationshipProfile,
+)
+from mlos.feature_intelligence.algorithms.feature_algorithm import FeatureAlgorithm
 from mlos.feature_intelligence.algorithms.ranking import (
-    MutualInformationRankingStrategy,
-    RandomForestRankingStrategy,
-    XGBoostRankingStrategy,
-    ShapRankingStrategy,
-    PermutationImportanceRankingStrategy,
     AnovaRankingStrategy,
     ChiSquareRankingStrategy,
+    MutualInformationRankingStrategy,
+    PermutationImportanceRankingStrategy,
+    RandomForestRankingStrategy,
+    ShapRankingStrategy,
+    XGBoostRankingStrategy,
 )
 
 
@@ -113,9 +112,7 @@ class RuleBasedFeatureAlgorithm(FeatureAlgorithm):
             elif pd.api.types.is_numeric_dtype(dtype):
                 # Check if it behaves as a Boolean (only 0 and 1 or single value)
                 unique_vals = dataframe[col].dropna().unique()
-                if len(unique_vals) <= 2 and set(unique_vals).issubset(
-                    {0, 1, 0.0, 1.0, True, False}
-                ):
+                if len(unique_vals) <= 2 and set(unique_vals).issubset({0, 1}):
                     discovered_types[col] = FeatureType.BOOLEAN
                 else:
                     discovered_types[col] = FeatureType.NUMERIC

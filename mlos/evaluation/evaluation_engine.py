@@ -7,16 +7,16 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
 
-from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_artifacts import EvaluationArtifacts
+from mlos.domain.models.evaluation_context import EvaluationContext
 from mlos.domain.models.evaluation_result import (
     EvaluationResult as DomainEvaluationResult,
 )
-from mlos.domain.models.evaluation_context import EvaluationContext
 from mlos.domain.models.evaluation_session import EvaluationSession
+from mlos.domain.models.execution_result import ExecutionResult
 from mlos.evaluation.contracts.model_evaluator import ModelEvaluator
 
 
@@ -60,11 +60,52 @@ class EvaluationEngine:
 
         # New EvaluationContext path
         latest_session = context.execution_session
+        if (
+            latest_session is None
+            and getattr(context, "project_memory", None)
+            and getattr(context.project_memory, "execution_result", None)
+        ):
+            res_exec = context.project_memory.execution_result
+            from mlos.domain.models.execution_session import (
+                ExecutionSession as ExecSess,
+            )
+            from datetime import datetime
+            from mlos.domain.models.pipeline_source import PipelineSource
+
+            ps = PipelineSource(imports="", body="", code="")
+            st = getattr(res_exec, "start_time", datetime.now())
+            et = getattr(res_exec, "end_time", None) or st
+            latest_session = ExecSess(
+                pipeline_source=ps,
+                status=getattr(res_exec, "status", "SUCCESS"),
+                start_time=st,
+                end_time=et,
+                stdout=getattr(res_exec, "stdout", ""),
+                stderr=getattr(res_exec, "stderr", ""),
+                exit_code=getattr(res_exec, "exit_code", 0),
+                duration_seconds=0.0,
+            )
+
         if latest_session is None:
             return EvaluationSession(status="NO_EXECUTION")
 
         # Attempt to load structured metrics.json from artifacts folder
-        project_dir = Path("playground") / context.project_memory.project_name
+        from mlos.cli.persistence import find_project_root
+
+        project_dir = None
+        if hasattr(context, "project_root") and context.project_root:
+            project_dir = Path(context.project_root)
+        elif getattr(context, "project_memory", None) and getattr(
+            context.project_memory, "project_name", None
+        ):
+            pname = context.project_memory.project_name
+            candidate = Path("playground") / pname
+            if candidate.exists():
+                project_dir = candidate
+
+        if not project_dir:
+            project_dir = find_project_root() or Path.cwd()
+
         metrics_file = project_dir / "artifacts" / "metrics.json"
 
         metrics_dict = {}
@@ -103,18 +144,30 @@ class EvaluationEngine:
             problem_type = context.project_memory.dataset.problem_type
 
         # Filter problem-specific metrics
-        classification_keys = {"accuracy", "precision", "recall", "f1", "roc_auc"}
-        regression_keys = {"rmse", "mae", "mse", "r2"}
+        classification_keys = {
+            "accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "roc_auc",
+            "loss",
+            "log_loss",
+            "cross_entropy",
+        }
+        regression_keys = {"rmse", "mae", "mse", "r2", "loss"}
         clustering_keys = {"silhouette_score", "davies_bouldin_index"}
 
         filtered_metrics = {}
         for k, v in consolidated_metrics.items():
             k_lower = k.lower()
-            if problem_type == "classification" and k_lower in classification_keys:
-                filtered_metrics[k_lower] = float(v)
-            elif problem_type == "regression" and k_lower in regression_keys:
-                filtered_metrics[k_lower] = float(v)
-            elif problem_type == "clustering" and k_lower in clustering_keys:
+            if (
+                problem_type == "classification"
+                and k_lower in classification_keys
+                or problem_type == "regression"
+                and k_lower in regression_keys
+                or problem_type == "clustering"
+                and k_lower in clustering_keys
+            ):
                 filtered_metrics[k_lower] = float(v)
             elif problem_type not in ("classification", "regression", "clustering"):
                 # Default fallback: keep all

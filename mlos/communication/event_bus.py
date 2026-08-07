@@ -6,10 +6,11 @@ License: MIT
 """
 
 import threading
-from datetime import datetime
-from uuid import UUID, uuid4
-from typing import Any, Callable, Dict, List
+from collections.abc import Callable
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Any
+from uuid import UUID, uuid4
 
 
 @dataclass(frozen=True)
@@ -20,9 +21,9 @@ class ExecutionEvent:
     event_type: str
     timestamp: datetime
     source: str
-    payload: Dict[str, Any]
+    payload: dict[str, Any]
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "event_id": str(self.event_id),
             "event_type": self.event_type,
@@ -32,7 +33,7 @@ class ExecutionEvent:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ExecutionEvent":
+    def from_dict(cls, data: dict[str, Any]) -> "ExecutionEvent":
         return cls(
             event_id=UUID(data["event_id"]),
             event_type=data["event_type"],
@@ -53,12 +54,12 @@ class GlobalEventBus:
     def __new__(cls, *args, **kwargs):
         with cls._lock:
             if not cls._instance:
-                cls._instance = super(GlobalEventBus, cls).__new__(cls, *args, **kwargs)
+                cls._instance = super().__new__(cls, *args, **kwargs)
         return cls._instance
 
     def __init__(self) -> None:
         if not hasattr(self, "_subscribers"):
-            self._subscribers: Dict[str, List[Callable[[ExecutionEvent], None]]] = {}
+            self._subscribers: dict[str, list[Callable[[ExecutionEvent], None]]] = {}
             self._lock = threading.Lock()
 
     def subscribe(
@@ -82,7 +83,7 @@ class GlobalEventBus:
                     pass
 
     def publish(
-        self, event_type: str, source: str, payload: Dict[str, Any]
+        self, event_type: str, source: str, payload: dict[str, Any]
     ) -> ExecutionEvent:
         """Publish a new event to all matching subscribers."""
         event = ExecutionEvent(

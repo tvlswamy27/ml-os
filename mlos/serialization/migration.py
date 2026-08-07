@@ -5,7 +5,9 @@ Author: Antigravity
 License: MIT
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
+
 from mlos.serialization.version import SchemaVersion
 
 

@@ -7,10 +7,11 @@ License: MIT
 
 from dataclasses import dataclass
 from datetime import datetime
+
 from mlos.domain.enums.subsystem_name import SubsystemName
-from mlos.domain.models.meta_reasoning.policy_version import PolicyVersion
 from mlos.domain.models.meta_reasoning.execution_policy import ExecutionPolicy
 from mlos.domain.models.meta_reasoning.execution_schedule import ExecutionSchedule
+from mlos.domain.models.meta_reasoning.policy_version import PolicyVersion
 
 
 @dataclass(frozen=True)

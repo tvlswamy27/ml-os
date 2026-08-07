@@ -6,10 +6,11 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
+
 from mlos.domain.models.base import BaseModel
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
 from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
 from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
 
 # Patch BaseModel to appear frozen to the dataclasses compiler at runtime

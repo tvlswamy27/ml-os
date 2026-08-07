@@ -6,11 +6,10 @@ License: MIT
 """
 
 import importlib.util
-import os
 import sys
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Dict, Type
+from typing import Any
 
 
 class PluginType(str, Enum):
@@ -46,8 +45,8 @@ class PluginRegistry:
         return cls._instance
 
     def _init_registry(self) -> None:
-        self.plugins: Dict[str, Dict[str, Any]] = {}
-        self.loaded_classes: Dict[PluginType, Dict[str, Any]] = {
+        self.plugins: dict[str, dict[str, Any]] = {}
+        self.loaded_classes: dict[PluginType, dict[str, Any]] = {
             pt: {} for pt in PluginType
         }
         self.compatible_versions = ["2.0", "2.1", "2.2"]

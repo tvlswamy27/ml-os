@@ -6,17 +6,18 @@ License: MIT
 """
 
 from typing import Any
-from mlos.planning.algorithms.planning_algorithm import PlanningAlgorithm
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.hypothesis import Hypothesis
+
 from mlos.domain.models.planning.candidate_strategy import CandidateStrategy
-from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
-from mlos.domain.models.planning.reasoning_state import ReasoningState
 from mlos.domain.models.planning.confidence import Confidence
 from mlos.domain.models.planning.evidence import Evidence
+from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.planning.hypothesis import Hypothesis
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
+from mlos.domain.models.planning.reasoning_state import ReasoningState
 from mlos.intelligence.intelligence_service import IntelligenceService
 from mlos.intelligence.schemas.planning_output import LLMPlanningOutput
+from mlos.planning.algorithms.planning_algorithm import PlanningAlgorithm
 from mlos.planning.translator import PlanningTranslator
 
 
@@ -31,8 +32,9 @@ class LLMPlanningAlgorithm(PlanningAlgorithm):
         """
         if intelligence_service is None:
             import os
-            from mlos.planning.config import get_planner_config
+
             from mlos.intelligence.config import ProviderConfig
+            from mlos.planning.config import get_planner_config
 
             planner_cfg = get_planner_config()
             provider = planner_cfg.get("provider", "mock")

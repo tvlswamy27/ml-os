@@ -1,6 +1,7 @@
 from dataclasses import dataclass
-from mlos.domain.models.learning.learning_update_type import LearningUpdateType
+
 from mlos.domain.models.learning.learning_evidence import LearningEvidence
+from mlos.domain.models.learning.learning_update_type import LearningUpdateType
 
 
 @dataclass(frozen=True)

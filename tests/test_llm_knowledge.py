@@ -6,46 +6,45 @@ License: MIT
 """
 
 import argparse
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
-import pytest
-from datetime import datetime
 
+import pytest
+
+from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
 from mlos.domain.models.knowledge.knowledge_context import (
     KnowledgeContext,
+    KnowledgeSummary,
     LearningSummary,
     LearningUpdateSummary,
-    KnowledgeSummary,
 )
 from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
 from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_promotion_decision import (
     KnowledgePromotionType,
-    KnowledgeImpact,
-    KnowledgePromotionDecision,
 )
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
-from mlos.intelligence.intelligence_service import IntelligenceService
-from mlos.intelligence.config import ProviderConfig
-from mlos.intelligence.providers.mock_provider import MockProvider
+from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 from mlos.intelligence.cache.llm_cache import LLMCache
+from mlos.intelligence.config import ProviderConfig
+from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.intelligence.providers.mock_provider import MockProvider
 from mlos.intelligence.schemas.knowledge_output import (
-    LLMKnowledgeOutput,
-    LLMKnowledgePromotion,
     LLMKnowledgeConflict,
     LLMKnowledgeImpact,
-)
-from mlos.knowledge.translator import KnowledgeTranslator
-from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
-    LLMKnowledgeAlgorithm,
+    LLMKnowledgeOutput,
+    LLMKnowledgePromotion,
 )
 from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
     HybridKnowledgeAlgorithm,
 )
+from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
+    LLMKnowledgeAlgorithm,
+)
+from mlos.knowledge.translator import KnowledgeTranslator
 
 
 @pytest.fixture(autouse=True)

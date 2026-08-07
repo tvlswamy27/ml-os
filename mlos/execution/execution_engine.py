@@ -7,14 +7,14 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from datetime import datetime
 import hashlib
+from datetime import datetime
 from pathlib import Path
 
 from mlos.domain.models.execution_context import ExecutionContext
+from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.pipeline import Pipeline
-from mlos.domain.models.execution_result import ExecutionResult
 from mlos.execution.contracts.pipeline_runner import PipelineRunner
 
 
@@ -58,8 +58,13 @@ class ExecutionEngine:
         artifacts = {}
         model_path = None
         metrics_path = None
+        from mlos.cli.persistence import find_project_root
 
-        project_dir = Path("playground") / context.project_memory.project_name
+        if hasattr(context, "project_root") and context.project_root:
+            project_dir = Path(context.project_root)
+        else:
+            project_dir = find_project_root() or Path.cwd()
+
         artifacts_dir = project_dir / "artifacts"
 
         if artifacts_dir.exists():

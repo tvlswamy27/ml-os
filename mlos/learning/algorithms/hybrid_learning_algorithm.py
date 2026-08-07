@@ -5,21 +5,21 @@ Author: Antigravity
 License: MIT
 """
 
-from mlos.learning.algorithms.learning_algorithm import LearningAlgorithm
-from mlos.learning.algorithms.rule_based_learning_algorithm import (
-    RuleBasedLearningAlgorithm,
-)
-from mlos.learning.algorithms.llm_learning_algorithm import LLMLearningAlgorithm
+from mlos.domain.models.learning.learning_confidence import LearningConfidence
 from mlos.domain.models.learning.learning_context import LearningContext
-from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_reasoning_state import (
     LearningReasoningState,
 )
-from mlos.domain.models.learning.learning_update import LearningUpdate
-from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.domain.models.learning.learning_update_type import LearningUpdateType
 from mlos.intelligence.intelligence_service import IntelligenceService
+from mlos.learning.algorithms.learning_algorithm import LearningAlgorithm
+from mlos.learning.algorithms.llm_learning_algorithm import LLMLearningAlgorithm
+from mlos.learning.algorithms.rule_based_learning_algorithm import (
+    RuleBasedLearningAlgorithm,
+)
 
 
 class HybridLearningAlgorithm(LearningAlgorithm):

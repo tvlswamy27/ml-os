@@ -5,7 +5,8 @@ Author: Antigravity
 License: MIT
 """
 
-from typing import Any, Type
+from typing import Any
+
 from mlos.serialization.version import SchemaVersion, VersionedSerializer
 
 
@@ -13,11 +14,11 @@ class SerializationRegistry:
     """Registry mapping model types and schema versions to specific serializers."""
 
     def __init__(self) -> None:
-        self._serializers: dict[tuple[Type[Any], str], VersionedSerializer] = {}
+        self._serializers: dict[tuple[type[Any], str], VersionedSerializer] = {}
 
     def register(
         self,
-        model_class: Type[Any],
+        model_class: type[Any],
         version: SchemaVersion,
         serializer: VersionedSerializer,
     ) -> None:
@@ -25,7 +26,7 @@ class SerializationRegistry:
         self._serializers[(model_class, str(version))] = serializer
 
     def get_serializer(
-        self, model_class: Type[Any], version: SchemaVersion
+        self, model_class: type[Any], version: SchemaVersion
     ) -> VersionedSerializer | None:
         """Retrieve the registered serializer for a model class and version."""
         return self._serializers.get((model_class, str(version)))

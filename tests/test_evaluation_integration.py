@@ -2,21 +2,20 @@
 Unit and integration tests for Evaluation subsystem integration.
 """
 
-from datetime import datetime
-from unittest.mock import MagicMock
-from pathlib import Path
-import pytest
 import json
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.evaluation_context import EvaluationContext
-from mlos.domain.models.evaluation_session import EvaluationSession
-from mlos.domain.models.pipeline_source import PipelineSource
 from mlos.domain.models.evaluation_result import EvaluationResult
-from mlos.evaluation.evaluation_engine import EvaluationEngine
+from mlos.domain.models.evaluation_session import EvaluationSession
+from mlos.domain.models.execution_session import ExecutionSession
+from mlos.domain.models.pipeline_source import PipelineSource
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.evaluation_service import EvaluationService
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.evaluation.evaluation_engine import EvaluationEngine
 from mlos.evaluation.evaluators.simple_evaluator import SimpleEvaluator
 from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.workflow.workflow_hooks import HookRegistry

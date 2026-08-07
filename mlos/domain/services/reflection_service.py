@@ -9,14 +9,14 @@ License: MIT
 
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.reflection.reflection_context import (
-    ReflectionContext,
-    PlanningSummary,
-    ExecutionSummary,
     EvaluationSummary,
+    ExecutionSummary,
+    PlanningSummary,
+    ReflectionContext,
 )
 from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.reflection.reflection_engine import ReflectionEngine
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.reflection.reflection_engine import ReflectionEngine
 
 
 class ReflectionService:

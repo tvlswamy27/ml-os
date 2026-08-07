@@ -1,10 +1,11 @@
 from uuid import uuid4
+
 from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
 from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.domain.services.learning_service import LearningService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.learning.learning_engine import LearningEngine
 
 

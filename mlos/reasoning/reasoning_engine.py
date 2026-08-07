@@ -7,9 +7,9 @@ Author: Vikram Tanakala
 License: MIT
 """
 
+from mlos.domain.enums.recommendation_priority import RecommendationPriority
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.recommendation import Recommendation
-from mlos.domain.enums.recommendation_priority import RecommendationPriority
 
 
 class ReasoningEngine:

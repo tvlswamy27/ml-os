@@ -6,18 +6,18 @@ License: MIT
 """
 
 import os
-from typing import Any
-from mlos.reflection.algorithms.reflection_algorithm import ReflectionAlgorithm
+
 from mlos.domain.models.reflection.reflection_context import ReflectionContext
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
 from mlos.domain.models.reflection.reflection_reasoning_state import (
     ReflectionReasoningState,
 )
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
 from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
 from mlos.intelligence.intelligence_service import IntelligenceService
 from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
+from mlos.reflection.algorithms.reflection_algorithm import ReflectionAlgorithm
 from mlos.reflection.translator import ReflectionTranslator
 
 
@@ -31,8 +31,8 @@ class LLMReflectionAlgorithm(ReflectionAlgorithm):
         Initialize the LLM reflector, constructing a default intelligence service if none provided.
         """
         if intelligence_service is None:
-            from mlos.planning.config import get_planner_config
             from mlos.intelligence.config import ProviderConfig
+            from mlos.planning.config import get_planner_config
 
             planner_cfg = get_planner_config()
             provider = planner_cfg.get("provider", "mock")

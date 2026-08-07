@@ -1,14 +1,14 @@
 from unittest.mock import MagicMock
-import yaml  # type: ignore[import-untyped]
-from mlos.engine.engine import MLOSEngine
-from mlos.workflow.workflow_hooks import HookRegistry
-from mlos.workflow.workflow_engine import WorkflowEngine
-from mlos.domain.models.project_memory import ProjectMemory
+
+from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.learning.learning_evidence import LearningEvidence
 from mlos.domain.models.learning.learning_session import LearningSession
 from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.domain.models.learning.learning_update_type import LearningUpdateType
-from mlos.domain.models.learning.learning_evidence import LearningEvidence
-from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.engine.engine import MLOSEngine
+from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.workflow.workflow_hooks import HookRegistry
 
 
 def test_workflow_engine_triggers_learning():
@@ -41,7 +41,6 @@ def test_workflow_engine_triggers_learning():
 def test_persistence_serialization_deserialization(tmp_path):
     """Verify that YAML serialization/deserialization of learning sessions is fully trace-compatible."""
     from mlos.cli.persistence import (
-        save_project_config,
         reconstruct_project_memory,
         update_project_config_from_memory,
     )

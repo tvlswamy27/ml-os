@@ -9,6 +9,7 @@ License: MIT
 
 from dataclasses import dataclass
 from pathlib import Path
+
 from mlos.domain.models.base import BaseModel
 
 

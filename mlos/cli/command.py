@@ -5,8 +5,9 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from abc import ABC, abstractmethod
 import argparse
+from abc import ABC, abstractmethod
+
 from mlos.engine.engine import MLOSEngine
 
 
@@ -19,18 +20,25 @@ class BaseCommand(ABC):
     @abstractmethod
     def name(self) -> str:
         """The command name as invoked by the user."""
-        pass
 
     @property
     @abstractmethod
     def help(self) -> str:
         """The help text describing this command."""
-        pass
+
+    @property
+    def description(self) -> str:
+        """Detailed description for command help page."""
+        return self.help
+
+    @property
+    def epilog(self) -> str:
+        """Usage examples and additional guidance."""
+        return ""
 
     @abstractmethod
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         """Register subcommand-specific arguments."""
-        pass
 
     @abstractmethod
     def handle(self, args: argparse.Namespace, engine: MLOSEngine) -> int:
@@ -39,4 +47,3 @@ class BaseCommand(ABC):
         Returns:
             int: The exit code (0 for success, non-zero for error).
         """
-        pass

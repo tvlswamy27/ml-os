@@ -27,4 +27,3 @@ class BaseAnalyzer(ABC):
         """
         Analyze the project and enrich the ProjectProfile.
         """
-        pass

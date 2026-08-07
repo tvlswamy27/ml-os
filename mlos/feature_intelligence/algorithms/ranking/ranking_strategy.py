@@ -6,7 +6,9 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 import pandas as pd
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
 from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
     FeatureReasoningState,
@@ -24,7 +26,6 @@ class RankingStrategy(ABC):
         """
         Unique name of the ranking strategy.
         """
-        pass
 
     @abstractmethod
     def score_features(
@@ -36,4 +37,3 @@ class RankingStrategy(ABC):
         """
         Compute feature importance scores. Higher values signify more important features.
         """
-        pass

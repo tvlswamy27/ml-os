@@ -7,25 +7,25 @@ License: MIT
 
 import os
 from datetime import datetime
-from typing import Any
 from uuid import uuid4
-from mlos.knowledge.algorithms.knowledge_algorithm import KnowledgeAlgorithm
+
+from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
 from mlos.domain.models.knowledge.knowledge_context import KnowledgeContext
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_promotion_decision import (
+    KnowledgePromotionDecision,
+    KnowledgePromotionType,
+)
 from mlos.domain.models.knowledge.knowledge_reasoning_state import (
     KnowledgeReasoningState,
 )
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
-from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_promotion_decision import (
-    KnowledgePromotionType,
-    KnowledgePromotionDecision,
-)
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
+from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 from mlos.intelligence.intelligence_service import IntelligenceService
 from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
+from mlos.knowledge.algorithms.knowledge_algorithm import KnowledgeAlgorithm
 from mlos.knowledge.translator import KnowledgeTranslator
 
 
@@ -39,8 +39,8 @@ class LLMKnowledgeAlgorithm(KnowledgeAlgorithm):
         Initialize LLM knowledge learner.
         """
         if intelligence_service is None:
-            from mlos.planning.config import get_planner_config
             from mlos.intelligence.config import ProviderConfig
+            from mlos.planning.config import get_planner_config
 
             planner_cfg = get_planner_config()
             provider = planner_cfg.get("provider", "mock")

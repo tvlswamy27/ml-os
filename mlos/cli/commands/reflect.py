@@ -6,16 +6,18 @@ License: MIT
 """
 
 import argparse
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
 )
+from mlos.engine.engine import MLOSEngine
 
 
 class ReflectCommand(BaseCommand):
@@ -32,6 +34,10 @@ class ReflectCommand(BaseCommand):
         return (
             "Analyze run history, extract insights, and generate structured feedback."
         )
+
+    @property
+    def epilog(self) -> str:
+        return "Examples:\n" "  mlos reflect\n" "  mlos reflect --hybrid"
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
@@ -57,7 +63,8 @@ class ReflectCommand(BaseCommand):
 
         if not project_root:
             console.print(
-                "[bold red]Error: No active ML-OS project found. Run 'mlos init' first.[/bold red]"
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
             )
             return 1
 
@@ -70,14 +77,14 @@ class ReflectCommand(BaseCommand):
 
         # Determine reflection algorithm
         from mlos.planning.config import AlgorithmMode, get_planner_config
-        from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
-            RuleBasedReflectionAlgorithm,
+        from mlos.reflection.algorithms.hybrid_reflection_algorithm import (
+            HybridReflectionAlgorithm,
         )
         from mlos.reflection.algorithms.llm_reflection_algorithm import (
             LLMReflectionAlgorithm,
         )
-        from mlos.reflection.algorithms.hybrid_reflection_algorithm import (
-            HybridReflectionAlgorithm,
+        from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
+            RuleBasedReflectionAlgorithm,
         )
 
         if args.rule:

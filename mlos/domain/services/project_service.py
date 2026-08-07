@@ -14,10 +14,15 @@ class ProjectService:
 
     def create_project(
         self,
-        name: str,
+        name: str | None = None,
+        destination: Path | str | None = None,
     ) -> Path:
-
-        project_root = Path("playground") / name
+        if destination:
+            project_root = Path(destination).resolve()
+        elif name and name != ".":
+            project_root = (Path.cwd() / name).resolve()
+        else:
+            project_root = Path.cwd().resolve()
 
         folders = [
             "data",
@@ -25,6 +30,12 @@ class ProjectService:
             "models",
             "reports",
             "artifacts",
+            "deployments",
+            "explainability",
+            "experiments",
+            "telemetry",
+            "benchmarks",
+            "knowledge",
             ".mlos",
         ]
 

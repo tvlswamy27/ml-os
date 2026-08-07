@@ -6,20 +6,21 @@ License: MIT
 """
 
 import pandas as pd
-from mlos.feature_intelligence.algorithms.feature_algorithm import FeatureAlgorithm
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
-from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
-from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
-    FeatureReasoningState,
-)
-from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
-from mlos.domain.models.feature_intelligence.feature_recommendation import (
-    FeatureRecommendation,
-)
 from mlos.domain.models.feature_intelligence.feature_engineering_proposal import (
     FeatureEngineeringProposal,
 )
+from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
+from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
+    FeatureReasoningState,
+)
+from mlos.domain.models.feature_intelligence.feature_recommendation import (
+    FeatureRecommendation,
+)
+from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
 from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
+from mlos.feature_intelligence.algorithms.feature_algorithm import FeatureAlgorithm
 
 
 class HybridFeatureAlgorithm(FeatureAlgorithm):
@@ -94,7 +95,6 @@ class HybridFeatureAlgorithm(FeatureAlgorithm):
         proposals: list[FeatureEngineeringProposal],
         ranking_profile: RankingProfile,
     ) -> FeatureSession:
-        from datetime import datetime
 
         return FeatureSession(
             context=context,

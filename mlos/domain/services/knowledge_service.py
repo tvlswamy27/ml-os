@@ -1,13 +1,13 @@
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.knowledge.knowledge_context import (
     KnowledgeContext,
+    KnowledgeSummary,
     LearningSummary,
     LearningUpdateSummary,
-    KnowledgeSummary,
 )
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
-from mlos.knowledge.knowledge_engine import KnowledgeEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.knowledge.knowledge_engine import KnowledgeEngine
 
 
 class KnowledgeService:

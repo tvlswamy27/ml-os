@@ -1,8 +1,9 @@
 import argparse
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
@@ -10,6 +11,7 @@ from mlos.cli.persistence import (
     update_project_config_from_memory,
 )
 from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.engine.engine import MLOSEngine
 
 
 class KnowledgeCommand(BaseCommand):
@@ -24,6 +26,10 @@ class KnowledgeCommand(BaseCommand):
     @property
     def help(self) -> str:
         return "Manage persistent policies, conflicts, versions, and promotions."
+
+    @property
+    def epilog(self) -> str:
+        return "Examples:\n" "  mlos knowledge\n" "  mlos knowledge --hybrid"
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         group = parser.add_mutually_exclusive_group()
@@ -47,7 +53,10 @@ class KnowledgeCommand(BaseCommand):
         console = Console()
         project_root = find_project_root()
         if not project_root:
-            console.print("[bold red]Error: No active ML-OS project found.[/bold red]")
+            console.print(
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
+            )
             return 1
 
         memory = reconstruct_project_memory(project_root)
@@ -58,16 +67,16 @@ class KnowledgeCommand(BaseCommand):
             return 1
 
         # Determine knowledge algorithm
-        from mlos.planning.config import AlgorithmMode, get_planner_config
-        from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
-            RuleBasedKnowledgeAlgorithm,
+        from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
+            HybridKnowledgeAlgorithm,
         )
         from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
             LLMKnowledgeAlgorithm,
         )
-        from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
-            HybridKnowledgeAlgorithm,
+        from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
+            RuleBasedKnowledgeAlgorithm,
         )
+        from mlos.planning.config import AlgorithmMode, get_planner_config
 
         if args.rule:
             mode = AlgorithmMode.RULE

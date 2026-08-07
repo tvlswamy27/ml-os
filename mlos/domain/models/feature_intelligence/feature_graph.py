@@ -7,6 +7,7 @@ License: MIT
 
 from dataclasses import dataclass, field
 from typing import Any
+
 from mlos.domain.enums.feature_type import FeatureType
 
 

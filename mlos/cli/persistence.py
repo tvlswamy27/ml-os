@@ -11,73 +11,93 @@ import os
 import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
+
 import yaml
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.services.project_memory_service import ProjectMemoryService
-from mlos.domain.enums.feature_type import FeatureType
-from mlos.domain.enums.recommendation_action import RecommendationAction
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
 from mlos.domain.enums.execution_mode import ExecutionMode
+from mlos.domain.enums.feature_type import FeatureType
+from mlos.domain.enums.recommendation_action import RecommendationAction
 from mlos.domain.enums.subsystem_name import SubsystemName
-from mlos.domain.models.meta_reasoning import (
-    MetaSession,
-    MetaContext,
-    MetaReasoningState,
-    ExecutionPlan,
-    ExecutionSchedule,
-    ScheduleNode,
-    ScheduleDependency,
-    ExecutionPolicy,
-    ExecutionStrategy,
-    ResourceAllocation,
-    DecisionTrace,
-    DecisionRule,
-    DecisionEvidence,
-    PolicyVersion,
-    PolicyDiff,
-    ExecutionSnapshot,
-    HistoricalEvidence,
-    ProviderCapability,
-    CachePolicy,
-    ValidationPolicy,
-    RetryPolicy,
-    MetaTelemetry,
-)
 from mlos.domain.models.feature_intelligence import (
-    FeatureSession,
-    FeatureContext,
-    FeatureReasoningState,
-    FeatureProfile,
-    FeatureStatistics,
-    FeatureQualityScore,
     FeatureConfidence,
-    FeatureInsight,
-    FeatureRecommendation,
-    FeatureEngineeringProposal,
-    RecommendationEvidence,
-    FeatureLineage,
-    FeatureGraph,
-    FeatureNode,
+    FeatureContext,
     FeatureEdge,
+    FeatureEngineeringProposal,
+    FeatureGraph,
+    FeatureInsight,
+    FeatureLineage,
+    FeatureNode,
+    FeatureProfile,
+    FeatureQualityScore,
+    FeatureReasoningState,
+    FeatureRecommendation,
+    FeatureSession,
+    FeatureStatistics,
     RankingProfile,
+    RecommendationEvidence,
     RelationshipProfile,
 )
+from mlos.domain.models.meta_reasoning import (
+    CachePolicy,
+    DecisionEvidence,
+    DecisionRule,
+    DecisionTrace,
+    ExecutionPlan,
+    ExecutionPolicy,
+    ExecutionSchedule,
+    ExecutionSnapshot,
+    ExecutionStrategy,
+    HistoricalEvidence,
+    MetaContext,
+    MetaReasoningState,
+    MetaSession,
+    PolicyVersion,
+    ProviderCapability,
+    ResourceAllocation,
+    RetryPolicy,
+    ScheduleDependency,
+    ScheduleNode,
+    ValidationPolicy,
+)
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.project_memory_service import ProjectMemoryService
 
 if TYPE_CHECKING:
-    from mlos.domain.models.reflection.reflection_session import ReflectionSession
-    from mlos.domain.models.learning.learning_session import LearningSession
-    from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
     from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+    from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+    from mlos.domain.models.learning.learning_session import LearningSession
+    from mlos.domain.models.reflection.reflection_session import ReflectionSession
 
 
-def find_project_root(start_dir: Path | None = None) -> Path | None:
+def find_project_root(start_dir: Path | str | None = None) -> Path | None:
     """
-    Search upwards from start_dir to find a directory containing a '.mlos' folder.
+    Search order for active ML-OS project root:
+    1. Current directory (start_dir)
+    2. Parent directories up to filesystem root
+    3. Immediate child directories of start_dir
     """
-    current = Path(start_dir or os.getcwd()).resolve()
+    if start_dir:
+        current = Path(start_dir).resolve()
+    else:
+        current = Path(os.getcwd()).resolve()
+
+    # 1 & 2: Search current directory and parent directories
     for parent in [current] + list(current.parents):
         if (parent / ".mlos").is_dir():
             return parent
+
+    # 3: Search immediate child directories
+    if current.is_dir():
+        try:
+            subdirs = [
+                d for d in current.iterdir() if d.is_dir() and (d / ".mlos").is_dir()
+            ]
+            if subdirs:
+                return subdirs[0]
+        except Exception:
+            pass
+
     return None
 
 
@@ -191,8 +211,9 @@ def reconstruct_project_memory(project_root: Path) -> ProjectMemory | None:
 
 def dict_to_feature_session(data: dict) -> FeatureSession:
     """Helper to reconstruct a FeatureSession from raw dict."""
-    from uuid import UUID
     from datetime import datetime
+    from uuid import UUID
+
     from mlos.domain.models.dataset import Dataset
     from mlos.domain.models.knowledge_summary import KnowledgeSummary
 
@@ -423,9 +444,9 @@ def dict_to_feature_session(data: dict) -> FeatureSession:
 
 def dict_to_reflection_session(data: dict) -> "ReflectionSession":
     """Helper to reconstruct a ReflectionSession from raw dict."""
-    from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-    from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
     from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
+    from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+    from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
     from mlos.domain.models.reflection.reflection_session import ReflectionSession
 
     insights = []
@@ -495,11 +516,11 @@ def dict_to_reflection_session(data: dict) -> "ReflectionSession":
 
 def dict_to_learning_session(data: dict) -> "LearningSession":
     """Helper to reconstruct a LearningSession from raw dict."""
-    from mlos.domain.models.learning.learning_update_type import LearningUpdateType
-    from mlos.domain.models.learning.learning_evidence import LearningEvidence
-    from mlos.domain.models.learning.learning_update import LearningUpdate
     from mlos.domain.models.learning.learning_confidence import LearningConfidence
+    from mlos.domain.models.learning.learning_evidence import LearningEvidence
     from mlos.domain.models.learning.learning_session import LearningSession
+    from mlos.domain.models.learning.learning_update import LearningUpdate
+    from mlos.domain.models.learning.learning_update_type import LearningUpdateType
 
     updates = []
     for u in data.get("updates", []):
@@ -562,8 +583,8 @@ def dict_to_learning_session(data: dict) -> "LearningSession":
 
 def dict_to_knowledge_session(data: dict) -> "KnowledgeSession":
     """Helper to reconstruct a KnowledgeSession from raw dict."""
-    from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
     from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
+    from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 
     conflicts = []
     for c in data.get("conflicts", []):
@@ -604,12 +625,13 @@ def dict_to_knowledge_session(data: dict) -> "KnowledgeSession":
 
 def dict_to_knowledge_entry(data: dict) -> "KnowledgeEntry":
     """Helper to reconstruct a KnowledgeEntry from raw dict."""
-    from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-    from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-    from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
-    from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-    from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
     from datetime import datetime
+
+    from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+    from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+    from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+    from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+    from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
 
     v_data = data.get("version", {})
     version = KnowledgeVersion(
@@ -667,31 +689,34 @@ def feature_session_to_dict(s: FeatureSession) -> dict:
     from datetime import datetime
 
     d = s.to_dict()
-    if "context" in d and d["context"]:
+    if d.get("context"):
         ctx = d["context"]
-        if "observed_at" in ctx and isinstance(ctx["observed_at"], datetime):
+        if (
+            "observed_at" in ctx
+            and isinstance(ctx["observed_at"], datetime)
+            or "observed_at" in ctx
+            and hasattr(ctx["observed_at"], "isoformat")
+        ):
             ctx["observed_at"] = ctx["observed_at"].isoformat()
-        elif "observed_at" in ctx and hasattr(ctx["observed_at"], "isoformat"):
-            ctx["observed_at"] = ctx["observed_at"].isoformat()
-    if "reasoning_state" in d and d["reasoning_state"]:
+    if d.get("reasoning_state"):
         rs = d["reasoning_state"]
         if "feature_profiles" in rs:
             for col, prof in rs["feature_profiles"].items():
                 if "feature_type" in prof and hasattr(prof["feature_type"], "value"):
                     prof["feature_type"] = prof["feature_type"].value
-                if "quality_score" in prof and prof["quality_score"]:
+                if prof.get("quality_score"):
                     qs = prof["quality_score"]
-                    if "confidence" in qs and qs["confidence"]:
+                    if qs.get("confidence"):
                         c = qs["confidence"]
                         if "supporting_evidence" in c:
                             c["supporting_evidence"] = list(c["supporting_evidence"])
-        if "relationship_profile" in rs and rs["relationship_profile"]:
+        if rs.get("relationship_profile"):
             rp = rs["relationship_profile"]
             if "redundant_feature_groups" in rp:
                 rp["redundant_feature_groups"] = [
                     list(g) for g in rp["redundant_feature_groups"]
                 ]
-            if "graph" in rp and rp["graph"]:
+            if rp.get("graph"):
                 g = rp["graph"]
                 if "nodes" in g:
                     for k, node in g["nodes"].items():
@@ -701,7 +726,7 @@ def feature_session_to_dict(s: FeatureSession) -> dict:
                             node["feature_type"] = node["feature_type"].value
                 if "edges" in g:
                     g["edges"] = [dict(e) for e in g["edges"]]
-        if "ranking_profile" in rs and rs["ranking_profile"]:
+        if rs.get("ranking_profile"):
             rk = rs["ranking_profile"]
             for k in [
                 "mutual_information",
@@ -735,7 +760,7 @@ def feature_session_to_dict(s: FeatureSession) -> dict:
                 rec["confidence"]["supporting_evidence"] = list(
                     rec["confidence"]["supporting_evidence"]
                 )
-            if "evidence" in rec and rec["evidence"]:
+            if rec.get("evidence"):
                 ev = rec["evidence"]
                 for k in [
                     "triggered_rules",
@@ -757,7 +782,7 @@ def feature_session_to_dict(s: FeatureSession) -> dict:
                 prop["confidence"]["supporting_evidence"] = list(
                     prop["confidence"]["supporting_evidence"]
                 )
-            if "lineage" in prop and prop["lineage"]:
+            if prop.get("lineage"):
                 lin = prop["lineage"]
                 if "parent_features" in lin:
                     lin["parent_features"] = list(lin["parent_features"])
@@ -788,8 +813,6 @@ def update_project_config_from_memory(
 
 def meta_session_to_dict(s: MetaSession) -> dict:
     """Helper to convert MetaSession to dict."""
-    from uuid import UUID
-    from datetime import datetime
 
     def pc_to_dict(pc: ProviderCapability | None) -> dict | None:
         if pc is None:
@@ -940,8 +963,8 @@ def meta_session_to_dict(s: MetaSession) -> dict:
 
 def dict_to_meta_session(data: dict) -> MetaSession:
     """Helper to reconstruct MetaSession from dict."""
-    from uuid import UUID
     from datetime import datetime
+    from uuid import UUID
 
     c_data = data.get("context", {})
     provider_registry = []
@@ -1202,8 +1225,8 @@ def execution_snapshot_to_dict(s: ExecutionSnapshot) -> dict:
 
 def dict_to_execution_snapshot(data: dict) -> ExecutionSnapshot:
     """Helper to reconstruct ExecutionSnapshot from dict."""
-    from uuid import UUID
     from datetime import datetime
+    from uuid import UUID
 
     pv_data = data.get("policy_version", {})
     policy_version = PolicyVersion(

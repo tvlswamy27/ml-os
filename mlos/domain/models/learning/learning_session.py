@@ -1,8 +1,9 @@
 from dataclasses import dataclass, field
+
 from mlos.domain.models.base import BaseModel
-from mlos.domain.models.learning.learning_update import LearningUpdate
 from mlos.domain.models.learning.learning_confidence import LearningConfidence
 from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+from mlos.domain.models.learning.learning_update import LearningUpdate
 
 # Patch BaseModel to appear frozen to the dataclasses compiler at runtime
 if hasattr(BaseModel, "__dataclass_params__"):

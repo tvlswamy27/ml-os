@@ -6,8 +6,9 @@ License: MIT
 """
 
 from dataclasses import dataclass
-from mlos.domain.models.project_memory import ProjectMemory
+
 from mlos.domain.models.pipeline_source import PipelineSource
+from mlos.domain.models.project_memory import ProjectMemory
 
 
 @dataclass(frozen=True)

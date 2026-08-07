@@ -6,8 +6,9 @@ License: MIT
 """
 
 from dataclasses import dataclass
-from mlos.domain.models.base import BaseModel
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
+from mlos.domain.models.base import BaseModel
 from mlos.domain.models.meta_reasoning.meta_context import MetaContext
 from mlos.domain.models.meta_reasoning.meta_reasoning_state import MetaReasoningState
 from mlos.domain.models.meta_reasoning.policy_version import PolicyVersion

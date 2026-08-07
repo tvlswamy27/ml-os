@@ -9,6 +9,7 @@ License: MIT
 
 from dataclasses import dataclass, field
 from datetime import datetime
+
 from mlos.domain.models.base import BaseModel
 
 

@@ -6,27 +6,28 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
-from mlos.domain.enums.subsystem_name import SubsystemName
+
 from mlos.domain.enums.execution_mode import ExecutionMode
-from mlos.domain.models.meta_reasoning.meta_context import MetaContext
-from mlos.domain.models.meta_reasoning.meta_reasoning_state import MetaReasoningState
+from mlos.domain.enums.subsystem_name import SubsystemName
 from mlos.domain.models.meta_reasoning.execution_policy import ExecutionPolicy
 from mlos.domain.models.meta_reasoning.execution_strategy import ExecutionStrategy
-from mlos.domain.models.meta_reasoning.resource_allocation import ResourceAllocation
-from mlos.meta_reasoning.routing.provider_selection_strategy import (
-    ProviderSelectionStrategy,
-)
-from mlos.domain.models.meta_reasoning.policies import (
-    CachePolicy,
-    ValidationPolicy,
-    RetryPolicy,
-)
 from mlos.domain.models.meta_reasoning.explainability import (
     DecisionEvidence,
     DecisionRule,
     DecisionTrace,
 )
+from mlos.domain.models.meta_reasoning.meta_context import MetaContext
+from mlos.domain.models.meta_reasoning.meta_reasoning_state import MetaReasoningState
+from mlos.domain.models.meta_reasoning.policies import (
+    CachePolicy,
+    RetryPolicy,
+    ValidationPolicy,
+)
+from mlos.domain.models.meta_reasoning.resource_allocation import ResourceAllocation
 from mlos.meta_reasoning.estimation.cost_estimator import DefaultCostEstimator
+from mlos.meta_reasoning.routing.provider_selection_strategy import (
+    ProviderSelectionStrategy,
+)
 
 
 class OptimizationStrategy(ABC):
@@ -45,7 +46,6 @@ class OptimizationStrategy(ABC):
         """
         Produce optimal execution policies for all downstream subsystems.
         """
-        pass
 
 
 class WeightedScoreOptimization(OptimizationStrategy):

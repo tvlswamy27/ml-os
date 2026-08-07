@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from typing import Any
+
 from mlos.intelligence.telemetry.call_metrics import CallMetrics
 
 

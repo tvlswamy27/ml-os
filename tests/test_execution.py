@@ -2,19 +2,17 @@
 Unit tests for the ML-OS Execution Subsystem.
 """
 
-import sys
-from pathlib import Path
 from datetime import datetime
-import pytest
+from pathlib import Path
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.execution_result import ExecutionResult
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.pipeline import Pipeline
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.execution_service import ExecutionService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.engine.engine import MLOSEngine
 from mlos.execution.execution_engine import ExecutionEngine
 from mlos.execution.runners.local_runner import LocalProcessPipelineRunner
-from mlos.engine.engine import MLOSEngine
 
 
 def test_domain_models():

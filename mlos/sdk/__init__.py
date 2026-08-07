@@ -7,4 +7,6 @@ License: MIT
 
 from mlos.sdk.project import MLProject
 
-__all__ = ["MLProject"]
+from . import project
+
+__all__ = ["MLProject", "project"]

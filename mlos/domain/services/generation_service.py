@@ -7,11 +7,11 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.generated_code import GeneratedCode
 from mlos.domain.models.generation_context import GenerationContext
-from mlos.generator.generator_engine import GeneratorEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.generator.generator_engine import GeneratorEngine
 
 
 class GenerationService:

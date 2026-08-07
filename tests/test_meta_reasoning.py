@@ -5,53 +5,50 @@ Author: Antigravity
 License: MIT
 """
 
-from datetime import datetime
 import uuid
+from datetime import datetime
+
 import pytest
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
-from mlos.domain.enums.execution_mode import ExecutionMode
 from mlos.domain.enums.subsystem_name import SubsystemName
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.meta_reasoning import (
     ExecutionConstraints,
-    ProviderCapability,
-    ResourceAllocation,
-    CachePolicy,
-    ValidationPolicy,
-    RetryPolicy,
-    ExecutionStrategy,
-    DecisionEvidence,
-    DecisionRule,
-    DecisionTrace,
-    PolicyVersion,
-    PolicyDiff,
-    ExecutionPolicy,
-    ScheduleNode,
-    ScheduleDependency,
-    ExecutionSchedule,
     ExecutionPlan,
-    ExecutionSnapshot,
+    ExecutionSchedule,
     HistoricalEvidence,
     MetaContext,
     MetaReasoningState,
-    MetaSession,
+    PolicyVersion,
+    ProviderCapability,
+    ResourceAllocation,
+    ScheduleDependency,
+    ScheduleNode,
 )
-from mlos.meta_reasoning.meta_planner import MetaPlanner, RuleBasedMetaAlgorithm
-from mlos.meta_reasoning.optimization.optimization_strategy import WeightedScoreOptimization
-from mlos.meta_reasoning.routing.provider_selection_strategy import HybridProviderSelector
-from mlos.meta_reasoning.validation.execution_plan_validator import ExecutionPlanValidator, PlanValidationError
-from mlos.meta_reasoning.validation.dry_run_verifier import DryRunVerifier
-from mlos.meta_reasoning.simulation.execution_simulator import ExecutionSimulator
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.engine.engine import MLOSEngine
 from mlos.meta_reasoning.communication.execution_event_bus import ExecutionEventBus
 from mlos.meta_reasoning.dispatchers.execution_dispatcher import ExecutionDispatcher
+from mlos.meta_reasoning.meta_planner import MetaPlanner, RuleBasedMetaAlgorithm
+from mlos.meta_reasoning.optimization.optimization_strategy import (
+    WeightedScoreOptimization,
+)
+from mlos.meta_reasoning.routing.provider_selection_strategy import (
+    HybridProviderSelector,
+)
 from mlos.meta_reasoning.scheduling.execution_scheduler import ExecutionScheduler
-from mlos.meta_reasoning.recovery.failure_recovery_strategy import DefaultFailureRecoveryStrategy
-from mlos.engine.engine import MLOSEngine
+from mlos.meta_reasoning.simulation.execution_simulator import ExecutionSimulator
+from mlos.meta_reasoning.validation.dry_run_verifier import DryRunVerifier
+from mlos.meta_reasoning.validation.execution_plan_validator import (
+    ExecutionPlanValidator,
+    PlanValidationError,
+)
 
 
 @pytest.fixture
 def mock_context() -> MetaContext:
     from mlos.domain.models.knowledge_summary import KnowledgeSummary
+
     return MetaContext(
         project_name="TestProject",
         project_goal="TestGoal",
@@ -59,8 +56,32 @@ def mock_context() -> MetaContext:
         feature_session=None,
         knowledge_summary=KnowledgeSummary(),
         provider_registry=(
-            ProviderCapability("openai", "gpt-4o", True, True, True, True, 128000, 0.4, 0.005, 0.015, False),
-            ProviderCapability("local", "llama-3-8b", True, False, False, False, 8000, 0.2, 0.0, 0.0, True),
+            ProviderCapability(
+                "openai",
+                "gpt-4o",
+                True,
+                True,
+                True,
+                True,
+                128000,
+                0.4,
+                0.005,
+                0.015,
+                False,
+            ),
+            ProviderCapability(
+                "local",
+                "llama-3-8b",
+                True,
+                False,
+                False,
+                False,
+                8000,
+                0.2,
+                0.0,
+                0.0,
+                True,
+            ),
         ),
         user_constraints=ResourceAllocation(
             token_budget=50000,
@@ -133,7 +154,9 @@ def test_validator(mock_context):
 
 
 def test_unreachable_node_validator_error():
-    pv = PolicyVersion(uuid.uuid4(), 1, None, "test", datetime.utcnow(), None, datetime.utcnow())
+    pv = PolicyVersion(
+        uuid.uuid4(), 1, None, "test", datetime.utcnow(), None, datetime.utcnow()
+    )
     nodes = (
         ScheduleNode("node_planning", SubsystemName.PLANNING, "ALWAYS", False),
         ScheduleNode("node_decision", SubsystemName.DECISION, "ALWAYS", False),
@@ -154,16 +177,25 @@ def test_unreachable_node_validator_error():
 
     validator = ExecutionPlanValidator()
     constraints = ExecutionConstraints(
-        max_cost=1.0, max_tokens=1000, max_latency=100.0, max_cpu=1.0, max_memory=100.0,
-        minimum_quality=0.0, maximum_retry_depth=1, must_use_local_models=False,
-        allow_network_calls=True, allow_parallel_execution=False
+        max_cost=1.0,
+        max_tokens=1000,
+        max_latency=100.0,
+        max_cpu=1.0,
+        max_memory=100.0,
+        minimum_quality=0.0,
+        maximum_retry_depth=1,
+        must_use_local_models=False,
+        allow_network_calls=True,
+        allow_parallel_execution=False,
     )
     with pytest.raises(PlanValidationError):
         validator.validate(plan, constraints)
 
 
 def test_cycle_detection_validator_error():
-    pv = PolicyVersion(uuid.uuid4(), 1, None, "test", datetime.utcnow(), None, datetime.utcnow())
+    pv = PolicyVersion(
+        uuid.uuid4(), 1, None, "test", datetime.utcnow(), None, datetime.utcnow()
+    )
     nodes = (
         ScheduleNode("node_planning", SubsystemName.PLANNING, "ALWAYS", False),
         ScheduleNode("node_decision", SubsystemName.DECISION, "ALWAYS", False),
@@ -187,9 +219,16 @@ def test_cycle_detection_validator_error():
 
     validator = ExecutionPlanValidator()
     constraints = ExecutionConstraints(
-        max_cost=1.0, max_tokens=1000, max_latency=100.0, max_cpu=1.0, max_memory=100.0,
-        minimum_quality=0.0, maximum_retry_depth=1, must_use_local_models=False,
-        allow_network_calls=True, allow_parallel_execution=False
+        max_cost=1.0,
+        max_tokens=1000,
+        max_latency=100.0,
+        max_cpu=1.0,
+        max_memory=100.0,
+        minimum_quality=0.0,
+        maximum_retry_depth=1,
+        must_use_local_models=False,
+        allow_network_calls=True,
+        allow_parallel_execution=False,
     )
     with pytest.raises(PlanValidationError):
         validator.validate(plan, constraints)
@@ -226,7 +265,9 @@ def test_event_bus_and_scheduler(mock_context):
 
     dispatcher = ExecutionDispatcher(engine, event_bus)
     # Mock dispatch_subsystem to isolate scheduler testing
-    dispatcher.dispatch_subsystem = lambda subsystem_name, strategy: ExecutionLifecycle.COMPLETED
+    dispatcher.dispatch_subsystem = (
+        lambda subsystem_name, strategy: ExecutionLifecycle.COMPLETED
+    )
     scheduler = ExecutionScheduler(dispatcher, event_bus)
 
     selector = HybridProviderSelector()

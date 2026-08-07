@@ -7,8 +7,9 @@ Author: Vikram Tanakala
 License: MIT
 """
 
+from collections.abc import Callable
 from enum import Enum
-from typing import Callable, Any
+from typing import Any
 
 
 class WorkflowHook(Enum):

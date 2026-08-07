@@ -6,8 +6,9 @@ License: MIT
 """
 
 from dataclasses import dataclass
-from mlos.domain.models.project_memory import ProjectMemory
+
 from mlos.domain.models.decision import Decision
+from mlos.domain.models.project_memory import ProjectMemory
 
 
 @dataclass(frozen=True)

@@ -1,16 +1,18 @@
-import yaml  # type: ignore[import-untyped]
-from unittest.mock import MagicMock
-from mlos.engine.engine import MLOSEngine
-from mlos.workflow.workflow_hooks import HookRegistry
-from mlos.workflow.workflow_engine import WorkflowEngine
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
-from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
-from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
-from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
-from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
 from datetime import datetime
+from unittest.mock import MagicMock
+
+import yaml  # type: ignore[import-untyped]
+
+from mlos.domain.models.knowledge.knowledge_confidence import KnowledgeConfidence
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
+from mlos.domain.models.knowledge.knowledge_entry_type import KnowledgeEntryType
+from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
+from mlos.domain.models.knowledge.knowledge_status import KnowledgeStatus
+from mlos.domain.models.knowledge.knowledge_version import KnowledgeVersion
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.engine.engine import MLOSEngine
+from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.workflow.workflow_hooks import HookRegistry
 
 
 def test_workflow_engine_triggers_knowledge():

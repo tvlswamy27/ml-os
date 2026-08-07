@@ -6,13 +6,15 @@ License: MIT
 """
 
 from unittest.mock import MagicMock
+
 import pandas as pd
-from mlos.domain.models.project_memory import ProjectMemory
+
 from mlos.domain.models.dataset import Dataset
-from mlos.domain.services.feature_service import FeatureService
-from mlos.feature_intelligence.feature_engine import FeatureEngine
-from mlos.domain.services.project_memory_service import ProjectMemoryService
 from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.services.feature_service import FeatureService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.feature_intelligence.feature_engine import FeatureEngine
 
 
 def test_build_context_mapping():

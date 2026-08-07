@@ -6,15 +6,15 @@ License: MIT
 """
 
 import argparse
-import os
-import platform
 import sys
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
-from mlos.cli.persistence import find_project_root, load_project_config
+from mlos.cli.persistence import find_project_root
+from mlos.engine.engine import MLOSEngine
 
 
 class DoctorCommand(BaseCommand):
@@ -29,6 +29,10 @@ class DoctorCommand(BaseCommand):
     @property
     def help(self) -> str:
         return "Check the health and environment configuration of ML-OS."
+
+    @property
+    def epilog(self) -> str:
+        return "Examples:\n" "  mlos doctor"
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         pass
@@ -63,20 +67,35 @@ class DoctorCommand(BaseCommand):
             except ImportError:
                 package_checks[name] = (False, "Not installed")
 
+        # 2b. Check Optional Integration Packages
+        optional_packages = {
+            "xgboost": "xgboost",
+            "transformers": "transformers",
+            "openai": "openai",
+            "anthropic": "anthropic",
+            "google-generativeai": "google.generativeai",
+        }
+        optional_checks = {}
+        for name, import_name in optional_packages.items():
+            try:
+                mod = __import__(import_name)
+                optional_checks[name] = (True, getattr(mod, "__version__", "Installed"))
+            except ImportError:
+                optional_checks[name] = (False, "Optional (Not installed)")
+
         # 3. Check SDK API
         try:
-            from mlos.sdk import MLProject
 
             sdk_ok = True
-        except Exception as e:
+        except Exception:
             sdk_ok = False
 
         # 4. Check Serialization Engine
         try:
+            from mlos.domain.models.project_memory import ProjectMemory
             from mlos.serialization.serializers.project_memory_serializer import (
                 ProjectMemorySerializer,
             )
-            from mlos.domain.models.project_memory import ProjectMemory
 
             serializer = ProjectMemorySerializer()
             dummy = ProjectMemory(project_name="DummyTest", project_goal="Validation")
@@ -119,14 +138,20 @@ class DoctorCommand(BaseCommand):
         # 8. Check Workspace Write Permissions
         from pathlib import Path
 
+        temp_check_file = Path("doctor_permissions_test.tmp")
+        permissions_ok = False
         try:
-            temp_check_file = Path("doctor_permissions_test.tmp")
             temp_check_file.write_text("ok")
             assert temp_check_file.read_text() == "ok"
-            temp_check_file.unlink()
             permissions_ok = True
         except Exception:
             permissions_ok = False
+        finally:
+            if temp_check_file.exists():
+                try:
+                    temp_check_file.unlink()
+                except Exception:
+                    pass
 
         # 9. Check Prompt Templates Folder & Loader
         try:
@@ -178,6 +203,13 @@ class DoctorCommand(BaseCommand):
             table.add_row(
                 f"Package: {pkg}",
                 "[bold green]✓[/bold green]" if ok else "[bold red]✗[/bold red]",
+                ver,
+            )
+
+        for pkg, (ok, ver) in optional_checks.items():
+            table.add_row(
+                f"Optional: {pkg}",
+                "[bold green]✓[/bold green]" if ok else "[bold yellow]![/bold yellow]",
                 ver,
             )
 
@@ -239,11 +271,21 @@ class DoctorCommand(BaseCommand):
 
         table.add_row(
             "Workspace Configuration",
-            "[bold green]✓[/bold green]" if config_ok else "[bold red]✗[/bold red]",
+            (
+                "[bold green]✓[/bold green]"
+                if project_root and config_ok
+                else "[bold yellow]![/bold yellow]"
+            ),
             f"Active Project Path: {project_root_str}",
         )
 
         console.print(table)
+
+        if not project_root:
+            console.print(
+                "[bold yellow]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold yellow]"
+            )
 
         # Print detailed project settings table if inside project
         if project_root and config_ok:

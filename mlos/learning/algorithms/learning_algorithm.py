@@ -1,9 +1,10 @@
 from abc import ABC, abstractmethod
-from mlos.domain.models.learning.learning_context import LearningContext
-from mlos.domain.models.learning.learning_session import LearningSession
-from mlos.domain.models.learning.learning_reasoning_state import LearningReasoningState
-from mlos.domain.models.learning.learning_update import LearningUpdate
+
 from mlos.domain.models.learning.learning_confidence import LearningConfidence
+from mlos.domain.models.learning.learning_context import LearningContext
+from mlos.domain.models.learning.learning_reasoning_state import LearningReasoningState
+from mlos.domain.models.learning.learning_session import LearningSession
+from mlos.domain.models.learning.learning_update import LearningUpdate
 
 
 class LearningAlgorithm(ABC):
@@ -14,7 +15,6 @@ class LearningAlgorithm(ABC):
     @abstractmethod
     def can_learn(self, context: LearningContext) -> bool:
         """Determines if the algorithm can execute given the context."""
-        pass
 
     def learn(self, context: LearningContext) -> LearningSession:
         """
@@ -43,42 +43,36 @@ class LearningAlgorithm(ABC):
     @abstractmethod
     def _analyze_feedback(self, context: LearningContext) -> LearningReasoningState:
         """Processes raw feedback objects into a strongly typed FeedbackStats model."""
-        pass
 
     @abstractmethod
     def _group_patterns(
         self, context: LearningContext, state: LearningReasoningState
     ) -> LearningReasoningState:
         """Groups repeated action requests to calculate failure/success rates."""
-        pass
 
     @abstractmethod
     def _rank_learning_candidates(
         self, context: LearningContext, state: LearningReasoningState
     ) -> LearningReasoningState:
         """Sorts candidates by priority ('CRITICAL', 'HIGH') and weight support."""
-        pass
 
     @abstractmethod
     def _validate_candidates(
         self, context: LearningContext, state: LearningReasoningState
     ) -> LearningReasoningState:
         """Validates updates to ensure they don't contradict or undo baseline constraints."""
-        pass
 
     @abstractmethod
     def _generate_learning_updates(
         self, context: LearningContext, state: LearningReasoningState
     ) -> tuple[LearningUpdate, ...]:
         """Translates validated candidates to structured, machine-readable LearningUpdate objects."""
-        pass
 
     @abstractmethod
     def _build_confidence(
         self, context: LearningContext, state: LearningReasoningState
     ) -> LearningConfidence:
         """Calculates uncertainty and derives the accepted check status."""
-        pass
 
     @abstractmethod
     def _construct_session(
@@ -88,4 +82,3 @@ class LearningAlgorithm(ABC):
         state: LearningReasoningState,
     ) -> LearningSession:
         """Assembles variables into the final, frozen LearningSession object."""
-        pass

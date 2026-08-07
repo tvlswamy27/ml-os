@@ -5,14 +5,14 @@ Author: Antigravity
 License: MIT
 """
 
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
-import uuid
-from mlos.domain.enums.subsystem_name import SubsystemName
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
-from mlos.domain.models.meta_reasoning.meta_context import MetaContext
 from mlos.domain.models.meta_reasoning.execution_plan import ExecutionPlan
 from mlos.domain.models.meta_reasoning.execution_snapshot import ExecutionSnapshot
+from mlos.domain.models.meta_reasoning.meta_context import MetaContext
 from mlos.domain.models.meta_reasoning.meta_telemetry import MetaTelemetry
 from mlos.meta_reasoning.communication.execution_event_bus import (
     ExecutionEvent,
@@ -139,15 +139,15 @@ class ExecutionScheduler:
                         continue
                     elif recovery.action_type == "FALLBACK":
                         # Attempt fallback to simple rule execution strategy
-                        from mlos.domain.models.meta_reasoning.policies import (
-                            CachePolicy,
-                            ValidationPolicy,
-                            RetryPolicy,
-                        )
+                        from mlos.domain.enums.execution_mode import ExecutionMode
                         from mlos.domain.models.meta_reasoning.execution_strategy import (
                             ExecutionStrategy,
                         )
-                        from mlos.domain.enums.execution_mode import ExecutionMode
+                        from mlos.domain.models.meta_reasoning.policies import (
+                            CachePolicy,
+                            RetryPolicy,
+                            ValidationPolicy,
+                        )
 
                         fallback_strat = ExecutionStrategy(
                             algorithm_type=ExecutionMode.RULE,

@@ -5,33 +5,31 @@ Author: Antigravity
 License: MIT
 """
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock
-import pytest
 from datetime import datetime
 
-from mlos.domain.models.project_memory import ProjectMemory
-from mlos.domain.models.run_context import RunContext
-from mlos.domain.models.planning.planning_telemetry import PlanningTelemetry
-from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
-from mlos.domain.models.learning.learning_session import LearningSession
-from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+import pytest
+
+from mlos.benchmark.framework import BenchmarkRunner
 from mlos.domain.models.knowledge.knowledge_session import KnowledgeSession
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
-from mlos.observability.telemetry import TelemetryAggregator
-from mlos.plugins.manager import PluginRegistry, PluginType
-from mlos.benchmark.framework import BenchmarkRunner
+from mlos.domain.models.learning.learning_session import LearningSession
+from mlos.domain.models.learning.learning_telemetry import LearningTelemetry
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
+from mlos.domain.models.planning.planning_telemetry import PlanningTelemetry
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.domain.models.reflection.reflection_telemetry import ReflectionTelemetry
+from mlos.domain.models.run_context import RunContext
 from mlos.engine.engine import MLOSEngine
-from mlos.intelligence.providers.mock_provider import MockProvider
 from mlos.intelligence.cache.llm_cache import LLMCache
+from mlos.intelligence.providers.mock_provider import MockProvider
+from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
+from mlos.intelligence.schemas.learning_output import LLMLearningOutput
 from mlos.intelligence.schemas.planning_output import LLMPlanningOutput
 from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
-from mlos.intelligence.schemas.learning_output import LLMLearningOutput
-from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
+from mlos.observability.telemetry import TelemetryAggregator
+from mlos.plugins.manager import PluginRegistry, PluginType
 
 
 @pytest.fixture(autouse=True)
@@ -199,10 +197,6 @@ def test_telemetry_aggregator_timeline():
 
 def test_benchmark_runner_and_save_outputs(tmp_path):
     # Setup structured LLM outputs to prevent exceptions in test benchmark run
-    from mlos.intelligence.schemas.planning_output import LLMPlanningOutput
-    from mlos.intelligence.schemas.reflection_output import LLMReflectionOutput
-    from mlos.intelligence.schemas.learning_output import LLMLearningOutput
-    from mlos.intelligence.schemas.knowledge_output import LLMKnowledgeOutput
 
     MockProvider.mock_structured_responses[LLMPlanningOutput] = LLMPlanningOutput(
         strategy_name="BaselineStrategy",
@@ -256,20 +250,16 @@ def test_benchmark_runner_and_save_outputs(tmp_path):
 def test_long_running_adaptation_integration():
     # Execute multiple complete loop cycles, verifying evolving knowledge adaptation:
     # Iteration 1 -> Knowledge Update -> Iteration 2 -> Knowledge Update -> Iteration 3
-    from mlos.intelligence.schemas.planning_output import LLMPlanningOutput
-    from mlos.intelligence.schemas.reflection_output import (
-        LLMReflectionOutput,
-        LLMRecommendation,
+    from mlos.intelligence.schemas.knowledge_output import (
+        LLMKnowledgeImpact,
+        LLMKnowledgePromotion,
     )
     from mlos.intelligence.schemas.learning_output import (
-        LLMLearningOutput,
-        LLMLearningProposal,
         LLMLearningEvidence,
+        LLMLearningProposal,
     )
-    from mlos.intelligence.schemas.knowledge_output import (
-        LLMKnowledgeOutput,
-        LLMKnowledgePromotion,
-        LLMKnowledgeImpact,
+    from mlos.intelligence.schemas.reflection_output import (
+        LLMRecommendation,
     )
 
     # Step 1: Pre-populate LLM structured responses
@@ -349,17 +339,17 @@ def test_long_running_adaptation_integration():
     engine.create_project(name="AdaptProj", goal="Verify Evolving Knowledge")
 
     # Set mode to HYBRID across planning, reflection, learning, knowledge
+    from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
+        HybridKnowledgeAlgorithm,
+    )
+    from mlos.learning.algorithms.hybrid_learning_algorithm import (
+        HybridLearningAlgorithm,
+    )
     from mlos.planning.algorithms.hybrid_planning_algorithm import (
         HybridPlanningAlgorithm,
     )
     from mlos.reflection.algorithms.hybrid_reflection_algorithm import (
         HybridReflectionAlgorithm,
-    )
-    from mlos.learning.algorithms.hybrid_learning_algorithm import (
-        HybridLearningAlgorithm,
-    )
-    from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
-        HybridKnowledgeAlgorithm,
     )
 
     engine.planning_engine.planning_algorithm = HybridPlanningAlgorithm()
@@ -440,5 +430,7 @@ def test_long_running_adaptation_integration():
     # Evolving version lineage correctly tracked
     v2_entries = [e for e in session2.promoted_entries if e.version.version_number == 2]
     assert len(v2_entries) == 1
-    assert v2_entries[0].version.parent_entry_id == session1.promoted_entries[0].knowledge_id
-
+    assert (
+        v2_entries[0].version.parent_entry_id
+        == session1.promoted_entries[0].knowledge_id
+    )

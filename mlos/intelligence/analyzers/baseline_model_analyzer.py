@@ -1,8 +1,6 @@
-import profile
-
-from mlos.intelligence.analyzers.base_analyzer import BaseAnalyzer
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.project_profile import ProjectProfile
+from mlos.intelligence.analyzers.base_analyzer import BaseAnalyzer
 
 
 class BaselineModelAnalyzer(BaseAnalyzer):

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+
 from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
 
 

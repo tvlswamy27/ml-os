@@ -7,11 +7,11 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.evaluation_context import EvaluationContext
 from mlos.domain.models.evaluation_session import EvaluationSession
-from mlos.evaluation.evaluation_engine import EvaluationEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.evaluation.evaluation_engine import EvaluationEngine
 
 
 class EvaluationService:

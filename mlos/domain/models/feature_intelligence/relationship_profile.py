@@ -6,6 +6,7 @@ License: MIT
 """
 
 from dataclasses import dataclass, field
+
 from mlos.domain.models.feature_intelligence.feature_graph import FeatureGraph
 
 

@@ -7,10 +7,10 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from mlos.domain.models.project_memory import ProjectMemory
+from mlos.decision.decision_engine import DecisionEngine
 from mlos.domain.models.decision import Decision
 from mlos.domain.models.decision_context import DecisionContext
-from mlos.decision.decision_engine import DecisionEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
 
 

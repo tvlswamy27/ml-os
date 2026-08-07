@@ -7,11 +7,11 @@ Author: Vikram Tanakala
 License: MIT
 """
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.execution_context import ExecutionContext
 from mlos.domain.models.execution_session import ExecutionSession
-from mlos.execution.execution_engine import ExecutionEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.execution.execution_engine import ExecutionEngine
 
 
 class ExecutionService:

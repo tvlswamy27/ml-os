@@ -3,19 +3,18 @@ Unit and integration tests for Execution subsystem integration.
 """
 
 from datetime import datetime
-from unittest.mock import MagicMock
 from pathlib import Path
-import pytest
+from unittest.mock import MagicMock
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.execution_context import ExecutionContext
+from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.execution_session import ExecutionSession
 from mlos.domain.models.pipeline import Pipeline
 from mlos.domain.models.pipeline_source import PipelineSource
-from mlos.domain.models.execution_result import ExecutionResult
-from mlos.execution.execution_engine import ExecutionEngine
+from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.services.execution_service import ExecutionService
 from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.execution.execution_engine import ExecutionEngine
 from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.workflow.workflow_hooks import HookRegistry
 

@@ -5,13 +5,13 @@ Author: Antigravity
 License: MIT
 """
 
-import pytest
 from typing import Any
-from mlos.serialization.version import SchemaVersion, VersionedSerializer
-from mlos.serialization.registry import SerializationRegistry
-from mlos.serialization.migration import MigrationManager
-from mlos.serialization.engine import SerializationEngine
+
 from mlos.domain.models.project_memory import ProjectMemory
+from mlos.serialization.engine import SerializationEngine
+from mlos.serialization.migration import MigrationManager
+from mlos.serialization.registry import SerializationRegistry
+from mlos.serialization.version import SchemaVersion, VersionedSerializer
 
 
 class DummyModel:
@@ -103,8 +103,10 @@ def test_serialization_engine():
 
 
 def test_project_memory_transparent_serialization(tmp_path):
-    from mlos.cli.persistence import reconstruct_project_memory, update_project_config_from_memory
-    from mlos.domain.models.project_memory import ProjectMemory
+    from mlos.cli.persistence import (
+        reconstruct_project_memory,
+        update_project_config_from_memory,
+    )
 
     memory = ProjectMemory("PersistenceProject", "ValidationGoal")
     update_project_config_from_memory(tmp_path, memory)

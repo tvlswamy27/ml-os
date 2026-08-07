@@ -1,5 +1,5 @@
-from mlos.io.data_loader import DataLoader
 from mlos.analysis.dataset_analyzer import DatasetAnalyzer
+from mlos.io.data_loader import DataLoader
 
 loader = DataLoader()
 analyzer = DatasetAnalyzer()

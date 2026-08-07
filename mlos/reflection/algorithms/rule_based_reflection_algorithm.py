@@ -6,24 +6,24 @@ License: MIT
 """
 
 import math
-from datetime import datetime
+
+from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
 from mlos.domain.models.reflection.reflection_context import (
-    ReflectionContext,
     EvaluationSummary,
     ExecutionSummary,
     PlanningSummary,
+    ReflectionContext,
+)
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
+from mlos.domain.models.reflection.reflection_reasoning_state import (
+    ExecutionStats,
+    MetricStats,
+    PlanningStats,
+    ReflectionReasoningState,
+    TrendStats,
 )
 from mlos.domain.models.reflection.reflection_session import ReflectionSession
-from mlos.domain.models.reflection.reflection_reasoning_state import (
-    MetricStats,
-    ExecutionStats,
-    PlanningStats,
-    TrendStats,
-    ReflectionReasoningState,
-)
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
-from mlos.domain.models.reflection.reflection_confidence import ReflectionConfidence
 from mlos.reflection.algorithms.reflection_algorithm import ReflectionAlgorithm
 
 
@@ -293,7 +293,7 @@ class RuleBasedReflectionAlgorithm(ReflectionAlgorithm):
         if not insights and not state.metric_history:
             insights.append(
                 ReflectionInsight(
-                    insight_id=f"INS-INIT-001",
+                    insight_id="INS-INIT-001",
                     insight_type="METRIC_TREND",
                     severity="LOW",
                     summary="No execution history found. Workspace is initialized.",

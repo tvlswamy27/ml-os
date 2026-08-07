@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime
+
 from mlos.intelligence.telemetry.token_usage import TokenUsage
 
 

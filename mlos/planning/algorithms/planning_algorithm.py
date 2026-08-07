@@ -6,11 +6,12 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
-from mlos.domain.models.planning.planning_context import PlanningContext
-from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.hypothesis import Hypothesis
+
 from mlos.domain.models.planning.candidate_strategy import CandidateStrategy
 from mlos.domain.models.planning.execution_strategy import ExecutionStrategy
+from mlos.domain.models.planning.hypothesis import Hypothesis
+from mlos.domain.models.planning.planning_context import PlanningContext
+from mlos.domain.models.planning.planning_session import PlanningSession
 from mlos.domain.models.planning.reasoning_state import ReasoningState
 
 
@@ -30,7 +31,6 @@ class PlanningAlgorithm(ABC):
         Returns:
             bool: True if this algorithm can generate a plan for the context, False otherwise.
         """
-        pass
 
     def plan(self, context: PlanningContext) -> PlanningSession:
         """

@@ -2,15 +2,14 @@
 Unit and integration tests for the ML-OS Workflow Engine.
 """
 
-from pathlib import Path
 from datetime import datetime
-import pytest
+from pathlib import Path
 
 from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.workflow_result import WorkflowResult
-from mlos.workflow.workflow_hooks import HookRegistry, WorkflowHook
-from mlos.workflow.workflow_engine import WorkflowEngine
 from mlos.engine.engine import MLOSEngine
+from mlos.workflow.workflow_engine import WorkflowEngine
+from mlos.workflow.workflow_hooks import HookRegistry, WorkflowHook
 
 
 def test_workflow_result_instantiation():

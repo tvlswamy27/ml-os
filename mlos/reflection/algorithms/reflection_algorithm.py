@@ -6,13 +6,14 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 from mlos.domain.models.reflection.reflection_context import ReflectionContext
-from mlos.domain.models.reflection.reflection_session import ReflectionSession
+from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
 from mlos.domain.models.reflection.reflection_reasoning_state import (
     ReflectionReasoningState,
 )
-from mlos.domain.models.reflection.reflection_insight import ReflectionInsight
-from mlos.domain.models.reflection.reflection_feedback import ReflectionFeedback
+from mlos.domain.models.reflection.reflection_session import ReflectionSession
 
 
 class ReflectionAlgorithm(ABC):
@@ -23,7 +24,6 @@ class ReflectionAlgorithm(ABC):
     @abstractmethod
     def can_reflect(self, context: ReflectionContext) -> bool:
         """Verify if this algorithm is capable of reflecting over the given context."""
-        pass
 
     def reflect(self, context: ReflectionContext) -> ReflectionSession:
         """
@@ -48,21 +48,18 @@ class ReflectionAlgorithm(ABC):
     @abstractmethod
     def _analyze_history(self, context: ReflectionContext) -> ReflectionReasoningState:
         """Step 1: Extract, index, and organize raw metric histories for querying."""
-        pass
 
     @abstractmethod
     def _compare_runs(
         self, context: ReflectionContext, state: ReflectionReasoningState
     ) -> ReflectionReasoningState:
         """Step 2: Contrast the latest evaluation with past runs, updating the state."""
-        pass
 
     @abstractmethod
     def _detect_patterns(
         self, context: ReflectionContext, state: ReflectionReasoningState
     ) -> tuple[ReflectionInsight, ...]:
         """Step 3: Analyze performance transitions to generate unified ReflectionInsights."""
-        pass
 
     @abstractmethod
     def _generate_recommendations(
@@ -72,7 +69,6 @@ class ReflectionAlgorithm(ABC):
         insights: tuple[ReflectionInsight, ...],
     ) -> tuple[ReflectionFeedback, ...]:
         """Step 4: Translate insights into structured ReflectionFeedback recommendations."""
-        pass
 
     @abstractmethod
     def _construct_session(
@@ -82,4 +78,3 @@ class ReflectionAlgorithm(ABC):
         state: ReflectionReasoningState,
     ) -> ReflectionSession:
         """Step 5: Assemble insights and feedback into a final ReflectionSession."""
-        pass

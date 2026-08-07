@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
+
 from mlos.domain.models.base import BaseModel
-from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
 from mlos.domain.models.knowledge.knowledge_conflict import KnowledgeConflict
+from mlos.domain.models.knowledge.knowledge_entry import KnowledgeEntry
 from mlos.domain.models.knowledge.knowledge_telemetry import KnowledgeTelemetry
 
 # Patch BaseModel to appear frozen to the dataclasses compiler at runtime

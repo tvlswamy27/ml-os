@@ -1,5 +1,5 @@
-from mlos.intelligence.prompts.prompt_version import PromptVersion
 from mlos.intelligence.prompts.prompt_loader import ParsedPrompt, PromptLoader
 from mlos.intelligence.prompts.prompt_manager import PromptManager
+from mlos.intelligence.prompts.prompt_version import PromptVersion
 
-__all__ = ["PromptVersion", "ParsedPrompt", "PromptLoader", "PromptManager"]
+__all__ = ["ParsedPrompt", "PromptLoader", "PromptManager", "PromptVersion"]

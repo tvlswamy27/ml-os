@@ -8,6 +8,7 @@ License: MIT
 """
 
 from dataclasses import dataclass
+
 from mlos.domain.models.base import BaseModel
 
 

@@ -4,22 +4,21 @@ Unit tests for the PlanningService class.
 
 from datetime import datetime
 from pathlib import Path
-import pytest
 from unittest.mock import MagicMock
 
-from mlos.domain.models.project_memory import ProjectMemory
 from mlos.domain.models.dataset import Dataset
-from mlos.domain.models.project_profile import ProjectProfile
-from mlos.domain.models.risk import Risk
-from mlos.domain.models.pipeline import Pipeline
-from mlos.domain.models.execution_result import ExecutionResult
 from mlos.domain.models.evaluation_result import EvaluationResult
+from mlos.domain.models.execution_result import ExecutionResult
+from mlos.domain.models.pipeline import Pipeline
+from mlos.domain.models.planning.observation import Observation
 from mlos.domain.models.planning.planning_context import PlanningContext
 from mlos.domain.models.planning.planning_session import PlanningSession
-from mlos.domain.models.planning.observation import Observation
-from mlos.planning.planning_engine import PlanningEngine
-from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.domain.models.project_memory import ProjectMemory
+from mlos.domain.models.project_profile import ProjectProfile
+from mlos.domain.models.risk import Risk
 from mlos.domain.services.planning_service import PlanningService
+from mlos.domain.services.project_memory_service import ProjectMemoryService
+from mlos.planning.planning_engine import PlanningEngine
 
 
 def test_planning_service_dependency_injection():
@@ -195,9 +194,7 @@ def test_build_context_fully_mapped():
     assert obs_map[("project_profile", "problem_type")] == "classification"
     assert obs_map[("project_profile", "complexity")] == "low"
     assert obs_map[("project_profile", "baseline_models")] == "LogisticRegression"
-    assert "risk:Overfitting" in [
-        k[1] for k in obs_map.keys() if k[0] == "project_profile"
-    ]
+    assert "risk:Overfitting" in [k[1] for k in obs_map if k[0] == "project_profile"]
 
     # Verify pipeline
     assert obs_map[("pipeline", "entrypoint_path")] == "run.py"

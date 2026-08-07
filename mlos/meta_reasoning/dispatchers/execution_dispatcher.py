@@ -6,8 +6,9 @@ License: MIT
 """
 
 import traceback
-from mlos.domain.enums.subsystem_name import SubsystemName
+
 from mlos.domain.enums.execution_lifecycle import ExecutionLifecycle
+from mlos.domain.enums.subsystem_name import SubsystemName
 from mlos.domain.models.meta_reasoning.execution_strategy import ExecutionStrategy
 from mlos.meta_reasoning.communication.execution_event_bus import (
     ExecutionEvent,

@@ -6,6 +6,7 @@ License: MIT
 """
 
 from dataclasses import dataclass
+
 from mlos.domain.enums.subsystem_name import SubsystemName
 
 

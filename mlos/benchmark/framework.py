@@ -9,40 +9,41 @@ import csv
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
 from mlos.engine.engine import MLOSEngine
-from mlos.planning.config import AlgorithmMode
-from mlos.planning.algorithms.rule_based_algorithm import (
-    RuleBasedPlanningAlgorithm,
-)
-from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
-from mlos.planning.algorithms.hybrid_planning_algorithm import (
-    HybridPlanningAlgorithm,
-)
-from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
-    RuleBasedReflectionAlgorithm,
-)
-from mlos.reflection.algorithms.llm_reflection_algorithm import (
-    LLMReflectionAlgorithm,
-)
-from mlos.reflection.algorithms.hybrid_reflection_algorithm import (
-    HybridReflectionAlgorithm,
-)
-from mlos.learning.algorithms.rule_based_learning_algorithm import (
-    RuleBasedLearningAlgorithm,
-)
-from mlos.learning.algorithms.llm_learning_algorithm import LLMLearningAlgorithm
-from mlos.learning.algorithms.hybrid_learning_algorithm import (
-    HybridLearningAlgorithm,
-)
-from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
-    RuleBasedKnowledgeAlgorithm,
+from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
+    HybridKnowledgeAlgorithm,
 )
 from mlos.knowledge.algorithms.llm_knowledge_algorithm import (
     LLMKnowledgeAlgorithm,
 )
-from mlos.knowledge.algorithms.hybrid_knowledge_algorithm import (
-    HybridKnowledgeAlgorithm,
+from mlos.knowledge.algorithms.rule_based_knowledge_algorithm import (
+    RuleBasedKnowledgeAlgorithm,
+)
+from mlos.learning.algorithms.hybrid_learning_algorithm import (
+    HybridLearningAlgorithm,
+)
+from mlos.learning.algorithms.llm_learning_algorithm import LLMLearningAlgorithm
+from mlos.learning.algorithms.rule_based_learning_algorithm import (
+    RuleBasedLearningAlgorithm,
+)
+from mlos.planning.algorithms.hybrid_planning_algorithm import (
+    HybridPlanningAlgorithm,
+)
+from mlos.planning.algorithms.llm_planning_algorithm import LLMPlanningAlgorithm
+from mlos.planning.algorithms.rule_based_algorithm import (
+    RuleBasedPlanningAlgorithm,
+)
+from mlos.planning.config import AlgorithmMode
+from mlos.reflection.algorithms.hybrid_reflection_algorithm import (
+    HybridReflectionAlgorithm,
+)
+from mlos.reflection.algorithms.llm_reflection_algorithm import (
+    LLMReflectionAlgorithm,
+)
+from mlos.reflection.algorithms.rule_based_reflection_algorithm import (
+    RuleBasedReflectionAlgorithm,
 )
 
 
@@ -51,11 +52,11 @@ class BenchmarkRunner:
     Evaluates ML-OS cognitive subsystems against datasets, comparing RULE, LLM, and HYBRID modes.
     """
 
-    def __init__(self, dataset_paths: List[str]):
+    def __init__(self, dataset_paths: list[str]):
         self.dataset_paths = [Path(p) for p in dataset_paths]
-        self.results: List[Dict[str, Any]] = []
+        self.results: list[dict[str, Any]] = []
 
-    def run_benchmark(self) -> List[Dict[str, Any]]:
+    def run_benchmark(self) -> list[dict[str, Any]]:
         """
         Executes ML-OS loop across modes and gathers comparative metrics.
         """
@@ -263,7 +264,7 @@ class BenchmarkRunner:
                 "| Dataset | Mode | Latency (s) | Accuracy | F1 | Tokens | Cost ($) | Cache Hit % | Fallbacks |\n"
             )
             f.write("| --- | --- | --- | --- | --- | --- | --- | --- | --- |\n")
-            for r in self.results:
-                f.write(
-                    f"| {r['dataset']} | {r['mode']} | {r['latency_sec']:.3f} | {r['accuracy']:.2f} | {r['f1']:.2f} | {r['token_usage']} | {r['estimated_cost']:.5f} | {r['cache_hit_rate']*100:.1f}% | {r['fallback_frequency']} |\n"
-                )
+            f.writelines(
+                f"| {r['dataset']} | {r['mode']} | {r['latency_sec']:.3f} | {r['accuracy']:.2f} | {r['f1']:.2f} | {r['token_usage']} | {r['estimated_cost']:.5f} | {r['cache_hit_rate']*100:.1f}% | {r['fallback_frequency']} |\n"
+                for r in self.results
+            )

@@ -6,19 +6,21 @@ License: MIT
 """
 
 from abc import ABC, abstractmethod
+
 import pandas as pd
+
 from mlos.domain.models.feature_intelligence.feature_context import FeatureContext
-from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
-from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
-    FeatureReasoningState,
-)
-from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
-from mlos.domain.models.feature_intelligence.feature_recommendation import (
-    FeatureRecommendation,
-)
 from mlos.domain.models.feature_intelligence.feature_engineering_proposal import (
     FeatureEngineeringProposal,
 )
+from mlos.domain.models.feature_intelligence.feature_insight import FeatureInsight
+from mlos.domain.models.feature_intelligence.feature_reasoning_state import (
+    FeatureReasoningState,
+)
+from mlos.domain.models.feature_intelligence.feature_recommendation import (
+    FeatureRecommendation,
+)
+from mlos.domain.models.feature_intelligence.feature_session import FeatureSession
 from mlos.domain.models.feature_intelligence.ranking_profile import RankingProfile
 
 
@@ -32,7 +34,6 @@ class FeatureAlgorithm(ABC):
         """
         Determine if this algorithm can run on the provided context.
         """
-        pass
 
     def analyze(
         self, context: FeatureContext, dataframe: pd.DataFrame

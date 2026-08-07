@@ -6,16 +6,18 @@ License: MIT
 """
 
 import argparse
+
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from mlos.engine.engine import MLOSEngine
+
 from mlos.cli.command import BaseCommand
 from mlos.cli.persistence import (
     find_project_root,
     reconstruct_project_memory,
     update_project_config_from_memory,
 )
+from mlos.engine.engine import MLOSEngine
 
 
 class MetaCommand(BaseCommand):
@@ -30,6 +32,15 @@ class MetaCommand(BaseCommand):
     @property
     def help(self) -> str:
         return "Run Meta-Reasoning & Cognitive Orchestrator subsystem."
+
+    @property
+    def epilog(self) -> str:
+        return (
+            "Examples:\n"
+            "  mlos meta\n"
+            "  mlos meta --dry-run\n"
+            "  mlos meta --simulate"
+        )
 
     def register_args(self, parser: argparse.ArgumentParser) -> None:
         parser.add_argument(
@@ -49,7 +60,8 @@ class MetaCommand(BaseCommand):
 
         if not project_root:
             console.print(
-                "[bold red]Error: No active ML-OS project found. Run 'mlos init' first.[/bold red]"
+                "[bold red]No ML-OS project found.\n"
+                "Run 'mlos init .' to initialize this directory or 'mlos init --name MyProject' to create a new project.[/bold red]"
             )
             return 1
 
@@ -66,12 +78,12 @@ class MetaCommand(BaseCommand):
         context = engine.meta_service.build_context(memory)
 
         if args.dry_run:
+            from mlos.domain.models.meta_reasoning.execution_constraints import (
+                ExecutionConstraints,
+            )
             from mlos.meta_reasoning.validation.dry_run_verifier import DryRunVerifier
             from mlos.meta_reasoning.validation.execution_plan_validator import (
                 ExecutionPlanValidator,
-            )
-            from mlos.domain.models.meta_reasoning.execution_constraints import (
-                ExecutionConstraints,
             )
 
             console.print("[bold green]Executing Dry Run Verification...[/bold green]")
