@@ -19,22 +19,16 @@ class ProjectTypeAnalyzer(BaseAnalyzer):
         if dataset.target is None:
             return
 
-        if self._is_binary_classification(
-            dataset,
-            profile,
-        ):
+        if self._is_binary_classification(dataset, profile):
+            dataset.problem_type = profile.problem_type
             return
 
-        if self._is_multiclass_classification(
-            dataset,
-            profile,
-        ):
+        if self._is_multiclass_classification(dataset, profile):
+            dataset.problem_type = profile.problem_type
             return
 
-        if self._is_regression(
-            dataset,
-            profile,
-        ):
+        if self._is_regression(dataset, profile):
+            dataset.problem_type = profile.problem_type
             return
 
         """if dataset is None:

@@ -246,7 +246,7 @@ class MLOSEngine:
             self.project_memory,
         )
 
-        self.project_memory.profile = profile
+        self.project_memory.project_profile = profile
 
     def reason(self):
         """Reason about the current project."""
