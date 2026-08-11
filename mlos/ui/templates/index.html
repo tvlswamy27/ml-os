@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ML-OS Studio</title>
+    <!-- Google Fonts: Outfit and Fira Code -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+
+    <!-- Init Screen Overlay: Appears if no project is initialized -->
+    <div id="init-project-overlay" class="overlay-container hidden">
+        <div class="overlay-card">
+            <h2>No ML-OS Project Found</h2>
+            <p class="subtitle">Initialize an ML-OS workspace in the current directory or specify a target path.</p>
+
+            <div class="form-group">
+                <label for="init-name">Project Name</label>
+                <input type="text" id="init-name" placeholder="e.g. Titanic Survival" value="Titanic Survival">
+            </div>
+
+            <div class="form-group">
+                <label for="init-goal">Optimization Goal</label>
+                <input type="text" id="init-goal" placeholder="e.g. Maximize F1 Score" value="Maximize F1 Score">
+            </div>
+
+            <div class="form-group">
+                <label for="init-path">Workspace Destination (Optional)</label>
+                <input type="text" id="init-path" placeholder="Leave empty for current directory">
+            </div>
+
+            <div class="error-msg hidden" id="init-error"></div>
+
+            <button id="btn-init-project" class="btn btn-primary">Initialize Project</button>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden"></div>
+
+    <div class="app-container">
+
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <span class="logo-accent">ML</span>-OS
+                </div>
+            </div>
+
+            <nav class="sidebar-nav">
+                <ul class="nav-list">
+                    <li class="nav-item active" data-page="dashboard">
+                        <span class="nav-icon">🏠</span> Dashboard
+                    </li>
+                    <li class="nav-item" data-page="analyze">
+                        <span class="nav-icon">📊</span> Analyze Dataset
+                    </li>
+                    <li class="nav-item" data-page="run">
+                        <span class="nav-icon">▶</span> Run Pipeline
+                    </li>
+                    <li class="nav-item" data-page="experiments">
+                        <span class="nav-icon">🧪</span> Experiments
+                    </li>
+
+                    <li class="nav-divider"></li>
+
+                    <!-- Non-functional pages for v0.1 -->
+                    <li class="nav-item nav-future" data-page="features">
+                        <span class="nav-icon">🧠</span> Features
+                    </li>
+                    <li class="nav-item nav-future" data-page="planning">
+                        <span class="nav-icon">🧩</span> Planning
+                    </li>
+                    <li class="nav-item nav-future" data-page="models">
+                        <span class="nav-icon">🤖</span> Models
+                    </li>
+                    <li class="nav-item nav-future" data-page="pipelines">
+                        <span class="nav-icon">⚙</span> Pipelines
+                    </li>
+                    <li class="nav-item nav-future" data-page="lineage">
+                        <span class="nav-icon">🔗</span> Lineage
+                    </li>
+                    <li class="nav-item nav-future" data-page="artifacts">
+                        <span class="nav-icon">📦</span> Artifacts
+                    </li>
+                    <li class="nav-item nav-future" data-page="knowledge">
+                        <span class="nav-icon">💡</span> Knowledge
+                    </li>
+                    <li class="nav-item nav-future" data-page="telemetry">
+                        <span class="nav-icon">📈</span> Telemetry
+                    </li>
+
+                    <li class="nav-divider"></li>
+
+                    <li class="nav-item nav-future" data-page="settings">
+                        <span class="nav-icon">🛠</span> Settings
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main class="main-content">
+
+            <!-- Top Navigation Bar -->
+            <header class="top-bar">
+                <div class="project-info">
+                    <span class="meta-label">Project:</span>
+                    <span id="active-project-name" class="meta-value">Loading...</span>
+                </div>
+                <div class="system-status">
+                    <span class="meta-label">Status:</span>
+                    <span id="system-status-indicator" class="status-dot dot-inactive"></span>
+                    <span id="system-status-text" class="meta-value">Inactive</span>
+                </div>
+            </header>
+
+            <!-- Page Views Wrapper -->
+            <div class="view-container">
+
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="page-view">
+                    <div class="page-header">
+                        <h1>Engineering Dashboard</h1>
+                        <p class="subtitle">Overview of the current ML-OS active workspace.</p>
+                    </div>
+
+                    <!-- Project Empty State -->
+                    <div id="dashboard-empty-state" class="empty-state-panel hidden">
+                        <div class="empty-state-icon">📊</div>
+                        <h3>No Dataset Analyzed Yet</h3>
+                        <p>Begin by selecting and analyzing a dataset to generate project intelligence.</p>
+                        <button class="btn btn-primary" onclick="switchPage('analyze')">Analyze Dataset</button>
+                    </div>
+
+                    <!-- Dashboard Content -->
+                    <div id="dashboard-content" class="dashboard-grid">
+
+                        <!-- Metric Overview Cards -->
+                        <div class="card card-summary">
+                            <h3>Workspace Path</h3>
+                            <p id="dash-project-path" class="path-text">---</p>
+                        </div>
+
+                        <div class="card card-summary">
+                            <h3>Problem Configuration</h3>
+                            <div class="summary-item">
+                                <span class="label">Problem Type:</span>
+                                <span id="dash-problem-type" class="value">---</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Dataset:</span>
+                                <span id="dash-dataset" class="value">---</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Target:</span>
+                                <span id="dash-target" class="value">---</span>
+                            </div>
+                        </div>
+
+                        <div class="card card-summary">
+                            <h3>Dataset Profile</h3>
+                            <div class="summary-item">
+                                <span class="label">Rows:</span>
+                                <span id="dash-rows" class="value">---</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Columns:</span>
+                                <span id="dash-columns" class="value">---</span>
+                            </div>
+                        </div>
+
+                        <div class="card card-summary">
+                            <h3>Registry Snapshot</h3>
+                            <div class="summary-item">
+                                <span class="label">Latest Experiment:</span>
+                                <span id="dash-latest-exp" class="value">---</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Latest Model:</span>
+                                <span id="dash-latest-model" class="value">---</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="label">Model Stage:</span>
+                                <span id="dash-model-stage" class="badge">---</span>
+                            </div>
+                        </div>
+
+                        <!-- Latest Performance Section -->
+                        <div class="card col-span-2">
+                            <h3>Latest Run Metrics</h3>
+                            <div id="dashboard-metrics-container" class="metrics-grid">
+                                <!-- Populated dynamically -->
+                                <p class="dim-text">No metrics logged yet.</p>
+                            </div>
+                        </div>
+
+                        <!-- Recent Runs Table -->
+                        <div class="card col-span-2">
+                            <h3>Recent Experiments</h3>
+                            <div class="table-container">
+                                <table id="dash-experiments-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Run ID</th>
+                                            <th>Timestamp</th>
+                                            <th>Selected Model</th>
+                                            <th>Problem Type</th>
+                                            <th>Metrics</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="5" class="center dim-text">No experiments logged yet.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 2. ANALYZE DATASET VIEW -->
+                <section id="view-analyze" class="page-view hidden">
+                    <div class="page-header">
+                        <h1>Dataset Analysis & Intelligence</h1>
+                        <p class="subtitle">Profile a CSV or Parquet file and run problem-type detection.</p>
+                    </div>
+
+                    <div class="columns-grid">
+
+                        <!-- Inputs Card -->
+                        <div class="card">
+                            <h3>Configure Data Analysis</h3>
+
+                            <div class="form-group">
+                                <label for="analyze-dataset-path">Dataset Path (Absolute or Relative to Workspace)</label>
+                                <input type="text" id="analyze-dataset-path" placeholder="e.g. playground/data/titanic.csv">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="analyze-target">Target Column</label>
+                                <input type="text" id="analyze-target" placeholder="e.g. Survived">
+                            </div>
+
+                            <button id="btn-run-analysis" class="btn btn-primary">Analyze Dataset</button>
+                        </div>
+
+                        <!-- Results Card -->
+                        <div class="card col-span-2">
+                            <h3>Analysis Summary</h3>
+                            <div id="analysis-empty-state" class="center-content py-4">
+                                <p class="dim-text">Select a dataset and run analysis to view profiles.</p>
+                            </div>
+
+                            <div id="analysis-results" class="hidden">
+
+                                <div class="results-grid">
+
+                                    <div class="results-card">
+                                        <h4>Dataset Metrics</h4>
+                                        <div class="metric-row">
+                                            <span>Detected Problem:</span>
+                                            <span id="analysis-problem-type" class="badge">---</span>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span>Rows Count:</span>
+                                            <strong id="analysis-rows">0</strong>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span>Columns Count:</span>
+                                            <strong id="analysis-cols">0</strong>
+                                        </div>
+                                        <div class="metric-row">
+                                            <span>Duplicate Rows:</span>
+                                            <strong id="analysis-duplicates">0</strong>
+                                        </div>
+                                    </div>
+
+                                    <div class="results-card">
+                                        <h4>Features Intelligence</h4>
+                                        <div class="features-summary">
+                                            <h5>Numerical Columns (<span id="analysis-num-count">0</span>)</h5>
+                                            <p id="analysis-num-cols" class="feature-tag-list dim-text">None</p>
+                                        </div>
+                                        <div class="features-summary mt-2">
+                                            <h5>Categorical Columns (<span id="analysis-cat-count">0</span>)</h5>
+                                            <p id="analysis-cat-cols" class="feature-tag-list dim-text">None</p>
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                <div class="mt-4">
+                                    <h4>Decisions & Base Models</h4>
+                                    <div class="table-container mt-1">
+                                        <table id="analysis-decisions-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Decision</th>
+                                                    <th>Strategy</th>
+                                                    <th>Confidence</th>
+                                                    <th>Reason</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dyn -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="mt-4">
+                                    <h4>Recommendations & Risks</h4>
+                                    <div class="table-container mt-1">
+                                        <table id="analysis-recs-table">
+                                            <thead>
+                                                <tr>
+                                                    <th>Priority</th>
+                                                    <th>Title</th>
+                                                    <th>Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Dyn -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 3. RUN PIPELINE VIEW -->
+                <section id="view-run" class="page-view hidden">
+                    <div class="page-header">
+                        <h1>Execute ML Pipeline</h1>
+                        <p class="subtitle">Run full end-to-end automated machine learning training and evaluation.</p>
+                    </div>
+
+                    <div class="columns-grid">
+
+                        <div class="card">
+                            <h3>Pipeline Configuration</h3>
+
+                            <div class="form-group">
+                                <label for="run-dataset-path">Dataset Path</label>
+                                <input type="text" id="run-dataset-path" placeholder="e.g. playground/data/titanic.csv">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="run-target">Target Column</label>
+                                <input type="text" id="run-target" placeholder="e.g. Survived">
+                            </div>
+
+                            <button id="btn-run-pipeline" class="btn btn-success">Run ML Pipeline</button>
+                        </div>
+
+                        <!-- Progress / Results Panel -->
+                        <div class="card col-span-2">
+                            <h3>Execution Pipeline Status</h3>
+
+                            <div id="run-empty-state" class="center-content py-4">
+                                <p class="dim-text">Configure and click "Run ML Pipeline" to launch the background execution runtime.</p>
+                            </div>
+
+                            <div id="run-progress-panel" class="hidden">
+
+                                <div class="pipeline-progress-header">
+                                    <span class="status-badge running" id="pipeline-overall-status-badge">Running</span>
+                                    <span class="run-id-text">Run ID: <span id="pipeline-active-run-id">---</span></span>
+                                </div>
+
+                                <!-- Checklist Timeline -->
+                                <ul class="timeline">
+                                    <li class="timeline-item" id="stage-Analysis">
+                                        <span class="icon">○</span>
+                                        <span class="text">Analysis (Loading & Validation)</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Feature-Intelligence">
+                                        <span class="icon">○</span>
+                                        <span class="text">Feature Intelligence</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Meta-Reasoning">
+                                        <span class="icon">○</span>
+                                        <span class="text">Meta Reasoning</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Planning">
+                                        <span class="icon">○</span>
+                                        <span class="text">Planning</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Execution-Runtime">
+                                        <span class="icon">○</span>
+                                        <span class="text">Execution Runtime</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Training">
+                                        <span class="icon">○</span>
+                                        <span class="text">Training</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Evaluation">
+                                        <span class="icon">○</span>
+                                        <span class="text">Evaluation</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Explainability">
+                                        <span class="icon">○</span>
+                                        <span class="text">Explainability</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Artifacts-Generation">
+                                        <span class="icon">○</span>
+                                        <span class="text">Artifacts Generation</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Experiment-Tracking">
+                                        <span class="icon">○</span>
+                                        <span class="text">Experiment Tracking</span>
+                                    </li>
+                                    <li class="timeline-item" id="stage-Knowledge-Capture">
+                                        <span class="icon">○</span>
+                                        <span class="text">Knowledge Capture</span>
+                                    </li>
+                                </ul>
+
+                                <!-- Post Execution Stats -->
+                                <div id="run-success-stats" class="run-results-box hidden">
+                                    <h4 class="text-success">✓ ML-OS Run Completed Successfully</h4>
+
+                                    <div class="results-meta-grid">
+                                        <div>
+                                            <span class="dim-text">Experiment ID:</span>
+                                            <strong id="res-exp-id">---</strong>
+                                        </div>
+                                        <div>
+                                            <span class="dim-text">Problem Type:</span>
+                                            <strong id="res-problem-type">---</strong>
+                                        </div>
+                                        <div>
+                                            <span class="dim-text">Registered Artifacts:</span>
+                                            <strong id="res-artifacts-count">0</strong>
+                                        </div>
+                                        <div>
+                                            <span class="dim-text">Execution Time:</span>
+                                            <strong id="res-exec-time">0 sec</strong>
+                                        </div>
+                                    </div>
+
+                                    <h5 class="mt-3">Evaluation Metrics Score</h5>
+                                    <div id="run-final-metrics" class="metrics-grid">
+                                        <!-- Dynamic metrics -->
+                                    </div>
+                                </div>
+
+                                <div id="run-failed-stats" class="run-results-box error-box hidden">
+                                    <h4 class="text-danger">✗ Pipeline Execution Failed</h4>
+                                    <p id="run-failed-error" class="mt-1">Unknown error occurred</p>
+                                </div>
+
+                            </div>
+                        </div>
+
+                    </div>
+                </section>
+
+                <!-- 4. EXPERIMENTS VIEW -->
+                <section id="view-experiments" class="page-view hidden">
+                    <div class="page-header">
+                        <h1>Experiments Ledger</h1>
+                        <p class="subtitle">Track historical AutoML pipeline optimization, metrics, and models.</p>
+                    </div>
+
+                    <div class="experiments-toolbar">
+                        <button id="btn-compare-experiments" class="btn btn-primary" disabled>Compare Selected Experiments</button>
+                    </div>
+
+                    <div class="table-container mt-2">
+                        <table id="experiments-table">
+                            <thead>
+                                <tr>
+                                    <th width="40"><input type="checkbox" id="experiments-select-all"></th>
+                                    <th>Experiment ID</th>
+                                    <th>Timestamp</th>
+                                    <th>Dataset Fingerprint</th>
+                                    <th>Problem Type</th>
+                                    <th>Model Name</th>
+                                    <th>Primary Metrics</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="center dim-text">No experiments logged yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <!-- 5. EXPERIMENT DETAILS OVERLAY PANEL -->
+                <div id="experiment-details-modal" class="modal-overlay hidden">
+                    <div class="modal-card">
+                        <div class="modal-header">
+                            <h2>Experiment Details: <span id="modal-exp-id">---</span></h2>
+                            <button class="btn-close" onclick="closeExperimentModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="results-grid">
+                                <div>
+                                    <div class="metric-row"><span>Timestamp:</span> <strong id="modal-timestamp">---</strong></div>
+                                    <div class="metric-row"><span>Problem Type:</span> <strong id="modal-problem-type">---</strong></div>
+                                    <div class="metric-row"><span>Selected Model:</span> <strong id="modal-model">---</strong></div>
+                                    <div class="metric-row"><span>Pipeline ID:</span> <strong id="modal-pipeline">---</strong></div>
+                                    <div class="metric-row"><span>Status:</span> <span id="modal-status" class="badge">---</span></div>
+                                </div>
+                                <div>
+                                    <div class="metric-row"><span>Training Time:</span> <strong id="modal-train-time">---</strong></div>
+                                    <div class="metric-row"><span>Prediction Time:</span> <strong id="modal-pred-time">---</strong></div>
+                                    <div class="metric-row"><span>Memory Delta:</span> <strong id="modal-memory">---</strong></div>
+                                    <div class="metric-row"><span>Dataset Hash:</span> <code id="modal-hash">---</code></div>
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h3>Logged Performance Metrics</h3>
+                                <div id="modal-metrics" class="metrics-grid">
+                                    <!-- Dyn -->
+                                </div>
+                            </div>
+
+                            <div class="mt-4">
+                                <h3>Generated Artifacts</h3>
+                                <ul id="modal-artifacts" class="artifact-list">
+                                    <!-- Dyn -->
+                                </ul>
+                            </div>
+
+                            <div class="mt-4">
+                                <h3>Hyperparameters Configuration</h3>
+                                <pre id="modal-hyperparameters" class="code-block"></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. EXPERIMENT COMPARISON MODAL -->
+                <div id="compare-modal" class="modal-overlay hidden">
+                    <div class="modal-card modal-large">
+                        <div class="modal-header">
+                            <h2>Experiment Comparison</h2>
+                            <button class="btn-close" onclick="closeCompareModal()">×</button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="compare-header-grid">
+                                <div>
+                                    <h4>Experiment A</h4>
+                                    <p id="comp-id-a" class="bold-text">---</p>
+                                </div>
+                                <div class="center bold-text text-accent">VS</div>
+                                <div>
+                                    <h4>Experiment B</h4>
+                                    <p id="comp-id-b" class="bold-text">---</p>
+                                </div>
+                            </div>
+
+                            <div class="table-container mt-3">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Metric / Property</th>
+                                            <th id="comp-name-a">Experiment A</th>
+                                            <th id="comp-name-b">Experiment B</th>
+                                            <th>Variance / Difference</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="compare-metrics-body">
+                                        <!-- Dynamic rows -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

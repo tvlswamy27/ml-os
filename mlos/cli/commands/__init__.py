@@ -21,6 +21,7 @@ from mlos.cli.commands.reflect import ReflectCommand
 from mlos.cli.commands.registry_cmd import RegistryCommand
 from mlos.cli.commands.run import RunCommand
 from mlos.cli.commands.telemetry_cmd import TelemetryCommand
+from mlos.cli.commands.ui import UICommand
 
 # Explicit command registry for initial release
 COMMANDS = [
@@ -40,6 +41,7 @@ COMMANDS = [
     PipelineCommand(),
     RegistryCommand(),
     LineageCommand(),
+    UICommand(),
 ]
 
 __all__ = ["COMMANDS"]

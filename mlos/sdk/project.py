@@ -100,7 +100,15 @@ class MLProject:
             self.dataset_path = dataset_path
             from mlos.domain.models.dataset import Dataset
 
-            self.memory.dataset = Dataset(path=dataset_path, target=target_column)
+            old_problem_type = None
+            if self.memory and self.memory.dataset:
+                old_problem_type = self.memory.dataset.problem_type
+            if not old_problem_type and self.memory and self.memory.project_profile:
+                old_problem_type = self.memory.project_profile.problem_type
+
+            self.memory.dataset = Dataset(
+                path=dataset_path, target=target_column, problem_type=old_problem_type
+            )
             update_project_config_from_memory(self.project_path, self.memory)
         else:
             self.dataset_path = (
@@ -151,7 +159,7 @@ class MLProject:
         if self.memory:
             update_project_config_from_memory(self.project_path, self.memory)
 
-    def run(self) -> MLProjectSession:
+    def run(self, experiment_id: str | None = None) -> MLProjectSession:
         """
         Execute the stage-based pipeline, auto-organizing outputs and logging lineage metrics.
         """
@@ -331,7 +339,29 @@ class MLProject:
             for a in registered_artifacts
         ]
 
-        experiment = self.experiment_tracker.get_or_create_experiment(self.name)
+        from mlos.experiment.ids import generate_experiment_id
+
+        exp_id = experiment_id or generate_experiment_id()
+        experiment = self.experiment_tracker.get_or_create_experiment(exp_id)
+
+        canonical_problem_type = None
+        if self.memory:
+            if self.memory.project_profile and self.memory.project_profile.problem_type:
+                canonical_problem_type = self.memory.project_profile.problem_type
+            elif self.memory.dataset and self.memory.dataset.problem_type:
+                canonical_problem_type = self.memory.dataset.problem_type
+
+        if canonical_problem_type:
+            mapping = {
+                "binary_classification": "Binary Classification",
+                "multiclass_classification": "Multi-class Classification",
+                "regression": "Regression",
+                "classification": "Binary Classification",
+            }
+            canonical_problem_type = mapping.get(
+                canonical_problem_type.lower(), canonical_problem_type
+            )
+
         run_record = Run(
             run_id=uuid4(),
             experiment_id=experiment.experiment_id,
@@ -342,6 +372,11 @@ class MLProject:
             artifacts=model_run_artifacts,
             events=run_events,
             knowledge_snapshot=knowledge_snap,
+            metadata={
+                "project_name": self.name,
+                "problem_type": canonical_problem_type,
+                "experiment_id": exp_id,
+            },
         )
 
         self.experiment_tracker.record_run(experiment.experiment_id, run_record)
@@ -423,9 +458,7 @@ class MLProject:
                 "metrics": getattr(
                     getattr(r, "metrics", None), "metrics", getattr(r, "metrics", {})
                 ),
-                "status": getattr(
-                    getattr(r, "execution", None), "status", "SUCCESS"
-                ),
+                "status": getattr(getattr(r, "execution", None), "status", "SUCCESS"),
             }
             for r in exp.runs
         ]

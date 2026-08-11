@@ -209,11 +209,16 @@ class RunCommand(BaseCommand):
             with console.status(
                 "[bold green]Orchestrating workflow stages & AutoML Engine...[/bold green]"
             ):
-                session = project.run()
+                from mlos.experiment.ids import generate_experiment_id
+
+                experiment_id = generate_experiment_id()
+                session = project.run(experiment_id=experiment_id)
                 engine.run_automl(
                     dataset_path,
                     target_column=target,
                     output_dir=str(project_root / "artifacts" / "automl"),
+                    experiment_id=experiment_id,
+                    workspace_root=project_root,
                 )
 
             status = session.run.execution.status

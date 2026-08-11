@@ -377,6 +377,7 @@ class MLOSEngine:
         )
 
         self.project_memory.profile = profile
+        self.project_memory.project_profile = profile
 
         decisions = self.decision_service.decide(
             self.project_memory,
@@ -397,6 +398,8 @@ class MLOSEngine:
         dataset_path: str,
         target_column: str | None = None,
         output_dir: str = "artifacts/automl",
+        experiment_id: str | None = None,
+        workspace_root: str | Path | None = None,
     ):
         """
         Run end-to-end AutoML pipeline with experiment tracking, pipeline persistence,
@@ -408,6 +411,12 @@ class MLOSEngine:
         from mlos.observability.lineage import LineageTracker
         from mlos.pipeline.registry import PipelineRegistry
         from mlos.registry.model_registry import ModelRegistry
+
+        # Determine workspace root
+        if workspace_root:
+            w_root = Path(workspace_root)
+        else:
+            w_root = Path(output_dir).parent.parent
 
         try:
             dataframe = self.data_loader.load(dataset_path)
@@ -429,15 +438,37 @@ class MLOSEngine:
             dataframe, target_column=target_column
         )
 
+        # Get problem type from memory/dataset and normalize it
+        prob_type = "classification"
+        if self.project_memory:
+            if self.project_memory.dataset and self.project_memory.dataset.problem_type:
+                prob_type = self.project_memory.dataset.problem_type
+            elif (
+                self.project_memory.project_profile
+                and self.project_memory.project_profile.problem_type
+            ):
+                prob_type = self.project_memory.project_profile.problem_type
+
+        if prob_type:
+            mapping = {
+                "binary_classification": "Binary Classification",
+                "binary classification": "Binary Classification",
+                "classification": "Binary Classification",
+                "multiclass_classification": "Multi-class Classification",
+                "multiclass classification": "Multi-class Classification",
+                "multi_class_classification": "Multi-class Classification",
+                "regression": "Regression",
+            }
+            prob_type = mapping.get(prob_type.lower(), prob_type)
+
         # Track experiment
-        tracker = ExperimentTracker()
+        from mlos.experiment.ids import generate_experiment_id
+
+        exp_id = experiment_id or generate_experiment_id()
+        tracker = ExperimentTracker(w_root)
         exp_record = tracker.log_experiment(
             dataset_fingerprint=fingerprint,
-            problem_type=(
-                self.project_memory.dataset.problem_type
-                if self.project_memory and self.project_memory.dataset
-                else "classification"
-            ),
+            problem_type=prob_type,
             pipeline_id=(
                 f"pipeline-{best_res.model_id}" if best_res else "pipeline-none"
             ),
@@ -451,11 +482,12 @@ class MLOSEngine:
             feature_importance=best_res.feature_importance if best_res else {},
             artifacts=artifacts,
             hyperparameters=best_res.hpo_result.get("best_params") if best_res else {},
+            experiment_id=exp_id,
         )
 
         # Register Pipeline
         if best_res and best_res.model_object:
-            pipeline_reg = PipelineRegistry()
+            pipeline_reg = PipelineRegistry(w_root)
             pipeline_reg.save_pipeline(
                 pipeline_id=exp_record.pipeline_id,
                 pipeline_object=best_res.model_object,
@@ -466,7 +498,7 @@ class MLOSEngine:
 
         # Register Model
         if best_res:
-            model_reg = ModelRegistry()
+            model_reg = ModelRegistry(w_root)
             model_reg.register_version(
                 model_id=best_res.model_id,
                 version="1.0.0",

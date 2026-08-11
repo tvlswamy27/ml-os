@@ -71,7 +71,9 @@ class DictAttributeWrapper(dict):
         if isinstance(d, dict):
             for k, v in d.items():
                 val = _make_serializable(v)
-                wrapped_val = DictAttributeWrapper(val) if isinstance(val, dict) else val
+                wrapped_val = (
+                    DictAttributeWrapper(val) if isinstance(val, dict) else val
+                )
                 self[k] = wrapped_val
                 setattr(self, str(k), wrapped_val)
 
@@ -158,25 +160,53 @@ class ExperimentTracker:
             status="SUCCESS",
         )
 
-        self.experiments[exp_id] = {
-            "experiment_id": rec.experiment_id,
-            "timestamp": rec.timestamp,
-            "dataset_fingerprint": rec.dataset_fingerprint,
-            "problem_type": rec.problem_type,
-            "pipeline_id": rec.pipeline_id,
-            "selected_model": rec.selected_model,
-            "candidate_models": rec.candidate_models,
-            "hyperparameters": rec.hyperparameters,
-            "metrics": rec.metrics,
-            "cv_scores": rec.cv_scores,
-            "training_time_s": rec.training_time_s,
-            "prediction_time_s": rec.prediction_time_s,
-            "memory_usage_mb": rec.memory_usage_mb,
-            "feature_importance": rec.feature_importance,
-            "artifacts": rec.artifacts,
-            "environment": rec.environment,
-            "status": rec.status,
-        }
+        if exp_id in self.experiments:
+            # Merge!
+            exp_data = self.experiments[exp_id]
+
+            exp_data["dataset_fingerprint"] = rec.dataset_fingerprint
+            exp_data["problem_type"] = rec.problem_type
+            exp_data["pipeline_id"] = rec.pipeline_id
+            exp_data["selected_model"] = rec.selected_model
+            exp_data["candidate_models"] = rec.candidate_models
+            exp_data["hyperparameters"] = rec.hyperparameters
+
+            # Merge metrics
+            existing_metrics = exp_data.get("metrics", {})
+            exp_data["metrics"] = {**existing_metrics, **rec.metrics}
+
+            exp_data["cv_scores"] = rec.cv_scores
+            exp_data["training_time_s"] = rec.training_time_s
+            exp_data["prediction_time_s"] = rec.prediction_time_s
+            exp_data["memory_usage_mb"] = rec.memory_usage_mb
+            exp_data["feature_importance"] = rec.feature_importance
+            exp_data["artifacts"] = rec.artifacts
+            exp_data["environment"] = rec.environment
+            exp_data["status"] = rec.status
+            exp_data["timestamp"] = rec.timestamp
+        else:
+            self.experiments[exp_id] = {
+                "experiment_id": rec.experiment_id,
+                "name": rec.experiment_id,
+                "timestamp": rec.timestamp,
+                "dataset_fingerprint": rec.dataset_fingerprint,
+                "problem_type": rec.problem_type,
+                "pipeline_id": rec.pipeline_id,
+                "selected_model": rec.selected_model,
+                "candidate_models": rec.candidate_models,
+                "hyperparameters": rec.hyperparameters,
+                "metrics": rec.metrics,
+                "cv_scores": rec.cv_scores,
+                "training_time_s": rec.training_time_s,
+                "prediction_time_s": rec.prediction_time_s,
+                "memory_usage_mb": rec.memory_usage_mb,
+                "feature_importance": rec.feature_importance,
+                "artifacts": rec.artifacts,
+                "environment": rec.environment,
+                "status": rec.status,
+                "runs": [],
+            }
+
         self._save()
         return rec
 
@@ -186,17 +216,57 @@ class ExperimentTracker:
 
     def get_or_create_experiment(self, name: str) -> Any:
         """SDK compatibility helper returning an experiment container object."""
+
         class _LegacyExpContainer:
             def __init__(self, exp_id: str, name: str):
                 self.experiment_id = exp_id
                 self.name = name
                 self.runs: list[Any] = []
 
+        # 1. First, check if name is an exact experiment_id (key in self.experiments)
+        if name in self.experiments:
+            data = self.experiments[name]
+            c = _LegacyExpContainer(name, data.get("name", name))
+            c.runs = [
+                DictAttributeWrapper(r) if isinstance(r, dict) else r
+                for r in data.get("runs", [])
+            ]
+            return c
+
+        # 2. Check if name looks like an explicit experiment_id (length 8 or UUID)
+        is_explicit_id = False
+        if len(name) == 8:
+            try:
+                int(name, 16)
+                is_explicit_id = True
+            except ValueError:
+                pass
+
+        if is_explicit_id:
+            c = _LegacyExpContainer(name, name)
+            return c
+
+        # 3. For legacy calls (e.g. project name or model name)
+        matches = []
         for exp_id, data in self.experiments.items():
-            if data.get("selected_model") == name or data.get("name") == name or exp_id == name:
-                c = _LegacyExpContainer(exp_id, name)
-                c.runs = [DictAttributeWrapper(r) if isinstance(r, dict) else r for r in data.get("runs", [])]
-                return c
+            if (
+                data.get("selected_model") == name
+                or data.get("name") == name
+                or exp_id == name
+            ):
+                matches.append((exp_id, data))
+
+        if matches:
+            matches = sorted(
+                matches, key=lambda x: x[1].get("timestamp", ""), reverse=True
+            )
+            exp_id, data = matches[0]
+            c = _LegacyExpContainer(exp_id, data.get("name", name))
+            c.runs = [
+                DictAttributeWrapper(r) if isinstance(r, dict) else r
+                for r in data.get("runs", [])
+            ]
+            return c
 
         c = _LegacyExpContainer(name, name)
         return c
@@ -204,18 +274,50 @@ class ExperimentTracker:
     def record_run(self, experiment_id: str, run_record: Any) -> None:
         """SDK compatibility helper for recording run objects."""
         run_data = _make_serializable(run_record)
+
+        problem_type = None
+        project_name = None
+        if hasattr(run_record, "metadata") and isinstance(run_record.metadata, dict):
+            problem_type = run_record.metadata.get("problem_type")
+            project_name = run_record.metadata.get("project_name")
+        if (
+            not problem_type
+            and isinstance(run_record, dict)
+            and "metadata" in run_record
+        ):
+            problem_type = run_record["metadata"].get("problem_type")
+            project_name = run_record["metadata"].get("project_name")
+
+        run_metrics: dict[str, float] = {}
+        if hasattr(run_record, "metrics") and run_record.metrics:
+            run_metrics = getattr(run_record.metrics, "metrics", {})
+        if not run_metrics and isinstance(run_record, dict) and "metrics" in run_record:
+            run_metrics = run_record["metrics"].get("metrics", {})
+
         if experiment_id not in self.experiments:
             self.experiments[experiment_id] = {
                 "experiment_id": str(experiment_id),
-                "name": str(experiment_id),
+                "name": project_name or str(experiment_id),
                 "timestamp": datetime.utcnow().isoformat(),
-                "metrics": getattr(getattr(run_record, "metrics", None), "metrics", {}),
+                "metrics": run_metrics,
                 "runs": [run_data],
             }
+            if problem_type:
+                self.experiments[experiment_id]["problem_type"] = problem_type
         else:
-            if "runs" not in self.experiments[experiment_id]:
-                self.experiments[experiment_id]["runs"] = []
-            self.experiments[experiment_id]["runs"].append(run_data)
+            exp_data = self.experiments[experiment_id]
+            if "runs" not in exp_data:
+                exp_data["runs"] = []
+            exp_data["runs"].append(run_data)
+
+            if project_name:
+                exp_data["name"] = project_name
+            if problem_type:
+                exp_data["problem_type"] = problem_type
+
+            existing_metrics = exp_data.get("metrics", {})
+            exp_data["metrics"] = {**existing_metrics, **run_metrics}
+
         self._save()
 
     def list_experiments(self) -> list[dict[str, Any]]:
