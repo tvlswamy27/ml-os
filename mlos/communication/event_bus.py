@@ -22,6 +22,7 @@ class ExecutionEvent:
     timestamp: datetime
     source: str
     payload: dict[str, Any]
+    run_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -30,6 +31,7 @@ class ExecutionEvent:
             "timestamp": self.timestamp.isoformat(),
             "source": self.source,
             "payload": self.payload,
+            "run_id": self.run_id,
         }
 
     @classmethod
@@ -40,6 +42,7 @@ class ExecutionEvent:
             timestamp=datetime.fromisoformat(data["timestamp"]),
             source=data["source"],
             payload=data.get("payload", {}),
+            run_id=data.get("run_id"),
         )
 
 
@@ -60,7 +63,32 @@ class GlobalEventBus:
     def __init__(self) -> None:
         if not hasattr(self, "_subscribers"):
             self._subscribers: dict[str, list[Callable[[ExecutionEvent], None]]] = {}
+            self._cancel_requests: set[str] = set()
             self._lock = threading.Lock()
+
+    def request_cancel(self, run_id: str) -> None:
+        """Register a cancellation request for a specific run ID."""
+        with self._lock:
+            if not hasattr(self, "_cancel_requests"):
+                self._cancel_requests = set()
+            self._cancel_requests.add(run_id)
+
+    def is_cancel_requested(self, run_id: str | None) -> bool:
+        """Check if cancellation has been requested for a run ID."""
+        if not run_id:
+            return False
+        with self._lock:
+            if not hasattr(self, "_cancel_requests"):
+                self._cancel_requests = set()
+            return run_id in self._cancel_requests
+
+    def clear_cancel_request(self, run_id: str) -> None:
+        """Clear the cancellation request for a run ID."""
+        with self._lock:
+            if not hasattr(self, "_cancel_requests"):
+                self._cancel_requests = set()
+            if run_id in self._cancel_requests:
+                self._cancel_requests.remove(run_id)
 
     def subscribe(
         self, event_type: str, callback: Callable[[ExecutionEvent], None]
@@ -83,7 +111,7 @@ class GlobalEventBus:
                     pass
 
     def publish(
-        self, event_type: str, source: str, payload: dict[str, Any]
+        self, event_type: str, source: str, payload: dict[str, Any], run_id: str | None = None
     ) -> ExecutionEvent:
         """Publish a new event to all matching subscribers."""
         event = ExecutionEvent(
@@ -92,6 +120,7 @@ class GlobalEventBus:
             timestamp=datetime.now(),
             source=source,
             payload=payload,
+            run_id=run_id or payload.get("run_id"),
         )
 
         # Collect subscribers under a lock, then call them outside of the lock
@@ -114,3 +143,5 @@ class GlobalEventBus:
         """Clear all subscribers."""
         with self._lock:
             self._subscribers.clear()
+            if hasattr(self, "_cancel_requests"):
+                self._cancel_requests.clear()

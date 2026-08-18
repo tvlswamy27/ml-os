@@ -109,6 +109,34 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
+    // Close tracker button
+    const btnCancelRun = document.getElementById("btn-cancel-run");
+    if (btnCancelRun) {
+        btnCancelRun.addEventListener("click", async () => {
+            if (!currentRunId) return;
+            const confirmCancel = confirm("Are you sure you want to request cooperative cancellation of the running pipeline?");
+            if (confirmCancel) {
+                try {
+                    const response = await fetch(`/api/project/run/cancel/${currentRunId}`, {
+                        method: "POST"
+                    });
+                    const data = await response.json();
+                    if (response.ok) {
+                        showToast("Cancellation request submitted. Waiting for backend to reach a checkpoint...", false);
+                        document.getElementById("pipeline-overall-status-badge").textContent = "Cancelling...";
+                        document.getElementById("pipeline-overall-status-badge").className = "badge warning";
+                    } else {
+                        const errMsg = data.error ? data.error.message : "Cancellation failed";
+                        showToast(errMsg, true);
+                    }
+                } catch (err) {
+                    showToast("Error requesting cancellation", true);
+                    console.error(err);
+                }
+            }
+        });
+    }
+
     // Global Modal Usability: Close modals on backdrop click
     const modalOverlays = document.querySelectorAll(".modal-overlay");
     modalOverlays.forEach(overlay => {
@@ -1401,7 +1429,24 @@ async function pollRunStatus(runId) {
             showToast("ML-OS Pipeline run succeeded!");
             fetchProjectMetadata();
 
+        } else if (data.status === "cancelled") {
+            clearInterval(runPollInterval);
+            document.getElementById("btn-run-pipeline").disabled = false;
+            document.getElementById("btn-run-pipeline").textContent = "Run ML Pipeline";
+            document.getElementById("btn-cancel-run").classList.add("hidden");
 
+            document.getElementById("pipeline-overall-status-badge").textContent = "Cancelled";
+            document.getElementById("pipeline-overall-status-badge").className = "badge warning";
+
+            document.getElementById("run-failed-stats").classList.remove("hidden");
+            document.getElementById("run-failed-error").textContent = data.error || "Execution cancelled by user.";
+            showToast("ML Pipeline execution was cancelled", false);
+
+            document.getElementById("mlos-thinking-active-stage-panel").classList.add("hidden");
+
+        } else if (data.status === "cancel_requested") {
+            document.getElementById("pipeline-overall-status-badge").textContent = "Cancelling...";
+            document.getElementById("pipeline-overall-status-badge").className = "badge warning";
 
         } else if (data.status === "failed") {
             clearInterval(runPollInterval);

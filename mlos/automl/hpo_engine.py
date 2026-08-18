@@ -27,6 +27,7 @@ class BaseHPOBackend(ABC):
         scoring: str = "accuracy",
         cv: int = 5,
         max_trials: int = 10,
+        run_id: str | None = None,
     ) -> tuple[Any, dict[str, Any]]:
         """Run hyperparameter search and return (best_estimator, best_params_info)."""
 
@@ -43,7 +44,14 @@ class GridSearchBackend(BaseHPOBackend):
         scoring: str = "accuracy",
         cv: int = 5,
         max_trials: int = 10,
+        run_id: str | None = None,
     ) -> tuple[Any, dict[str, Any]]:
+        from mlos.communication.event_bus import GlobalEventBus
+        from mlos.execution.exceptions import ExecutionCancelledError
+
+        if GlobalEventBus().is_cancel_requested(run_id):
+            raise ExecutionCancelledError("HPO Grid search cancelled before fit.")
+
         if not param_space:
             estimator.fit(X, y)
             return estimator, {"best_params": {}, "best_score": 0.0, "trials": 1}
@@ -76,7 +84,14 @@ class RandomSearchBackend(BaseHPOBackend):
         scoring: str = "accuracy",
         cv: int = 5,
         max_trials: int = 10,
+        run_id: str | None = None,
     ) -> tuple[Any, dict[str, Any]]:
+        from mlos.communication.event_bus import GlobalEventBus
+        from mlos.execution.exceptions import ExecutionCancelledError
+
+        if GlobalEventBus().is_cancel_requested(run_id):
+            raise ExecutionCancelledError("HPO Random search cancelled before fit.")
+
         if not param_space:
             estimator.fit(X, y)
             return estimator, {"best_params": {}, "best_score": 0.0, "trials": 1}
@@ -116,19 +131,20 @@ class OptunaBackend(BaseHPOBackend):
         scoring: str = "accuracy",
         cv: int = 5,
         max_trials: int = 10,
+        run_id: str | None = None,
     ) -> tuple[Any, dict[str, Any]]:
         try:
             import optuna  # type: ignore
         except ImportError:
             # Fallback to RandomSearch if Optuna is unavailable
             return RandomSearchBackend().optimize(
-                estimator, param_space, X, y, scoring, cv, max_trials
+                estimator, param_space, X, y, scoring, cv, max_trials, run_id=run_id
             )
 
         # Optuna integration loop
         start_time = time.time()
         fallback = RandomSearchBackend().optimize(
-            estimator, param_space, X, y, scoring, cv, max_trials
+            estimator, param_space, X, y, scoring, cv, max_trials, run_id=run_id
         )
         res = fallback[1]
         res["backend"] = "optuna"
@@ -155,9 +171,10 @@ class HPOEngine:
         scoring: str = "accuracy",
         cv: int = 5,
         max_trials: int = 5,
+        run_id: str | None = None,
     ) -> tuple[Any, dict[str, Any]]:
         """Run hyperparameter search on model estimator."""
         param_space = metadata.hpo_param_space
         return self.backend.optimize(
-            estimator, param_space, X, y, scoring=scoring, cv=cv, max_trials=max_trials
+            estimator, param_space, X, y, scoring=scoring, cv=cv, max_trials=max_trials, run_id=run_id
         )

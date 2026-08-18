@@ -159,7 +159,7 @@ class MLProject:
         if self.memory:
             update_project_config_from_memory(self.project_path, self.memory)
 
-    def run(self, experiment_id: str | None = None) -> MLProjectSession:
+    def run(self, experiment_id: str | None = None, run_id: str | None = None) -> MLProjectSession:
         """
         Execute the stage-based pipeline, auto-organizing outputs and logging lineage metrics.
         """
@@ -218,6 +218,7 @@ class MLProject:
             dataset_path=self.dataset_path or "",
             target=self.target_column or "",
             project_path=str(self.project_path),
+            run_id=run_id,
         )
 
         end_time = datetime.now()

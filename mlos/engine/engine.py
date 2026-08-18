@@ -402,6 +402,7 @@ class MLOSEngine:
         output_dir: str = "artifacts/automl",
         experiment_id: str | None = None,
         workspace_root: str | Path | None = None,
+        run_id: str | None = None,
     ):
         """
         Run end-to-end AutoML pipeline with experiment tracking, pipeline persistence,
@@ -444,7 +445,7 @@ class MLOSEngine:
 
         orchestrator = AutoMLOrchestrator(cv_folds=cv_folds)
         results, artifacts = orchestrator.run_automl(
-            dataframe, target_column=target_column, output_dir=output_dir
+            dataframe, target_column=target_column, output_dir=output_dir, run_id=run_id
         )
 
         successful = [r for r in results if r.status == "SUCCESS"]

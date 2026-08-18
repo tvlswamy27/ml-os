@@ -175,7 +175,7 @@ def test_api_run_pipeline_flow(client, tmp_path):
     status_response = client.get(f"/api/project/run/status/{run_id}")
     assert status_response.status_code == 200
     status_data = json.loads(status_response.data)
-    assert status_data["status"] in ["running", "success"]
+    assert status_data["status"] in ["queued", "running", "completed", "success"]
 
 
 def test_api_experiments_listing(client, tmp_path):

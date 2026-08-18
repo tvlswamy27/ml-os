@@ -9,7 +9,7 @@ import uuid
 import threadpoolctl
 from datetime import datetime
 from pathlib import Path
-from threading import Thread
+from threading import Thread, Lock
 from typing import Any, Dict
 
 from flask import Flask, jsonify, request, render_template, send_from_directory
@@ -38,7 +38,7 @@ app = Flask(
 
 # Background execution state store
 active_runs: Dict[str, Dict[str, Any]] = {}
-
+active_runs_lock = Lock()
 
 
 def get_active_project_path() -> Path:
@@ -455,27 +455,41 @@ def analyze_dataset():
 def background_run_pipeline(
     run_id: str, project_root: Path, dataset_path: str, target_column: str
 ):
-    """Executes the pipeline run in a background thread and updates progress state."""
-    active_runs[run_id] = {
-        "status": "running",
-        "current_stage": "Analysis",
-        "completed_stages": [],
-        "error": None,
-    }
+    """Executes the pipeline run in a background thread and updates progress state based on events."""
+    from mlos.communication.event_bus import GlobalEventBus
+    from mlos.execution.exceptions import ExecutionCancelledError
 
-    stages = [
-        "Analysis",
-        "Feature Intelligence",
-        "Meta Reasoning",
-        "Planning",
-        "Execution Runtime",
-        "Training",
-        "Evaluation",
-        "Explainability",
-        "Artifacts Generation",
-        "Experiment Tracking",
-        "Knowledge Capture",
-    ]
+    event_bus = GlobalEventBus()
+
+    # Event listener function
+    def on_event(event):
+        if event.run_id != run_id and event.payload.get("run_id") != run_id:
+            return
+
+        with active_runs_lock:
+            if run_id not in active_runs:
+                return
+            
+            run_info = active_runs[run_id]
+            # Prevent overwriting terminal state
+            if run_info.get("status") in ("completed", "failed", "cancelled"):
+                return
+
+            if event.event_type == "ExecutionStarted":
+                if run_info.get("status") == "queued":
+                    run_info["status"] = "running"
+            elif event.event_type == "StageStarted":
+                stage_name = event.payload.get("stage")
+                run_info["current_stage"] = stage_name
+            elif event.event_type == "StageCompleted":
+                stage_name = event.payload.get("stage")
+                if stage_name not in run_info["completed_stages"]:
+                    run_info["completed_stages"].append(stage_name)
+            elif event.event_type == "StageFailed":
+                stage_name = event.payload.get("stage")
+                run_info["failed_stage"] = stage_name
+
+    event_bus.subscribe("*", on_event)
 
     try:
         # Resolve absolute dataset path
@@ -494,58 +508,22 @@ def background_run_pipeline(
         )
 
         engine = MLOSEngine()
-        # Wire memory
         engine.project_memory = project.memory
 
-        # Let's execute the graph topological run. We will update stages dynamically as it runs.
-        # Since project.run() executes all stages sequentially inside one function,
-        # we will run it, but mock stage-by-stage progression updates to the UI,
-        # because the internal execution runtime is synchronous and fast in this ML-OS version.
-
-        # Step-by-step progress updating helper
-        def update_progress(current_stage_name: str, completed_list: list):
-            active_runs[run_id]["current_stage"] = current_stage_name
-            active_runs[run_id]["completed_stages"] = completed_list
-
-        # Simulate quick progression to show the UI timeline updating
-        update_progress("Analysis", [])
-        import time
-
-        time.sleep(0.5)
-
-        update_progress("Feature Intelligence", ["Analysis"])
-        time.sleep(0.5)
-
-        update_progress("Meta Reasoning", ["Analysis", "Feature Intelligence"])
-        time.sleep(0.5)
-
-        update_progress(
-            "Planning", ["Analysis", "Feature Intelligence", "Meta Reasoning"]
-        )
-        time.sleep(0.5)
-
         from mlos.experiment.ids import generate_experiment_id
-
         generated_exp_id = generate_experiment_id()
 
-        # Run SDK workflow stages now
-        update_progress(
-            "Execution Runtime",
-            ["Analysis", "Feature Intelligence", "Meta Reasoning", "Planning"],
-        )
-        session = project.run(experiment_id=generated_exp_id)
-        time.sleep(0.5)
+        # Check cooperative cancellation before starting Project.run
+        if event_bus.is_cancel_requested(run_id):
+            raise ExecutionCancelledError("Run cancelled before starting ExecutionRuntime.")
 
-        update_progress(
-            "Training",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-            ],
-        )
+        # Run SDK workflow stages
+        session = project.run(experiment_id=generated_exp_id, run_id=run_id)
+
+        # Check cooperative cancellation before starting AutoML
+        if event_bus.is_cancel_requested(run_id):
+            raise ExecutionCancelledError("Run cancelled before starting AutoML.")
+
         # Run AutoML search
         results, artifacts = engine.run_automl(
             str(path_resolved),
@@ -553,149 +531,204 @@ def background_run_pipeline(
             output_dir=str(project_root / "artifacts" / "automl"),
             experiment_id=generated_exp_id,
             workspace_root=project_root,
+            run_id=run_id,
         )
-        time.sleep(0.5)
 
-        update_progress(
-            "Evaluation",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-                "Training",
-            ],
-        )
-        time.sleep(0.5)
-
-        update_progress(
-            "Explainability",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-                "Training",
-                "Evaluation",
-            ],
-        )
-        time.sleep(0.5)
-
-        update_progress(
-            "Artifacts Generation",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-                "Training",
-                "Evaluation",
-                "Explainability",
-            ],
-        )
-        time.sleep(0.5)
-
-        update_progress(
-            "Experiment Tracking",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-                "Training",
-                "Evaluation",
-                "Explainability",
-                "Artifacts Generation",
-            ],
-        )
-        time.sleep(0.5)
-
-        update_progress(
-            "Knowledge Capture",
-            [
-                "Analysis",
-                "Feature Intelligence",
-                "Meta Reasoning",
-                "Planning",
-                "Execution Runtime",
-                "Training",
-                "Evaluation",
-                "Explainability",
-                "Artifacts Generation",
-                "Experiment Tracking",
-            ],
-        )
-        time.sleep(0.5)
+        # Final check cooperative cancellation
+        if event_bus.is_cancel_requested(run_id):
+            raise ExecutionCancelledError("Run cancelled after completing AutoML.")
 
         # Final success details
         eval_metrics = project.metrics()
 
-        # Load the latest experiment details from tracker to get correct experiment ID
         tracker = ExperimentTracker(project_root)
         exps = tracker.list_experiments()
         experiment_id = session.run.experiment_id
         if exps:
-            # Match latest
             latest_rec = sorted(
                 exps, key=lambda e: e.get("timestamp", ""), reverse=True
             )[0]
             experiment_id = latest_rec.get("experiment_id", experiment_id)
             eval_metrics = latest_rec.get("metrics", eval_metrics)
 
-        active_runs[run_id] = {
-            "status": "success",
-            "current_stage": None,
-            "completed_stages": stages,
-            "experiment_id": str(experiment_id),
-            "problem_type": (
-                project.memory.project_profile.problem_type
-                if (project.memory and project.memory.project_profile)
-                else "Classification"
-            ),
-            "execution_time_s": session.run.execution.duration_seconds,
-            "artifacts_count": len(project.artifacts()),
-            "metrics": eval_metrics,
-            "error": None,
-        }
+        with active_runs_lock:
+            # Prevent overwriting terminal state
+            if active_runs[run_id]["status"] not in ("completed", "failed", "cancelled"):
+                active_runs[run_id].update({
+                    "status": "completed",
+                    "current_stage": None,
+                    "completed_at": datetime.now().isoformat(),
+                    "experiment_id": str(experiment_id),
+                    "problem_type": (
+                        project.memory.project_profile.problem_type
+                        if (project.memory and project.memory.project_profile)
+                        else "Classification"
+                    ),
+                    "execution_time_s": session.run.execution.duration_seconds,
+                    "artifacts_count": len(project.artifacts()),
+                    "metrics": eval_metrics,
+                    "error": None,
+                })
 
+    except ExecutionCancelledError as e:
+        print(f"Pipeline cooperative cancellation triggered: {e}", file=sys.stderr)
+        with active_runs_lock:
+            # Prevent overwriting terminal state
+            if active_runs[run_id]["status"] not in ("completed", "failed", "cancelled"):
+                active_runs[run_id].update({
+                    "status": "cancelled",
+                    "current_stage": None,
+                    "error": str(e),
+                    "completed_at": datetime.now().isoformat(),
+                })
     except Exception as e:
         import traceback
-
         print(f"Pipeline background execution error: {e}", file=sys.stderr)
         traceback.print_exc()
-        active_runs[run_id] = {
-            "status": "failed",
-            "current_stage": None,
-            "completed_stages": [],
-            "error": str(e),
-        }
+
+        with active_runs_lock:
+            # Prevent overwriting terminal state
+            if active_runs[run_id]["status"] not in ("completed", "failed", "cancelled"):
+                current_run_state = active_runs.get(run_id, {})
+                failed_stage = current_run_state.get("current_stage")
+                completed_stages = current_run_state.get("completed_stages", [])
+
+                active_runs[run_id].update({
+                    "status": "failed",
+                    "current_stage": failed_stage,
+                    "completed_stages": completed_stages,
+                    "failed_stage": failed_stage,
+                    "error": str(e),
+                    "completed_at": datetime.now().isoformat(),
+                })
+    finally:
+        # Clean up run-scoped listener and cancel request
+        event_bus.unsubscribe("*", on_event)
+        event_bus.clear_cancel_request(run_id)
 
 
 @app.route("/api/project/run", methods=["POST"])
 def run_pipeline():
     """Start background ML pipeline execution."""
     try:
-        data = request.json or {}
+        if request.content_length and request.content_length > 0 and not request.is_json:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Content-Type must be application/json"
+                }
+            }), 415
+
+        try:
+            data = request.get_json() or {}
+        except BadRequest:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_JSON",
+                    "message": "Request body must contain valid JSON."
+                }
+            }), 400
+
         dataset_path = data.get("dataset_path")
         target_column = data.get("target_column")
 
         if not dataset_path:
-            return jsonify({"error": "Dataset path is required"}), 400
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset path is required"
+                }
+            }), 400
 
         project_root = get_active_project_path()
         if not (project_root / ".mlos").is_dir():
-            return (
-                jsonify(
-                    {"error": "No project initialized. Initialize a project first."}
-                ),
-                400,
-            )
+            return jsonify({
+                "error": {
+                    "code": "PROJECT_NOT_FOUND",
+                    "message": "No project initialized. Initialize a project first."
+                }
+            }), 400
 
-        run_id = str(uuid.uuid4())
+        # Resolve path
+        path_resolved = Path(dataset_path)
+        if not path_resolved.is_absolute():
+            path_resolved = (project_root / dataset_path).resolve()
+
+        # Workspace isolation check
+        try:
+            path_resolved.relative_to(project_root)
+        except ValueError:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset outside workspace"
+                }
+            }), 400
+
+        if not path_resolved.exists():
+            return jsonify({
+                "error": {
+                    "code": "DATASET_NOT_FOUND",
+                    "message": f"Dataset file does not exist at: {path_resolved}"
+                }
+            }), 404
+
+        # Verify dataset format
+        suffix = path_resolved.suffix.lower()
+        if suffix not in [".csv", ".parquet"]:
+            return jsonify({
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": "Unsupported file type. Only CSV and Parquet are supported."
+                }
+            }), 400
+
+        try:
+            if suffix == ".csv":
+                df_temp = pd.read_csv(path_resolved, nrows=2)
+            else:
+                df_temp = pd.read_parquet(path_resolved)
+
+            if target_column and target_column not in df_temp.columns:
+                return jsonify({
+                    "error": {
+                        "code": "TARGET_NOT_FOUND",
+                        "message": f"Target column '{target_column}' not found in dataset."
+                    }
+                }), 400
+        except Exception as read_err:
+            return jsonify({
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": f"Failed to read dataset: {str(read_err)}"
+                }
+            }), 400
+
+        # Check if a run is already active
+        with active_runs_lock:
+            active_running = [
+                rid for rid, info in active_runs.items() 
+                if info.get("status") in ("queued", "running", "cancel_requested")
+            ]
+            if active_running:
+                return jsonify({
+                    "error": {
+                        "code": "RUN_ALREADY_ACTIVE",
+                        "message": f"A pipeline run is already active (Run ID: {active_running[0]})."
+                    }
+                }), 400
+
+            run_id = str(uuid.uuid4())
+
+            active_runs[run_id] = {
+                "run_id": run_id,
+                "status": "queued",
+                "current_stage": None,
+                "completed_stages": [],
+                "started_at": datetime.now().isoformat(),
+                "completed_at": None,
+                "error": None,
+            }
 
         # Start execution in a background thread
         thread = Thread(
@@ -709,16 +742,60 @@ def run_pipeline():
         )
 
     except Exception as e:
-        return jsonify({"error": f"Failed to start pipeline: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to start pipeline: {str(e)}"
+            }
+        }), 500
 
 
 @app.route("/api/project/run/status/<run_id>", methods=["GET"])
 def get_run_status(run_id):
     """Poll the status of an active pipeline execution."""
-    if run_id not in active_runs:
-        return jsonify({"error": "Run ID not found"}), 404
-    return jsonify(active_runs[run_id])
+    with active_runs_lock:
+        if run_id not in active_runs:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Run ID not found"
+                }
+            }), 404
+        return jsonify(active_runs[run_id])
 
+
+@app.route("/api/project/run/cancel/<run_id>", methods=["POST"])
+def cancel_run(run_id):
+    """Request cooperative cancellation of a pipeline run."""
+    with active_runs_lock:
+        if run_id not in active_runs:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Run ID not found"
+                }
+            }), 404
+
+        run_info = active_runs[run_id]
+        status = run_info.get("status")
+
+        if status in ("completed", "failed", "cancelled"):
+            return jsonify({
+                "error": {
+                    "code": "INVALID_STATE",
+                    "message": f"Cannot cancel run in {status} state."
+                }
+            }), 400
+
+        from mlos.communication.event_bus import GlobalEventBus
+        GlobalEventBus().request_cancel(run_id)
+        run_info["status"] = "cancel_requested"
+
+        return jsonify({
+            "run_id": run_id,
+            "status": "cancel_requested",
+            "message": "Cancellation request submitted."
+        })
 
 
 @app.route("/api/experiments", methods=["GET"])

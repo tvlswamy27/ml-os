@@ -53,18 +53,47 @@ class AutoMLOrchestrator:
         dataframe: pd.DataFrame,
         target_column: str | None = None,
         output_dir: Path | str = "artifacts/automl",
+        run_id: str | None = None,
     ) -> tuple[list[ModelResult], dict[str, str]]:
         """
         Run end-to-end AutoML execution on a dataset.
         """
+        from mlos.communication.event_bus import GlobalEventBus
+        from mlos.execution.exceptions import ExecutionCancelledError
+
+        event_bus = GlobalEventBus()
+        if event_bus.is_cancel_requested(run_id):
+            raise ExecutionCancelledError("AutoML execution cancelled before starting.")
+
+        event_bus.publish(
+            event_type="ExecutionStarted",
+            source="AutoMLOrchestrator",
+            payload={"run_id": run_id},
+            run_id=run_id,
+        )
+
         out_path = Path(output_dir)
         out_path.mkdir(parents=True, exist_ok=True)
+
+        event_bus.publish(
+            event_type="StageStarted",
+            source="AutoMLOrchestrator",
+            payload={"stage": "AutoML: Model Recommendation"},
+            run_id=run_id,
+        )
 
         # 1. Dataset Intelligence
         dataset = self.analyzer.analyze(dataframe, target=target_column)
 
         # 2. Model Recommendation
         recommendations = self.recommender.recommend(dataset)
+
+        event_bus.publish(
+            event_type="StageCompleted",
+            source="AutoMLOrchestrator",
+            payload={"stage": "AutoML: Model Recommendation"},
+            run_id=run_id,
+        )
 
         available_recs = [r for r in recommendations if r.is_available][
             : self.top_n_models
@@ -83,9 +112,19 @@ class AutoMLOrchestrator:
 
         # 3. Model Training & Evaluation Loop
         for rec in available_recs:
+            if event_bus.is_cancel_requested(run_id):
+                raise ExecutionCancelledError("AutoML execution cancelled before candidate model evaluation.")
+
             meta = rec.metadata
             if not meta:
                 continue
+
+            event_bus.publish(
+                event_type="StageStarted",
+                source="AutoMLOrchestrator",
+                payload={"stage": f"AutoML: Evaluating {meta.name}"},
+                run_id=run_id,
+            )
 
             plan = self.planner.plan_and_build(dataset, meta)
             try:
@@ -126,13 +165,36 @@ class AutoMLOrchestrator:
                 # Measure training time & CV score
                 start_train = time.time()
                 if y_processed is not None:
-                    cv_scores = cross_val_score(
-                        estimator,
-                        X_processed,
-                        y_processed,
-                        cv=cv_splitter,
-                        scoring=scoring,
-                    )
+                    cv_scores = []
+                    for fold_idx, (train_idx, test_idx) in enumerate(cv_splitter.split(X_processed, y_processed)):
+                        if event_bus.is_cancel_requested(run_id):
+                            raise ExecutionCancelledError(f"AutoML execution cancelled before CV fold {fold_idx + 1}.")
+                        
+                        from sklearn.base import clone
+                        fold_estimator = clone(estimator)
+
+                        if isinstance(X_processed, np.ndarray):
+                            X_train_f, X_test_f = X_processed[train_idx], X_processed[test_idx]
+                        else:
+                            X_train_f, X_test_f = X_processed.iloc[train_idx], X_processed.iloc[test_idx]
+                        y_train_f, y_test_f = y_processed[train_idx], y_processed[test_idx]
+
+                        fold_estimator.fit(X_train_f, y_train_f)
+
+                        if scoring == "accuracy":
+                            from sklearn.metrics import accuracy_score
+                            pred_f = fold_estimator.predict(X_test_f)
+                            score_f = accuracy_score(y_test_f, pred_f)
+                        elif scoring == "neg_mean_squared_error":
+                            from sklearn.metrics import mean_squared_error
+                            pred_f = fold_estimator.predict(X_test_f)
+                            score_f = -mean_squared_error(y_test_f, pred_f)
+                        else:
+                            score_f = fold_estimator.score(X_test_f, y_test_f)
+
+                        cv_scores.append(score_f)
+                    
+                    cv_scores = np.array(cv_scores)
                     if scoring == "neg_mean_squared_error":
                         cv_scores = np.sqrt(np.abs(cv_scores))
                 else:
@@ -141,6 +203,9 @@ class AutoMLOrchestrator:
                 train_duration = time.time() - start_train
 
                 # HPO Optimization
+                if event_bus.is_cancel_requested(run_id):
+                    raise ExecutionCancelledError("AutoML execution cancelled before HPO search.")
+
                 fitted_model, hpo_info = self.hpo_engine.run_hpo(
                     estimator,
                     meta,
@@ -148,7 +213,11 @@ class AutoMLOrchestrator:
                     y_processed,
                     scoring=scoring,
                     cv=self.cv_folds,
+                    run_id=run_id,
                 )
+
+                if event_bus.is_cancel_requested(run_id):
+                    raise ExecutionCancelledError("AutoML execution cancelled after HPO search.")
 
                 # Measure inference speed
                 start_pred = time.time()
@@ -196,7 +265,16 @@ class AutoMLOrchestrator:
 
                 results.append(res)
 
+                event_bus.publish(
+                    event_type="StageCompleted",
+                    source="AutoMLOrchestrator",
+                    payload={"stage": f"AutoML: Evaluating {meta.name}"},
+                    run_id=run_id,
+                )
+
             except Exception as e:
+                if isinstance(e, ExecutionCancelledError):
+                    raise e
                 results.append(
                     ModelResult(
                         model_id=meta.model_id,
@@ -207,6 +285,16 @@ class AutoMLOrchestrator:
                 )
 
         # 4. Generate Reports & Artifacts
+        if event_bus.is_cancel_requested(run_id):
+            raise ExecutionCancelledError("AutoML execution cancelled before reports generation.")
+
+        event_bus.publish(
+            event_type="StageStarted",
+            source="AutoMLOrchestrator",
+            payload={"stage": "AutoML: Generating Reports"},
+            run_id=run_id,
+        )
+
         dataset_info = {
             "path": dataset.path or "Input DataFrame",
             "rows": dataset.rows,
@@ -257,5 +345,19 @@ class AutoMLOrchestrator:
         bench_path = out_path / "benchmark_metadata.json"
         bench_path.write_text(json.dumps(bench_meta, indent=2), encoding="utf-8")
         generated_artifacts["benchmark_metadata"] = str(bench_path)
+
+        event_bus.publish(
+            event_type="StageCompleted",
+            source="AutoMLOrchestrator",
+            payload={"stage": "AutoML: Generating Reports"},
+            run_id=run_id,
+        )
+
+        event_bus.publish(
+            event_type="ExecutionCompleted",
+            source="AutoMLOrchestrator",
+            payload={"run_id": run_id},
+            run_id=run_id,
+        )
 
         return results, generated_artifacts

@@ -79,11 +79,13 @@ class ExecutionRuntime:
         dataset_path: str,
         target: str,
         project_path: str | None = None,
+        run_id: str | None = None,
     ) -> dict[str, Any]:
         """
         Sort and run the stages topologically, sharing context and notifying the Event Bus.
         """
         from mlos.communication.event_bus import GlobalEventBus
+        from mlos.execution.exceptions import ExecutionCancelledError
 
         event_bus = GlobalEventBus()
         topo_order = graph.topological_sort()
@@ -105,15 +107,20 @@ class ExecutionRuntime:
             event_type="ExecutionStarted",
             source="ExecutionRuntime",
             payload={"project_name": memory.project_name, "stages": topo_order},
+            run_id=run_id,
         )
 
         for name in topo_order:
             stage = graph.stages[name]
 
+            if event_bus.is_cancel_requested(run_id):
+                raise ExecutionCancelledError(f"Execution runtime cancelled before stage: {name}")
+
             event_bus.publish(
                 event_type="StageStarted",
                 source="ExecutionRuntime",
                 payload={"stage": name},
+                run_id=run_id,
             )
 
             try:
@@ -128,12 +135,16 @@ class ExecutionRuntime:
                         "status": "SUCCESS",
                         "details": str(result),
                     },
+                    run_id=run_id,
                 )
             except Exception as e:
+                if isinstance(e, ExecutionCancelledError):
+                    raise e
                 event_bus.publish(
                     event_type="StageFailed",
                     source="ExecutionRuntime",
                     payload={"stage": name, "status": "FAILED", "error": str(e)},
+                    run_id=run_id,
                 )
 
                 event_bus.publish(
@@ -144,6 +155,7 @@ class ExecutionRuntime:
                         "failed_stage": name,
                         "error": str(e),
                     },
+                    run_id=run_id,
                 )
                 raise e
 
@@ -161,6 +173,7 @@ class ExecutionRuntime:
             event_type="ExecutionCompleted",
             source="ExecutionRuntime",
             payload={"project_name": memory.project_name},
+            run_id=run_id,
         )
 
         # Store context in results dict for downstream extraction of artifacts/metrics
