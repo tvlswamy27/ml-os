@@ -205,6 +205,7 @@ class MLOSEngine:
         project_path = self.project_service.create_project(
             name=name, destination=destination
         )
+        self.project_path = project_path
         proj_name = name or (
             Path(project_path).name if project_path else "DefaultProject"
         )
@@ -302,7 +303,8 @@ class MLOSEngine:
             self.project_memory_service.update_generated_codes(
                 self.project_memory, generated_codes
             )
-        return self.assembly_service.assemble(self.project_memory)
+        project_root = getattr(self, "project_path", None)
+        return self.assembly_service.assemble(self.project_memory, project_root=project_root)
 
     def evaluate(self) -> EvaluationSession:
         """Evaluate the execution outputs of the pipeline."""
@@ -424,7 +426,23 @@ class MLOSEngine:
             # If dataset file is missing (e.g. mocked SDK test), return empty results gracefully
             return [], {}
 
-        orchestrator = AutoMLOrchestrator()
+        # Determine number of CV folds dynamically based on small sample counts
+        cv_folds = 5
+        if target_column and target_column in dataframe.columns:
+            non_null_y = dataframe[target_column].dropna()
+            if non_null_y.nunique() > 1:
+                class_counts = non_null_y.value_counts()
+                min_class_count = int(class_counts.min())
+                if min_class_count < 5:
+                    cv_folds = max(2, min_class_count)
+            else:
+                if len(dataframe) < 5:
+                    cv_folds = max(2, len(dataframe))
+        else:
+            if len(dataframe) < 5:
+                cv_folds = max(2, len(dataframe))
+
+        orchestrator = AutoMLOrchestrator(cv_folds=cv_folds)
         results, artifacts = orchestrator.run_automl(
             dataframe, target_column=target_column, output_dir=output_dir
         )
@@ -506,6 +524,37 @@ class MLOSEngine:
                 stage="staging",
                 notes=f"AutoML top candidate for experiment {exp_record.experiment_id}",
             )
+
+        # Register Model Selection Decision in ProjectMemory
+        if best_res and self.project_memory:
+            from mlos.cli.persistence import update_project_config_from_memory
+            from mlos.domain.models.decision import Decision
+            from mlos.models.catalog import ModelCatalog
+            
+            model_dec = None
+            for dec in self.project_memory.decisions:
+                if "model selection" in dec.title.lower() or dec.title.startswith("Model Selection"):
+                    model_dec = dec
+                    break
+            
+            if model_dec:
+                self.project_memory.decisions.remove(model_dec)
+
+            best_params = best_res.hpo_result.get("best_params") if best_res.hpo_result else {}
+            if not best_params:
+                catalog_entry = ModelCatalog.get(best_res.model_id)
+                best_params = catalog_entry.default_parameters if catalog_entry else {}
+
+            new_dec = Decision(
+                title=f"Model Selection: {best_res.model_name}",
+                strategy=best_res.model_id,
+                confidence="High",
+                reason=f"Selected model is {best_res.model_name} with CV score {best_res.cv_mean:.4f}.",
+                columns=[self.project_memory.dataset.target] if (self.project_memory.dataset and self.project_memory.dataset.target) else [],
+                parameters=best_params
+            )
+            self.project_memory.decisions.append(new_dec)
+            update_project_config_from_memory(w_root, self.project_memory)
 
         # Lineage Tracking
         lineage_tracker = LineageTracker()

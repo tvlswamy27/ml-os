@@ -50,6 +50,6 @@ class GeneratorEngine:
             generator = registry.get(dtype)
             if generator is not None:
                 if generator.can_generate(decision):
-                    generated.append(generator.generate(decision))
+                    generated.append(generator.generate(decision, context))
 
         return generated

@@ -74,6 +74,7 @@ class MissingValueDecision(BaseStrategy):
                     strategy=strategy,
                     confidence=confidence,
                     reason=reason,
+                    columns=[column],
                 )
             )
 

@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ML-OS Studio</title>
+    <!-- Inline SVG Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
     <!-- Google Fonts: Outfit and Fira Code -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,11 +14,47 @@
 </head>
 <body>
 
-    <!-- Init Screen Overlay: Appears if no project is initialized -->
+    <!-- Welcome / Init Onboarding Overlay -->
     <div id="init-project-overlay" class="overlay-container hidden">
-        <div class="overlay-card">
-            <h2>No ML-OS Project Found</h2>
-            <p class="subtitle">Initialize an ML-OS workspace in the current directory or specify a target path.</p>
+        <div class="overlay-card" id="onboarding-step-welcome">
+            <h2>Welcome to ML-OS Studio</h2>
+            <p class="subtitle dim-text">Your AI-powered machine learning engineering workspace. ML-OS helps you understand your data, plan the solution, compare models, and learn from results.</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 24px;">
+                <button id="btn-onboard-start" class="btn btn-primary" style="width: 100%; justify-content: flex-start;">
+                    <span>🚀</span>
+                    <div style="text-align: left;">
+                        <div class="bold-text">Start a New Project</div>
+                        <div class="dim-text" style="font-size: 11px; font-weight: normal;">Bring a dataset and build an ML solution.</div>
+                    </div>
+                </button>
+                
+                <button id="btn-onboard-open" class="btn btn-secondary" style="width: 100%; justify-content: flex-start;">
+                    <span>📂</span>
+                    <div style="text-align: left;">
+                        <div class="bold-text">Open Existing Project</div>
+                        <div class="dim-text" style="font-size: 11px; font-weight: normal;">Continue where you left off.</div>
+                    </div>
+                </button>
+                
+                <button id="btn-onboard-tour" class="btn btn-secondary" style="width: 100%; justify-content: flex-start;">
+                    <span>💡</span>
+                    <div style="text-align: left;">
+                        <div class="bold-text">Learn ML-OS (60-Sec Tour)</div>
+                        <div class="dim-text" style="font-size: 11px; font-weight: normal;">Take a guided tour of the ML lifecycle.</div>
+                    </div>
+                </button>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; margin-top: 24px;">
+                <button id="btn-skip-onboarding" class="btn btn-secondary" style="font-size: 12px; padding: 4px 12px;">Skip Onboarding</button>
+            </div>
+        </div>
+
+        <!-- Project Initialization Card inside overlay -->
+        <div class="overlay-card hidden" id="onboarding-step-init">
+            <h2>Initialize ML-OS Project</h2>
+            <p class="subtitle">Specify the configuration parameters for this ML workspace.</p>
 
             <div class="form-group">
                 <label for="init-name">Project Name</label>
@@ -29,18 +67,21 @@
             </div>
 
             <div class="form-group">
-                <label for="init-path">Workspace Destination (Optional)</label>
+                <label for="init-path">Workspace Path (Optional)</label>
                 <input type="text" id="init-path" placeholder="Leave empty for current directory">
             </div>
 
             <div class="error-msg hidden" id="init-error"></div>
 
-            <button id="btn-init-project" class="btn btn-primary">Initialize Project</button>
+            <div style="display: flex; justify-content: space-between; margin-top: 24px;">
+                <button id="btn-back-to-welcome" class="btn btn-secondary">Back</button>
+                <button id="btn-init-project" class="btn btn-primary">Initialize Project</button>
+            </div>
         </div>
     </div>
 
-    <!-- Notification Toast -->
-    <div id="toast" class="toast hidden"></div>
+    <!-- Notification Toast Container -->
+    <div id="toast-container"></div>
 
     <div class="app-container">
 
@@ -54,69 +95,85 @@
 
             <nav class="sidebar-nav">
                 <ul class="nav-list">
-                    <li class="nav-item active" data-page="dashboard">
+                    <li class="nav-header">PROJECT</li>
+                    <li class="nav-item active" data-page="dashboard" role="button" tabindex="0">
                         <span class="nav-icon">🏠</span> Dashboard
                     </li>
-                    <li class="nav-item" data-page="analyze">
+
+                    <li class="nav-header">DATA</li>
+                    <li class="nav-item" data-page="analyze" role="button" tabindex="0">
                         <span class="nav-icon">📊</span> Analyze Dataset
                     </li>
-                    <li class="nav-item" data-page="run">
-                        <span class="nav-icon">▶</span> Run Pipeline
-                    </li>
-                    <li class="nav-item" data-page="experiments">
-                        <span class="nav-icon">🧪</span> Experiments
-                    </li>
-
-                    <li class="nav-divider"></li>
-
-                    <!-- Non-functional pages for v0.1 -->
-                    <li class="nav-item nav-future" data-page="features">
+                    <li class="nav-item nav-future" data-page="features" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">🧠</span> Features
                     </li>
-                    <li class="nav-item nav-future" data-page="planning">
+
+                    <li class="nav-header">BUILD</li>
+                    <li class="nav-item nav-future" data-page="planning" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">🧩</span> Planning
                     </li>
-                    <li class="nav-item nav-future" data-page="models">
+                    <li class="nav-item" data-page="run" role="button" tabindex="0">
+                        <span class="nav-icon">▶</span> Run Pipeline
+                    </li>
+                    <li class="nav-item nav-future" data-page="models" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">🤖</span> Models
                     </li>
-                    <li class="nav-item nav-future" data-page="pipelines">
+
+                    <li class="nav-header">UNDERSTAND</li>
+                    <li class="nav-item" data-page="experiments" role="button" tabindex="0">
+                        <span class="nav-icon">🧪</span> Experiments
+                    </li>
+                    <li class="nav-item nav-future" data-page="pipelines" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">⚙</span> Pipelines
                     </li>
-                    <li class="nav-item nav-future" data-page="lineage">
+                    <li class="nav-item nav-future" data-page="lineage" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">🔗</span> Lineage
                     </li>
-                    <li class="nav-item nav-future" data-page="artifacts">
+                    <li class="nav-item nav-future" data-page="artifacts" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">📦</span> Artifacts
                     </li>
-                    <li class="nav-item nav-future" data-page="knowledge">
+                    <li class="nav-item nav-future" data-page="knowledge" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">💡</span> Knowledge
                     </li>
-                    <li class="nav-item nav-future" data-page="telemetry">
+                    <li class="nav-item nav-future" data-page="telemetry" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">📈</span> Telemetry
                     </li>
 
                     <li class="nav-divider"></li>
 
-                    <li class="nav-item nav-future" data-page="settings">
+                    <li class="nav-header">SYSTEM</li>
+                    <li class="nav-item nav-future" data-page="settings" role="button" tabindex="0" title="Coming in a future milestone">
                         <span class="nav-icon">🛠</span> Settings
                     </li>
                 </ul>
             </nav>
         </aside>
 
-        <!-- Main Workspace -->
+        <!-- Main Workspace Content -->
         <main class="main-content">
 
             <!-- Top Navigation Bar -->
             <header class="top-bar">
                 <div class="project-info">
+                    <button id="sidebar-toggle" class="hamburger-toggle" style="display: none;" aria-label="Toggle navigation">☰</button>
                     <span class="meta-label">Project:</span>
                     <span id="active-project-name" class="meta-value">Loading...</span>
                 </div>
-                <div class="system-status">
-                    <span class="meta-label">Status:</span>
-                    <span id="system-status-indicator" class="status-dot dot-inactive"></span>
-                    <span id="system-status-text" class="meta-value">Inactive</span>
+                
+                <!-- Learn Mode toggle switcher -->
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <div class="learn-mode-toggle-container">
+                        <span class="meta-label">Learn Mode</span>
+                        <label class="switch" aria-label="Toggle Learn Mode">
+                            <input type="checkbox" id="learn-mode-checkbox">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    <div class="system-status">
+                        <span class="meta-label">Status:</span>
+                        <span id="system-status-indicator" class="status-dot dot-inactive"></span>
+                        <span id="system-status-text" class="meta-value">Inactive</span>
+                    </div>
                 </div>
             </header>
 
@@ -140,13 +197,34 @@
 
                     <!-- Dashboard Content -->
                     <div id="dashboard-content" class="dashboard-grid">
+                        
+                        <!-- Hero summary card -->
+                        <div class="card col-span-2" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(15, 23, 42, 0.5) 100%);">
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                                <div>
+                                    <h2 id="dash-hero-title" style="font-size: 22px; font-weight: 700; color: var(--text-primary);">Project Name</h2>
+                                    <p id="dash-hero-desc" class="dim-text" style="margin-top: 4px; font-size: 13px;">Binary Classification • Predicting Target</p>
+                                </div>
+                                <div style="display: flex; gap: 8px;">
+                                    <button class="btn btn-secondary btn-sm" style="font-size: 12px; padding: 6px 12px;" onclick="switchPage('analyze')">Analyze Dataset</button>
+                                    <button id="dash-btn-continue" class="btn btn-primary btn-sm" style="font-size: 12px; padding: 6px 12px;" onclick="switchPage('run')">Continue Project →</button>
+                                </div>
+                            </div>
 
-                        <!-- Metric Overview Cards -->
+                            <!-- Learn Mode Educational Overlay -->
+                            <div class="learn-mode-content hidden">
+                                <h5>💡 Getting Started with ML-OS</h5>
+                                ML-OS automates your machine learning process while explaining each step. Now that your project is initialized, you should first run the **Analyze Dataset** step to extract initial intelligence, features, and model suggestions.
+                            </div>
+                        </div>
+
+                        <!-- Workspace Path -->
                         <div class="card card-summary">
                             <h3>Workspace Path</h3>
                             <p id="dash-project-path" class="path-text">---</p>
                         </div>
 
+                        <!-- Problem configuration details -->
                         <div class="card card-summary">
                             <h3>Problem Configuration</h3>
                             <div class="summary-item">
@@ -158,11 +236,12 @@
                                 <span id="dash-dataset" class="value">---</span>
                             </div>
                             <div class="summary-item">
-                                <span class="label">Target:</span>
+                                <span class="label">Target Column:</span>
                                 <span id="dash-target" class="value">---</span>
                             </div>
                         </div>
 
+                        <!-- Dataset Profiling metrics -->
                         <div class="card card-summary">
                             <h3>Dataset Profile</h3>
                             <div class="summary-item">
@@ -175,6 +254,7 @@
                             </div>
                         </div>
 
+                        <!-- Registry snapshot status -->
                         <div class="card card-summary">
                             <h3>Registry Snapshot</h3>
                             <div class="summary-item">
@@ -191,11 +271,53 @@
                             </div>
                         </div>
 
+                        <!-- Progress journey checklist visualizer -->
+                        <div class="card col-span-2">
+                            <h3>Project Journey Progress</h3>
+                            
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-top: 12px;" id="dash-journey-grid">
+                                <!-- Steps will be listed dynamically with click to open description -->
+                                <div class="importance-row-card" onclick="showJourneyDetail('understand')">
+                                    <div class="importance-meta">
+                                        <span>01 Understand</span>
+                                        <span class="badge success" id="journey-status-0">Complete</span>
+                                    </div>
+                                    <div class="dim-text" style="font-size: 11px;">Dataset Profiling Analysis</div>
+                                </div>
+                                <div class="importance-row-card" onclick="showJourneyDetail('prepare')">
+                                    <div class="importance-meta">
+                                        <span>02 Prepare</span>
+                                        <span class="badge warning" id="journey-status-1">Ready</span>
+                                    </div>
+                                    <div class="dim-text" style="font-size: 11px;">Feature Engineering</div>
+                                </div>
+                                <div class="importance-row-card" onclick="showJourneyDetail('plan')">
+                                    <div class="importance-meta">
+                                        <span>03 Plan</span>
+                                        <span class="badge" id="journey-status-2">Pending</span>
+                                    </div>
+                                    <div class="dim-text" style="font-size: 11px;">ML Strategy Planning</div>
+                                </div>
+                                <div class="importance-row-card" onclick="showJourneyDetail('build')">
+                                    <div class="importance-meta">
+                                        <span>04 Build</span>
+                                        <span class="badge" id="journey-status-3">Pending</span>
+                                    </div>
+                                    <div class="dim-text" style="font-size: 11px;">Model Training Battle</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Journey explanations -->
+                            <div id="journey-explanation-card" class="learn-mode-content hidden">
+                                <h5>💡 Stage Details</h5>
+                                <p id="journey-explanation-text">Select a stage card to understand its purpose in the pipeline.</p>
+                            </div>
+                        </div>
+
                         <!-- Latest Performance Section -->
                         <div class="card col-span-2">
                             <h3>Latest Run Metrics</h3>
                             <div id="dashboard-metrics-container" class="metrics-grid">
-                                <!-- Populated dynamically -->
                                 <p class="dim-text">No metrics logged yet.</p>
                             </div>
                         </div>
@@ -235,13 +357,14 @@
 
                     <div class="columns-grid">
 
-                        <!-- Inputs Card -->
+                        <!-- Inputs Configuration -->
                         <div class="card">
                             <h3>Configure Data Analysis</h3>
 
                             <div class="form-group">
                                 <label for="analyze-dataset-path">Dataset Path (Absolute or Relative to Workspace)</label>
-                                <input type="text" id="analyze-dataset-path" placeholder="e.g. playground/data/titanic.csv">
+                                <input type="text" id="analyze-dataset-path" list="workspace-files-list" placeholder="e.g. playground/data/titanic.csv">
+                                <div id="analyze-dataset-val-msg" class="validation-msg"></div>
                             </div>
 
                             <div class="form-group">
@@ -249,22 +372,75 @@
                                 <input type="text" id="analyze-target" placeholder="e.g. Survived">
                             </div>
 
-                            <button id="btn-run-analysis" class="btn btn-primary">Analyze Dataset</button>
+                            <button id="btn-run-analysis" class="btn btn-primary" style="width: 100%;">Analyze Dataset</button>
+                            
+                            <!-- Analysis Explanations inside Learn Mode -->
+                            <div class="learn-mode-content hidden">
+                                <h5>💡 Why Analyze first?</h5>
+                                Before building any model, we must understand data characteristics. Different algorithms require specific pre-processing (e.g., handling missing values, scaling features, or encoding categories). Analysis extracts this intelligence automatically.
+                            </div>
                         </div>
 
-                        <!-- Results Card -->
+                        <!-- Profiling Steps / Results -->
                         <div class="card col-span-2">
                             <h3>Analysis Summary</h3>
+                            
+                            <!-- Empty / Not Analyzed State -->
                             <div id="analysis-empty-state" class="center-content py-4">
                                 <p class="dim-text">Select a dataset and run analysis to view profiles.</p>
                             </div>
 
+                            <!-- Analysis Loading Timeline Progress -->
+                            <div id="analysis-loading-panel" class="hidden" style="padding: 24px 0;">
+                                <h4 class="bold-text text-accent" style="margin-bottom: 20px;">Let's understand your data...</h4>
+                                <ul class="timeline" id="analysis-steps-list">
+                                    <li class="timeline-item waiting" id="an-step-read">
+                                        <span class="icon">○</span>
+                                        <span class="text">Reading dataset file...</span>
+                                    </li>
+                                    <li class="timeline-item waiting" id="an-step-structure">
+                                        <span class="icon">○</span>
+                                        <span class="text">Checking column structures...</span>
+                                    </li>
+                                    <li class="timeline-item waiting" id="an-step-target">
+                                        <span class="icon">○</span>
+                                        <span class="text">Inspecting target column distribution...</span>
+                                    </li>
+                                    <li class="timeline-item waiting" id="an-step-problem">
+                                        <span class="icon">○</span>
+                                        <span class="text">Detecting machine learning problem type...</span>
+                                    </li>
+                                    <li class="timeline-item waiting" id="an-step-risks">
+                                        <span class="icon">○</span>
+                                        <span class="text">Assessing preprocessing risks and decisions...</span>
+                                    </li>
+                                </ul>
+                            </div>
+
+                            <!-- Analysis Profile Narrative Findings -->
                             <div id="analysis-results" class="hidden">
+                                
+                                <!-- Narrative findings block -->
+                                <div class="card col-span-2" style="background-color: rgba(255,255,255,0.01); border-color: var(--border-color); margin-bottom: 24px;">
+                                    <h4 class="bold-text text-accent" style="font-size: 16px; margin-bottom: 8px;">What ML-OS Discovered</h4>
+                                    <p style="font-size: 13px; line-height: 1.6;">
+                                        Your target column is <strong class="text-accent" id="summary-target-text">Survived</strong>. 
+                                        ML-OS has analyzed the values and detected exactly <strong class="text-accent" id="summary-unique-classes">2</strong> unique outcomes. 
+                                        Based on this structure, this problem is classified as: 
+                                        <span class="badge success" id="summary-problem-type-badge">Binary Classification</span>
+                                    </p>
+                                    <button class="why-btn" onclick="toggleWhyBox('why-classification-box')">Why classification?</button>
+                                    
+                                    <div id="why-classification-box" class="explanation-box hidden">
+                                        <strong>Reasoning:</strong> Since the target column represents discrete outcome variables (e.g., survival status: 0 or 1), the model's goal is to map input characteristics to class categories. If the target were continuous numbers (like price or age), this would be classified as a Regression problem.
+                                    </div>
+                                </div>
 
                                 <div class="results-grid">
-
-                                    <div class="results-card">
-                                        <h4>Dataset Metrics</h4>
+                                    
+                                    <!-- Profiling Summary stats -->
+                                    <div class="results-card card" style="margin-bottom: 20px;">
+                                        <h4>Dataset Profile Metrics</h4>
                                         <div class="metric-row">
                                             <span>Detected Problem:</span>
                                             <span id="analysis-problem-type" class="badge">---</span>
@@ -283,7 +459,8 @@
                                         </div>
                                     </div>
 
-                                    <div class="results-card">
+                                    <!-- Features details and types -->
+                                    <div class="results-card card" style="margin-bottom: 20px;">
                                         <h4>Features Intelligence</h4>
                                         <div class="features-summary">
                                             <h5>Numerical Columns (<span id="analysis-num-count">0</span>)</h5>
@@ -296,9 +473,26 @@
                                     </div>
 
                                 </div>
+                                
+                                <!-- Target class distribution bar chart -->
+                                <div class="card" style="margin-bottom: 24px;">
+                                    <h3>Target Distribution</h3>
+                                    <div class="target-distribution-container" id="target-dist-container">
+                                        <!-- Rendered dynamically inside JS -->
+                                    </div>
+                                </div>
+                                
+                                <!-- Features list categorized as cards -->
+                                <div class="card" style="margin-bottom: 24px;">
+                                    <h3>Input Variables Roles & Risks</h3>
+                                    <div class="feature-card-grid" id="analysis-feature-cards">
+                                        <!-- Dynamic cards representing variable details -->
+                                    </div>
+                                </div>
 
+                                <!-- Preprocessing decisions -->
                                 <div class="mt-4">
-                                    <h4>Decisions & Base Models</h4>
+                                    <h3>Preprocessing Strategy Decisions</h3>
                                     <div class="table-container mt-1">
                                         <table id="analysis-decisions-table">
                                             <thead>
@@ -316,14 +510,15 @@
                                     </div>
                                 </div>
 
+                                <!-- Intelligence recommendations and risks -->
                                 <div class="mt-4">
-                                    <h4>Recommendations & Risks</h4>
+                                    <h3>Intelligence Recommendations & Risks</h3>
                                     <div class="table-container mt-1">
                                         <table id="analysis-recs-table">
                                             <thead>
                                                 <tr>
                                                     <th>Priority</th>
-                                                    <th>Title</th>
+                                                    <th>Recommendation</th>
                                                     <th>Description</th>
                                                 </tr>
                                             </thead>
@@ -332,6 +527,11 @@
                                             </tbody>
                                         </table>
                                     </div>
+                                </div>
+                                
+                                <!-- Continue actions -->
+                                <div style="display: flex; justify-content: flex-end; margin-top: 32px;">
+                                    <button class="btn btn-primary" id="btn-goto-plan" onclick="switchPage('run')">Review Proposed Plan →</button>
                                 </div>
 
                             </div>
@@ -354,7 +554,8 @@
 
                             <div class="form-group">
                                 <label for="run-dataset-path">Dataset Path</label>
-                                <input type="text" id="run-dataset-path" placeholder="e.g. playground/data/titanic.csv">
+                                <input type="text" id="run-dataset-path" list="workspace-files-list" placeholder="e.g. playground/data/titanic.csv">
+                                <div id="run-dataset-val-msg" class="validation-msg"></div>
                             </div>
 
                             <div class="form-group">
@@ -362,104 +563,301 @@
                                 <input type="text" id="run-target" placeholder="e.g. Survived">
                             </div>
 
-                            <button id="btn-run-pipeline" class="btn btn-success">Run ML Pipeline</button>
+                            <button id="btn-run-pipeline" class="btn btn-success" style="width: 100%;">Run ML Pipeline</button>
                         </div>
 
                         <!-- Progress / Results Panel -->
                         <div class="card col-span-2">
-                            <h3>Execution Pipeline Status</h3>
-
+                            
+                            <!-- Empty / Configure state -->
                             <div id="run-empty-state" class="center-content py-4">
                                 <p class="dim-text">Configure and click "Run ML Pipeline" to launch the background execution runtime.</p>
                             </div>
 
-                            <div id="run-progress-panel" class="hidden">
-
-                                <div class="pipeline-progress-header">
-                                    <span class="status-badge running" id="pipeline-overall-status-badge">Running</span>
-                                    <span class="run-id-text">Run ID: <span id="pipeline-active-run-id">---</span></span>
+                            <!-- Plan details proposed screen -->
+                            <div id="run-plan-proposed-panel" class="hidden">
+                                <h3 style="border:none; padding:0; margin-bottom: 8px;">Proposed ML-OS Plan</h3>
+                                <p class="dim-text" style="font-size: 13px; margin-bottom: 24px;">Based on your analyzed dataset variables, ML-OS has structured the following lifecycle plan.</p>
+                                
+                                <div class="table-container" style="margin-bottom: 24px;">
+                                    <table>
+                                        <thead>
+                                            <tr>
+                                                <th width="80">Step</th>
+                                                <th>Phase</th>
+                                                <th>Operations Context</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td><strong>01</strong></td>
+                                                <td><span class="badge success">Analyze</span></td>
+                                                <td class="dim-text">Validating file contents, column shapes, missing entries, duplicates.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>02</strong></td>
+                                                <td><span class="badge">Features</span></td>
+                                                <td class="dim-text">Extracting informative descriptors, encoding categoricals, profiling feature-target scores.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>03</strong></td>
+                                                <td><span class="badge">Planning</span></td>
+                                                <td class="dim-text">Determining model families, hyperparameters, and split configuration.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>04</strong></td>
+                                                <td><span class="badge">Training</span></td>
+                                                <td class="dim-text">AutoML model battle (testing multiple candidate classifiers/regressors).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>05</strong></td>
+                                                <td><span class="badge">Evaluation</span></td>
+                                                <td class="dim-text">Assessing CV scores, validation metrics, confusion matrix metrics.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>06</strong></td>
+                                                <td><span class="badge">Explain</span></td>
+                                                <td class="dim-text">Generating SHAP/Feature Importances map.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>07</strong></td>
+                                                <td><span class="badge">Package</span></td>
+                                                <td class="dim-text">Exporting pipeline preprocessor and model joblib files.</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                                <div class="card" style="background-color: rgba(255,255,255,0.01); border-color: var(--border-color); margin-bottom: 24px;">
+                                    <h4 class="bold-text text-accent">Why this plan?</h4>
+                                    <p class="dim-text" style="font-size: 13px; line-height: 1.5; margin-top: 4px;" id="plan-why-text">
+                                        Because this dataset represents a classification lifecycle, we split validation at 80/20 to retain model parameters and benchmark predictions against unseen features.
+                                    </p>
                                 </div>
 
-                                <!-- Checklist Timeline -->
-                                <ul class="timeline">
-                                    <li class="timeline-item" id="stage-Analysis">
-                                        <span class="icon">○</span>
-                                        <span class="text">Analysis (Loading & Validation)</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Feature-Intelligence">
-                                        <span class="icon">○</span>
-                                        <span class="text">Feature Intelligence</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Meta-Reasoning">
-                                        <span class="icon">○</span>
-                                        <span class="text">Meta Reasoning</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Planning">
-                                        <span class="icon">○</span>
-                                        <span class="text">Planning</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Execution-Runtime">
-                                        <span class="icon">○</span>
-                                        <span class="text">Execution Runtime</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Training">
-                                        <span class="icon">○</span>
-                                        <span class="text">Training</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Evaluation">
-                                        <span class="icon">○</span>
-                                        <span class="text">Evaluation</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Explainability">
-                                        <span class="icon">○</span>
-                                        <span class="text">Explainability</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Artifacts-Generation">
-                                        <span class="icon">○</span>
-                                        <span class="text">Artifacts Generation</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Experiment-Tracking">
-                                        <span class="icon">○</span>
-                                        <span class="text">Experiment Tracking</span>
-                                    </li>
-                                    <li class="timeline-item" id="stage-Knowledge-Capture">
-                                        <span class="icon">○</span>
-                                        <span class="text">Knowledge Capture</span>
-                                    </li>
-                                </ul>
+                                <div style="display: flex; justify-content: flex-end;">
+                                    <button id="btn-accept-plan-run" class="btn btn-success">Start ML Pipeline →</button>
+                                </div>
+                            </div>
 
-                                <!-- Post Execution Stats -->
-                                <div id="run-success-stats" class="run-results-box hidden">
-                                    <h4 class="text-success">✓ ML-OS Run Completed Successfully</h4>
+                            <!-- Live pipeline running experience screen -->
+                            <div id="run-progress-panel" class="hidden">
 
-                                    <div class="results-meta-grid">
+                                <div class="pipeline-progress-header" style="display: flex; align-items: center; justify-content: space-between; width: 100%; border-bottom: 1px solid var(--border-color); padding-bottom: 16px; margin-bottom: 24px;">
+                                    <div style="display: flex; align-items: center; gap: 12px;">
+                                        <span class="badge success" id="pipeline-overall-status-badge">Running</span>
+                                        <span class="run-id-text">Run ID: <span id="pipeline-active-run-id" class="text-accent" style="font-family: var(--font-mono); font-size:12px;">---</span></span>
+                                    </div>
+                                </div>
+
+                                <!-- ML-OS IS THINKING Active Stage Panel -->
+                                <div class="card" style="border-left: 4px solid var(--color-accent); background-color: var(--color-accent-dim); margin-bottom: 24px;" id="mlos-thinking-active-stage-panel">
+                                    <h4 class="bold-text text-accent" style="font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                        <span>🧠</span> ML-OS IS THINKING: <span id="thinking-stage-title">Feature Intelligence</span>
+                                    </h4>
+                                    <div style="margin-top: 8px; font-size: 13px; line-height: 1.6;">
+                                        <div><strong>What are we doing?</strong></div>
+                                        <p class="dim-text" id="thinking-what-we-do">Analyzing feature descriptors and sorting target relationships.</p>
+                                        <div style="margin-top: 8px;"><strong>Why are we doing this?</strong></div>
+                                        <p class="dim-text" id="thinking-why-we-do">Not all columns contribute equally. Filtering features prevents overfitting.</p>
+                                    </div>
+                                </div>
+
+                                <!-- Interactive Vertical SVG/HTML Pipeline Journey layout -->
+                                <div class="pipeline-container-box">
+                                    <!-- SVG Connecting lines will be drawn here dynamically -->
+                                    <svg class="pipeline-svg-connections" id="pipeline-svg-canvas">
+                                        <path id="path-dataset-analyze" class="pipeline-line-path" />
+                                        <path id="path-analyze-features" class="pipeline-line-path" />
+                                        <path id="path-features-planning" class="pipeline-line-path" />
+                                        <path id="path-planning-training" class="pipeline-line-path" />
+                                        <path id="path-training-evaluation" class="pipeline-line-path" />
+                                        <path id="path-evaluation-explain" class="pipeline-line-path" />
+                                        <path id="path-explain-package" class="pipeline-line-path" />
+                                    </svg>
+
+                                    <!-- Node list -->
+                                    <div class="pipeline-nodes-list">
+                                        <div class="pipeline-node completed" id="pnode-dataset" data-stage="dataset">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">✓</div>
+                                                    <span class="pipeline-node-text-title">Dataset Provided</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-dataset-meta">Loaded</span>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-analysis" data-stage="analysis">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">01 Dataset Analysis</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-analysis-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Checking dataframe integrity, target types, and base models strategy.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-features" data-stage="features">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">02 Feature Intelligence</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-features-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Engineering features, grouping indicators, scaling values.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-planning" data-stage="planning">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">03 Meta Planning</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-planning-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Formulating validation splitting configuration and base parameters.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-training" data-stage="training">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">04 Model Battle (AutoML)</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-training-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <!-- Dynamic Model Battle progress bars are drawn here during running -->
+                                                <div class="model-battle-container" id="pnode-training-battle-box">
+                                                    <p class="dim-text">Training candidate models...</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-evaluation" data-stage="evaluation">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">05 Performance Evaluation</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-evaluation-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Validating performance on cross-validation sets and generating metrics.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-explain" data-stage="explain">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">06 Explainability Report</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-explain-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Extracting global feature importances score coefficients.</p>
+                                            </div>
+                                        </div>
+
+                                        <div class="pipeline-node" id="pnode-package" data-stage="package">
+                                            <div class="pipeline-node-header">
+                                                <div class="pipeline-node-title-box">
+                                                    <div class="pipeline-node-dot">○</div>
+                                                    <span class="pipeline-node-text-title">07 Artifact Packaging</span>
+                                                </div>
+                                                <span class="pipeline-node-status-text" id="pnode-package-meta">Waiting</span>
+                                            </div>
+                                            <div class="pipeline-node-expanded-body hidden">
+                                                <p>Saving model versions, serialization pickles, and execution logs.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Post Execution Stats & Metrics Story -->
+                                <div id="run-success-stats" class="run-results-box hidden" style="border: 2px solid var(--color-success); background-color: rgba(16, 185, 129, 0.02); margin-top: 32px;">
+                                    <h3 class="text-success" style="border:none; padding:0; margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+                                        <span>🏆</span> ML-OS Pipeline completed successfully!
+                                    </h3>
+                                    <p class="dim-text" style="font-size: 13px; margin-bottom: 24px;">All lifecycle stages executed. ML-OS evaluated candidate structures and compiled the top model version.</p>
+
+                                    <!-- Model Battle Leaderboard winner block -->
+                                    <div class="model-battle-winner-card" style="margin-bottom: 24px;">
+                                        <div class="model-battle-winner-name">
+                                            <span>🏆</span> Top Selected Model: <span id="model-battle-winner-name-text">Decision Tree Classifier</span>
+                                        </div>
+                                        <p class="dim-text" style="font-size: 13px; margin-top: 4px;">
+                                            Decision Tree achieved the highest primary evaluation score on the validation data. ML-OS selected it because of its robust performance constraints.
+                                        </p>
+                                    </div>
+
+                                    <div class="results-meta-grid" style="margin-bottom: 24px;">
                                         <div>
                                             <span class="dim-text">Experiment ID:</span>
-                                            <strong id="res-exp-id">---</strong>
+                                            <strong id="res-exp-id" class="text-accent" style="font-family: var(--font-mono);">---</strong>
                                         </div>
                                         <div>
                                             <span class="dim-text">Problem Type:</span>
                                             <strong id="res-problem-type">---</strong>
                                         </div>
                                         <div>
-                                            <span class="dim-text">Registered Artifacts:</span>
-                                            <strong id="res-artifacts-count">0</strong>
-                                        </div>
-                                        <div>
                                             <span class="dim-text">Execution Time:</span>
                                             <strong id="res-exec-time">0 sec</strong>
                                         </div>
+                                        <div>
+                                            <span class="dim-text">Registered Artifacts:</span>
+                                            <strong id="res-artifacts-count">0</strong>
+                                        </div>
                                     </div>
 
-                                    <h5 class="mt-3">Evaluation Metrics Score</h5>
-                                    <div id="run-final-metrics" class="metrics-grid">
+                                    <!-- Metrics Grid -->
+                                    <h4 class="bold-text mt-3" style="font-size: 14px; margin-bottom: 8px;">Evaluation Performance Metrics</h4>
+                                    <div id="run-final-metrics" class="metrics-grid" style="margin-bottom: 20px;">
                                         <!-- Dynamic metrics -->
                                     </div>
+                                    
+                                    <!-- High Accuracy Educational Alert -->
+                                    <div class="alert-box alert-warning hidden" id="accuracy-overfit-warning-box">
+                                        <span class="alert-box-icon">⚠</span>
+                                        <div>
+                                            <div class="alert-box-title">Unusually High Accuracy Detected (100%)</div>
+                                            <p>This model classified all validation examples correctly. While this is mathematically possible for very clean data, it often indicates **Data Leakage** (features that contain target information are included as inputs) or an overly easy validation split. ML-OS recommends double-checking feature structures.</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Feature Importance Section -->
+                                    <h4 class="bold-text mt-4" style="font-size: 14px; margin-bottom: 8px;">What is driving your model? (Feature Importance)</h4>
+                                    <div class="importance-list" id="pipeline-importance-list">
+                                        <!-- Rendered dynamically -->
+                                    </div>
+
+                                    <!-- Generated Artifact Cards grid -->
+                                    <h4 class="bold-text mt-4" style="font-size: 14px; margin-bottom: 8px;">Generated Output Artifacts</h4>
+                                    <div class="artifacts-dashboard-grid" id="pipeline-artifacts-grid">
+                                        <!-- Dyn -->
+                                    </div>
+
                                 </div>
 
-                                <div id="run-failed-stats" class="run-results-box error-box hidden">
-                                    <h4 class="text-danger">✗ Pipeline Execution Failed</h4>
+                                <!-- Failed State container -->
+                                <div id="run-failed-stats" class="run-results-box error-box hidden" style="margin-top: 32px;">
+                                    <h4 class="text-danger">✗ Pipeline Stopped / Failed</h4>
                                     <p id="run-failed-error" class="mt-1">Unknown error occurred</p>
+                                    
+                                    <div style="display: flex; gap: 12px; margin-top: 16px;">
+                                        <button class="btn btn-secondary btn-sm" onclick="switchPage('analyze')">Configure Dataset</button>
+                                        <button class="btn btn-danger btn-sm" id="btn-retry-pipeline">Retry Pipeline Run</button>
+                                    </div>
                                 </div>
 
                             </div>
@@ -475,7 +873,8 @@
                         <p class="subtitle">Track historical AutoML pipeline optimization, metrics, and models.</p>
                     </div>
 
-                    <div class="experiments-toolbar">
+                    <div class="experiments-toolbar" style="margin-bottom: 16px;">
+                        <span id="compare-helper-text" class="dim-text mr-2" style="align-self: center;">Select 2 experiments to compare.</span>
                         <button id="btn-compare-experiments" class="btn btn-primary" disabled>Compare Selected Experiments</button>
                     </div>
 
@@ -483,7 +882,7 @@
                         <table id="experiments-table">
                             <thead>
                                 <tr>
-                                    <th width="40"><input type="checkbox" id="experiments-select-all"></th>
+                                    <th width="40"><input type="checkbox" id="experiments-select-all" aria-label="Select all experiments"></th>
                                     <th>Experiment ID</th>
                                     <th>Timestamp</th>
                                     <th>Dataset Fingerprint</th>
@@ -507,7 +906,7 @@
                     <div class="modal-card">
                         <div class="modal-header">
                             <h2>Experiment Details: <span id="modal-exp-id">---</span></h2>
-                            <button class="btn-close" onclick="closeExperimentModal()">×</button>
+                            <button class="btn-close" onclick="closeExperimentModal()" aria-label="Close experiment details modal">×</button>
                         </div>
                         <div class="modal-body">
                             <div class="results-grid">
@@ -552,19 +951,30 @@
                 <div id="compare-modal" class="modal-overlay hidden">
                     <div class="modal-card modal-large">
                         <div class="modal-header">
-                            <h2>Experiment Comparison</h2>
-                            <button class="btn-close" onclick="closeCompareModal()">×</button>
+                            <h2>Experiment Comparison Laboratory</h2>
+                            <button class="btn-close" onclick="closeCompareModal()" aria-label="Close comparison modal">×</button>
                         </div>
                         <div class="modal-body">
+                            
+                            <!-- Interpretive summary block -->
+                            <div class="card" style="background-color: var(--color-accent-dim); border:1px solid rgba(6, 182, 212, 0.15); margin-bottom: 24px;">
+                                <h4 class="bold-text text-accent" style="font-size: 15px; display: flex; align-items: center; gap: 8px;">
+                                    <span>💡</span> ML-OS INTERPRETATION
+                                </h4>
+                                <p style="font-size: 13px; line-height: 1.5; margin-top: 6px;" id="compare-interpretation-text">
+                                    Decision Tree achieved the highest accuracy. However, check trade-offs between training latency and generalization limits.
+                                </p>
+                            </div>
+
                             <div class="compare-header-grid">
                                 <div>
                                     <h4>Experiment A</h4>
-                                    <p id="comp-id-a" class="bold-text">---</p>
+                                    <p id="comp-id-a" class="bold-text" style="font-family:var(--font-mono); font-size:12px; color:var(--color-accent);">---</p>
                                 </div>
-                                <div class="center bold-text text-accent">VS</div>
+                                <div class="center bold-text text-accent" style="font-size: 20px;">VS</div>
                                 <div>
                                     <h4>Experiment B</h4>
-                                    <p id="comp-id-b" class="bold-text">---</p>
+                                    <p id="comp-id-b" class="bold-text" style="font-family:var(--font-mono); font-size:12px; color:var(--color-accent);">---</p>
                                 </div>
                             </div>
 
@@ -590,6 +1000,9 @@
             </div>
         </main>
     </div>
+
+    <!-- HTML5 Datalist for autocomplete suggestions -->
+    <datalist id="workspace-files-list"></datalist>
 
     <script src="/static/js/app.js"></script>
 </body>

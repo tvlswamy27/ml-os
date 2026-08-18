@@ -21,7 +21,11 @@ class SplitGenerator(BaseGenerator):
     def can_generate(self, decision: Decision) -> bool:
         return "split" in decision.title.lower()
 
-    def generate(self, decision: Decision) -> GeneratedCode:
+    def generate(
+        self,
+        decision: Decision,
+        context = None,
+    ) -> GeneratedCode:
         imports = ["from sklearn.model_selection import train_test_split"]
         code = """
 train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)

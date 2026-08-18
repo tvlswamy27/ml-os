@@ -64,10 +64,10 @@ class AssemblyService:
 
         loader_code = ""
         if dataset_path_str:
+            suffix = Path(dataset_path_str).suffix.lower()
+            read_func = "read_parquet" if suffix == ".parquet" else "read_csv"
             loader_code = f"""import pandas as pd
-df = pd.read_csv("{dataset_path_str}")
-if "COLUMN_NAME" not in df.columns:
-    df["COLUMN_NAME"] = df.iloc[:, 1]
+df = pd.{read_func}("{dataset_path_str}")
 """
 
         # Write execution pipeline

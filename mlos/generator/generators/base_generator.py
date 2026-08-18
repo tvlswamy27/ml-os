@@ -9,6 +9,7 @@ from abc import ABC, abstractmethod
 
 from mlos.domain.models.decision import Decision
 from mlos.domain.models.generated_code import GeneratedCode
+from mlos.domain.models.generation_context import GenerationContext
 
 
 class BaseGenerator(ABC):
@@ -37,6 +38,7 @@ class BaseGenerator(ABC):
     def generate(
         self,
         decision: Decision,
+        context: GenerationContext | None = None,
     ) -> GeneratedCode:
         """
         Generate executable code.

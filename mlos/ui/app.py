@@ -13,6 +13,8 @@ from threading import Thread
 from typing import Any, Dict
 
 from flask import Flask, jsonify, request, render_template, send_from_directory
+from werkzeug.exceptions import HTTPException, BadRequest, UnsupportedMediaType
+import pandas as pd
 
 from mlos.cli.persistence import (
     find_project_root,
@@ -38,8 +40,17 @@ app = Flask(
 active_runs: Dict[str, Dict[str, Any]] = {}
 
 
+
 def get_active_project_path() -> Path:
-    """Find the active project root directory based on current working dir."""
+    """Find the active project root directory based on persistent pointer or cwd."""
+    pointer_file = Path.home() / ".mlos_active_project"
+    if pointer_file.is_file():
+        try:
+            persisted_path = Path(pointer_file.read_text(encoding="utf-8").strip()).resolve()
+            if persisted_path.exists() and (persisted_path / ".mlos").is_dir():
+                return persisted_path
+        except Exception:
+            pass
     root = find_project_root()
     if root:
         return root
@@ -146,33 +157,76 @@ def get_project():
         )
 
     except Exception as e:
-        return jsonify({"status": "error", "error": str(e)}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to retrieve project details: {str(e)}"
+            }
+        }), 500
 
 
 @app.route("/api/project/init", methods=["POST"])
 def init_project():
     """Initialize a new ML-OS workspace."""
     try:
-        data = request.json or {}
+        if request.content_length and request.content_length > 0 and not request.is_json:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Content-Type must be application/json"
+                }
+            }), 415
+
+        try:
+            data = request.get_json() or {}
+        except BadRequest:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_JSON",
+                    "message": "Request body must contain valid JSON."
+                }
+            }), 400
+
         name = data.get("name")
         goal = data.get("goal", "ML Optimization Goal")
         target_path = data.get("path")
 
         if not name:
-            return jsonify({"error": "Project name is required"}), 400
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Project name is required"
+                }
+            }), 400
 
         cwd = Path.cwd().resolve()
         if target_path:
-            project_root = Path(target_path).resolve()
+            try:
+                project_root = Path(target_path).resolve()
+            except Exception as pe:
+                return jsonify({
+                    "error": {
+                        "code": "INVALID_REQUEST",
+                        "message": f"Invalid project path: {str(pe)}"
+                    }
+                }), 400
         else:
             project_root = cwd / name
             project_root = project_root.resolve()
 
         engine = MLOSEngine()
         # Create project folder
-        project_root = engine.create_project(
-            name=name, goal=goal, destination=project_root
-        )
+        try:
+            project_root = engine.create_project(
+                name=name, goal=goal, destination=project_root
+            )
+        except (OSError, ValueError) as pe:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": f"Invalid project path: {str(pe)}"
+                }
+            }), 400
 
         # Save config yaml
         save_project_config(
@@ -187,6 +241,11 @@ def init_project():
             },
         )
 
+        # Save active project pointer
+        pointer_file = Path.home() / ".mlos_active_project"
+        pointer_file.parent.mkdir(parents=True, exist_ok=True)
+        pointer_file.write_text(str(project_root), encoding="utf-8")
+
         return jsonify(
             {
                 "message": f"Successfully initialized project '{name}'",
@@ -195,47 +254,123 @@ def init_project():
         )
 
     except Exception as e:
-        return jsonify({"error": f"Failed to initialize project: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "PROJECT_INITIALIZATION_FAILED",
+                "message": f"Failed to initialize project: {str(e)}"
+            }
+        }), 500
 
 
 @app.route("/api/project/analyze", methods=["POST"])
 def analyze_dataset():
     """Run analysis on a dataset."""
     try:
-        data = request.json or {}
+        if request.content_length and request.content_length > 0 and not request.is_json:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Content-Type must be application/json"
+                }
+            }), 415
+
+        try:
+            data = request.get_json() or {}
+        except BadRequest:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_JSON",
+                    "message": "Request body must contain valid JSON."
+                }
+            }), 400
+
         dataset_path = data.get("dataset_path")
         target_column = data.get("target_column")
 
         if not dataset_path:
-            return jsonify({"error": "Dataset path is required"}), 400
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset path is required"
+                }
+            }), 400
 
         project_root = get_active_project_path()
         if not (project_root / ".mlos").is_dir():
-            return (
-                jsonify(
-                    {"error": "No project initialized. Initialize a project first."}
-                ),
-                400,
-            )
-
-        memory = reconstruct_project_memory(project_root)
-        if not memory:
-            return jsonify({"error": "Failed to load project config."}), 400
-
-        # Run analysis using engine
-        engine = MLOSEngine()
-        engine.project_memory = memory
+            return jsonify({
+                "error": {
+                    "code": "PROJECT_NOT_FOUND",
+                    "message": "No project initialized. Initialize a project first."
+                }
+            }), 400
 
         # Resolve path
         path_resolved = Path(dataset_path)
         if not path_resolved.is_absolute():
             path_resolved = (project_root / dataset_path).resolve()
 
+        # Workspace isolation traversal check
+        try:
+            path_resolved.relative_to(project_root)
+        except ValueError:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset outside workspace"
+                }
+            }), 400
+
         if not path_resolved.exists():
-            return (
-                jsonify({"error": f"Dataset file does not exist at: {path_resolved}"}),
-                400,
-            )
+            return jsonify({
+                "error": {
+                    "code": "DATASET_NOT_FOUND",
+                    "message": f"Dataset file does not exist at: {path_resolved}"
+                }
+            }), 404
+
+        # Verify dataset format
+        suffix = path_resolved.suffix.lower()
+        if suffix not in [".csv", ".parquet"]:
+            return jsonify({
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": "Unsupported file type. Only CSV and Parquet are supported."
+                }
+            }), 400
+
+        try:
+            if suffix == ".csv":
+                df_temp = pd.read_csv(path_resolved, nrows=2)
+            else:
+                df_temp = pd.read_parquet(path_resolved)
+
+            if target_column and target_column not in df_temp.columns:
+                return jsonify({
+                    "error": {
+                        "code": "TARGET_NOT_FOUND",
+                        "message": f"Target column '{target_column}' not found in dataset."
+                    }
+                }), 400
+        except Exception as read_err:
+            return jsonify({
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": f"Failed to read dataset: {str(read_err)}"
+                }
+            }), 400
+
+        memory = reconstruct_project_memory(project_root)
+        if not memory:
+            return jsonify({
+                "error": {
+                    "code": "INTERNAL_ERROR",
+                    "message": "Failed to load project config."
+                }
+            }), 500
+
+        # Run analysis using engine
+        engine = MLOSEngine()
+        engine.project_memory = memory
 
         report = engine.run_analysis(str(path_resolved), target_column)
 
@@ -309,7 +444,12 @@ def analyze_dataset():
         )
 
     except Exception as e:
-        return jsonify({"error": f"Failed to analyze dataset: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to analyze dataset: {str(e)}"
+            }
+        }), 500
 
 
 def background_run_pipeline(
@@ -580,6 +720,7 @@ def get_run_status(run_id):
     return jsonify(active_runs[run_id])
 
 
+
 @app.route("/api/experiments", methods=["GET"])
 def list_experiments():
     """List all experiments tracked in this project."""
@@ -595,7 +736,12 @@ def list_experiments():
 
         return jsonify(experiments)
     except Exception as e:
-        return jsonify({"error": f"Failed to list experiments: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to list experiments: {str(e)}"
+            }
+        }), 500
 
 
 @app.route("/api/experiments/<experiment_id>", methods=["GET"])
@@ -607,40 +753,233 @@ def get_experiment_details(experiment_id):
         exp = tracker.get_experiment(experiment_id)
 
         if not exp:
-            return jsonify({"error": f"Experiment '{experiment_id}' not found"}), 404
+            return jsonify({
+                "error": {
+                    "code": "EXPERIMENT_NOT_FOUND",
+                    "message": f"Experiment '{experiment_id}' not found"
+                }
+            }), 404
 
         return jsonify(exp)
     except Exception as e:
-        return jsonify({"error": f"Failed to fetch experiment details: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to fetch experiment details: {str(e)}"
+            }
+        }), 500
 
 
 @app.route("/api/experiments/compare", methods=["POST"])
 def compare_experiments():
     """Compare two experiments side-by-side using the ExperimentComparator."""
     try:
-        data = request.json or {}
+        if request.content_length and request.content_length > 0 and not request.is_json:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Content-Type must be application/json"
+                }
+            }), 415
+
+        try:
+            data = request.get_json() or {}
+        except BadRequest:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_JSON",
+                    "message": "Request body must contain valid JSON."
+                }
+            }), 400
+
         exp1_id = data.get("exp1")
         exp2_id = data.get("exp2")
 
         if not exp1_id or not exp2_id:
-            return (
-                jsonify(
-                    {"error": "Both exp1 and exp2 IDs are required for comparison"}
-                ),
-                400,
-            )
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Both exp1 and exp2 IDs are required for comparison"
+                }
+            }), 400
 
         project_root = get_active_project_path()
         tracker = ExperimentTracker(project_root)
+
+        if not tracker.get_experiment(exp1_id):
+            return jsonify({
+                "error": {
+                    "code": "EXPERIMENT_NOT_FOUND",
+                    "message": f"Experiment '{exp1_id}' not found"
+                }
+            }), 404
+
+        if not tracker.get_experiment(exp2_id):
+            return jsonify({
+                "error": {
+                    "code": "EXPERIMENT_NOT_FOUND",
+                    "message": f"Experiment '{exp2_id}' not found"
+                }
+            }), 404
 
         comparator = ExperimentComparator(tracker)
         diff = comparator.compare_experiments(exp1_id, exp2_id)
 
         return jsonify(diff)
     except ValueError as ve:
-        return jsonify({"error": str(ve)}), 400
+        return jsonify({
+            "error": {
+                "code": "INVALID_REQUEST",
+                "message": str(ve)
+            }
+        }), 400
     except Exception as e:
-        return jsonify({"error": f"Failed to compare experiments: {str(e)}"}), 500
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to compare experiments: {str(e)}"
+            }
+        }), 500
+
+
+@app.route("/api/project/validate-dataset", methods=["POST"])
+def validate_dataset():
+    """Validate a dataset path inline."""
+    try:
+        if request.content_length and request.content_length > 0 and not request.is_json:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Content-Type must be application/json"
+                }
+            }), 415
+
+        try:
+            data = request.get_json() or {}
+        except BadRequest:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_JSON",
+                    "message": "Request body must contain valid JSON."
+                }
+            }), 400
+
+        dataset_path = data.get("dataset_path")
+        target_column = data.get("target_column")
+        if not dataset_path:
+            return jsonify({
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset path is required"
+                }
+            }), 400
+
+        project_root = get_active_project_path()
+        path_resolved = Path(dataset_path)
+        if not path_resolved.is_absolute():
+            path_resolved = (project_root / dataset_path).resolve()
+
+        # Check workspace isolation traversal
+        try:
+            path_resolved.relative_to(project_root)
+        except ValueError:
+            return jsonify({
+                "valid": False,
+                "error": {
+                    "code": "INVALID_REQUEST",
+                    "message": "Dataset outside workspace."
+                }
+            }), 400
+
+        if not path_resolved.exists():
+            return jsonify({
+                "valid": False,
+                "error": {
+                    "code": "DATASET_NOT_FOUND",
+                    "message": "Dataset file was not found."
+                }
+            }), 404
+
+        # Check unsupported file type
+        suffix = path_resolved.suffix.lower()
+        if suffix not in [".csv", ".parquet"]:
+            return jsonify({
+                "valid": False,
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": "Unsupported file type."
+                }
+            }), 400
+
+        try:
+            if suffix == ".csv":
+                df_temp = pd.read_csv(path_resolved, nrows=2)
+            else:
+                df_temp = pd.read_parquet(path_resolved)
+
+            if target_column and target_column not in df_temp.columns:
+                return jsonify({
+                    "valid": False,
+                    "error": {
+                        "code": "TARGET_NOT_FOUND",
+                        "message": f"Target column '{target_column}' not found in dataset."
+                    }
+                }), 400
+        except Exception as e:
+            return jsonify({
+                "valid": False,
+                "error": {
+                    "code": "DATASET_INVALID",
+                    "message": f"Failed to read dataset: {str(e)}"
+                }
+            }), 400
+
+        return jsonify({
+            "valid": True,
+            "path": str(dataset_path)
+        })
+
+    except Exception as e:
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to validate dataset: {str(e)}"
+            }
+        }), 500
+
+
+@app.route("/api/project/files", methods=["GET"])
+def list_workspace_files():
+    """List CSV/Parquet files in active workspace safely, up to 3 levels deep."""
+    try:
+        project_root = get_active_project_path()
+        files = []
+        for root, dirs, filenames in os.walk(project_root):
+            # Prune hidden dirs, pycache, egg-info, and virtualenvs
+            dirs[:] = [
+                d for d in dirs
+                if not d.startswith('.')
+                and d not in ['__pycache__', 'node_modules', 'venv', '.venv', 'build', 'dist', 'mlos.egg-info']
+            ]
+
+            rel_path = Path(root).relative_to(project_root)
+            if len(rel_path.parts) > 3:
+                continue
+
+            for f in filenames:
+                if f.endswith(('.csv', '.parquet')):
+                    full_p = Path(root) / f
+                    rel_p = full_p.relative_to(project_root)
+                    files.append(str(rel_p).replace('\\', '/'))
+
+        return jsonify({"files": files})
+    except Exception as e:
+        return jsonify({
+            "error": {
+                "code": "INTERNAL_ERROR",
+                "message": f"Failed to list workspace files: {str(e)}"
+            }
+        }), 500
 
 
 if __name__ == "__main__":
