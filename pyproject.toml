@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mlos"
-version = "2.0.0"
+version = "3.6.0"
 description = "Machine Learning Operating System"
 readme = "README.md"
 requires-python = ">=3.11"
