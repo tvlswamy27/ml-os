@@ -531,3 +531,52 @@ def get_project_run_events(project_id: int, run_id: str, current_user: models.Us
         EventStreamService.subscribe(run_id),
         media_type="text/event-stream"
     )
+
+
+@router.get("/projects/{project_id}/experiments", response_model=List[schemas.ExperimentRecordResponse])
+def get_project_experiments(project_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = verify_project_access(project_id, current_user.id, db)
+    
+    # Secure project path validation check
+    try:
+        ProjectService.validate_project_path(project.project_path)
+    except ValueError as path_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_PROJECT_PATH",
+                "message": str(path_err)
+            }
+        )
+        
+    project_root = Path(project.project_path)
+    tracker = ExperimentTracker(str(project_root))
+    
+    experiments = tracker.list_experiments()
+    
+    # Clean up absolute filepaths to make them relative to project root
+    sanitized_experiments = []
+    for exp in experiments:
+        sanitized_artifacts = {}
+        if "artifacts" in exp:
+            for k, val in exp["artifacts"].items():
+                try:
+                    p_val = Path(val)
+                    if p_val.is_absolute() and p_val.is_relative_to(project_root):
+                        sanitized_artifacts[k] = str(p_val.relative_to(project_root))
+                    else:
+                        sanitized_artifacts[k] = p_val.name
+                except Exception:
+                    sanitized_artifacts[k] = val
+                    
+        sanitized_exp = {**exp}
+        sanitized_exp["artifacts"] = sanitized_artifacts
+        
+        # Ensure candidate_trials is present and formatted
+        if "candidate_trials" not in sanitized_exp:
+            sanitized_exp["candidate_trials"] = []
+            
+        sanitized_experiments.append(sanitized_exp)
+        
+    return sanitized_experiments
+

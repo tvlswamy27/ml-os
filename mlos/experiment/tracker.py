@@ -19,6 +19,26 @@ from typing import Any
 
 
 @dataclass
+class ExperimentTrial:
+    """AutoML candidate evaluation trial metadata."""
+
+    trial_id: str
+    model_name: str
+    estimator_class: str
+    metric: str
+    score: float
+    cv_mean: float
+    cv_std: float
+    cv_scores: list[float] = field(default_factory=list)
+    parameters: dict[str, Any] = field(default_factory=dict)
+    rank: int = 1
+    status: str = "SUCCESS"
+    selected: bool = False
+    duration_seconds: float = 0.0
+    error: str | None = None
+
+
+@dataclass
 class ExperimentRecord:
     """Experiment execution record metadata."""
 
@@ -39,6 +59,7 @@ class ExperimentRecord:
     artifacts: dict[str, str] = field(default_factory=dict)
     environment: dict[str, str] = field(default_factory=dict)
     status: str = "SUCCESS"
+    candidate_trials: list[ExperimentTrial] = field(default_factory=list)
 
 
 from dataclasses import asdict, is_dataclass
@@ -131,6 +152,7 @@ class ExperimentTracker:
         artifacts: dict[str, str],
         hyperparameters: dict[str, Any] | None = None,
         experiment_id: str | None = None,
+        candidate_trials: list[ExperimentTrial] | None = None,
     ) -> ExperimentRecord:
         """Log a new experiment run."""
         exp_id = experiment_id or str(uuid.uuid4())[:8]
@@ -158,6 +180,7 @@ class ExperimentTracker:
             artifacts=artifacts,
             environment=env_meta,
             status="SUCCESS",
+            candidate_trials=candidate_trials or [],
         )
 
         if exp_id in self.experiments:
@@ -184,6 +207,7 @@ class ExperimentTracker:
             exp_data["environment"] = rec.environment
             exp_data["status"] = rec.status
             exp_data["timestamp"] = rec.timestamp
+            exp_data["candidate_trials"] = _make_serializable(rec.candidate_trials)
         else:
             self.experiments[exp_id] = {
                 "experiment_id": rec.experiment_id,
@@ -205,6 +229,7 @@ class ExperimentTracker:
                 "environment": rec.environment,
                 "status": rec.status,
                 "runs": [],
+                "candidate_trials": _make_serializable(rec.candidate_trials),
             }
 
         self._save()

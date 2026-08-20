@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { projectService } from '../services/projectService';
-import type { Project, ProjectDetails } from '../types';
+import type { Project, ProjectDetails, Experiment } from '../types';
 
 export function useProjects(workspaceId: number | null) {
   const queryClient = useQueryClient();
@@ -61,5 +61,22 @@ export function useProjectDetails(projectId: number | null) {
     isError: detailsQuery.isError,
     error: detailsQuery.error,
     detailsQuery,
+  };
+}
+
+export function useProjectExperiments(projectId: number | null) {
+  const experimentsQuery = useQuery<Experiment[], Error>({
+    queryKey: ['projectExperiments', projectId],
+    queryFn: () => projectService.getExperiments(projectId!),
+    enabled: projectId !== null && !isNaN(projectId),
+    staleTime: 30000,
+  });
+
+  return {
+    experiments: experimentsQuery.data || [],
+    isLoading: experimentsQuery.isLoading,
+    isError: experimentsQuery.isError,
+    error: experimentsQuery.error,
+    experimentsQuery,
   };
 }

@@ -61,6 +61,23 @@ export interface AnalysisReport {
   recommendations: Recommendation[];
 }
 
+export interface ExperimentTrial {
+  trial_id: string;
+  model_name: string;
+  estimator_class: string;
+  metric: string;
+  score: number;
+  cv_mean: number;
+  cv_std: number;
+  cv_scores: number[];
+  parameters: Record<string, any>;
+  rank: number;
+  status: 'SUCCESS' | 'FAILED' | string;
+  selected: boolean;
+  duration_seconds: number;
+  error?: string | null;
+}
+
 export interface Experiment {
   experiment_id: string;
   timestamp?: string;
@@ -78,4 +95,5 @@ export interface Experiment {
   hyperparameters?: Record<string, any>;
   status?: 'SUCCESS' | 'FAILED' | string;
   pipeline_id?: string;
+  candidate_trials?: ExperimentTrial[];
 }

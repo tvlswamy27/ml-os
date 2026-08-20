@@ -8,6 +8,8 @@ License: MIT
 """
 
 from pathlib import Path
+from typing import Any
+from mlos.experiment.tracker import ExperimentTracker
 
 from mlos.analysis.dataset_analyzer import DatasetAnalyzer
 from mlos.decision.decision_engine import DecisionEngine
@@ -543,6 +545,17 @@ class MLOSEngine:
             exp_tracker = ExperimentTracker(str(w_root))
             ev_store = EventStore(str(w_root))
 
+            exp_id = experiment_id or self.project_memory.project_name
+            self._track_experiment(
+                experiment_id=exp_id,
+                results=results,
+                best_res=best_res,
+                dataframe=dataframe,
+                target_column=target_column,
+                tracker=exp_tracker,
+                artifacts=automl_artifacts,
+            )
+
             # Automatically register generated physical files in ArtifactRegistry
             registered_artifacts = []
             if exec_session.model_path and Path(exec_session.model_path).exists():
@@ -756,6 +769,110 @@ class MLOSEngine:
             project_dir = getattr(self, "project_path", None) or find_project_root() or Path.cwd()
             update_project_config_from_memory(Path(project_dir), self.project_memory)
 
+    def _track_experiment(
+        self,
+        experiment_id: str,
+        results: list,
+        best_res: Any,
+        dataframe: Any,
+        target_column: str | None,
+        tracker: ExperimentTracker,
+        artifacts: dict[str, str],
+    ):
+        from mlos.analysis.fingerprint import DatasetFingerprinter
+        from mlos.experiment.tracker import ExperimentTracker, ExperimentTrial
+        from mlos.models.catalog import ModelCatalog
+
+        fingerprinter = DatasetFingerprinter()
+        fingerprint = fingerprinter.compute_fingerprint(
+            dataframe, target_column=target_column
+        )
+
+        prob_type = "classification"
+        if self.project_memory:
+            if self.project_memory.dataset and self.project_memory.dataset.problem_type:
+                prob_type = self.project_memory.dataset.problem_type
+            elif (
+                self.project_memory.project_profile
+                and self.project_memory.project_profile.problem_type
+            ):
+                prob_type = self.project_memory.project_profile.problem_type
+
+        if prob_type:
+            mapping = {
+                "binary_classification": "Binary Classification",
+                "binary classification": "Binary Classification",
+                "classification": "Binary Classification",
+                "multiclass_classification": "Multi-class Classification",
+                "multiclass classification": "Multi-class Classification",
+                "multi_class_classification": "Multi-class Classification",
+                "regression": "Regression",
+            }
+            prob_type = mapping.get(prob_type.lower(), prob_type)
+
+        candidate_trials = []
+        successful_results = [r for r in results if r.status == "SUCCESS"]
+        successful_results.sort(key=lambda r: r.cv_mean, reverse=True)
+        success_rank_map = {r.model_id: idx + 1 for idx, r in enumerate(successful_results)}
+
+        for r in results:
+            meta = ModelCatalog.get(r.model_id)
+            est_class = f"{meta.module_path}.{meta.class_name}" if meta else "unknown"
+
+            metric_name = "accuracy"
+            metric_score = 0.0
+            if r.metrics:
+                metric_name = list(r.metrics.keys())[0]
+                metric_score = r.metrics[metric_name]
+            elif r.cv_mean:
+                metric_score = r.cv_mean
+
+            if prob_type and "regression" in prob_type.lower():
+                metric_name = "neg_mean_squared_error"
+
+            rank = success_rank_map.get(r.model_id, len(successful_results) + 1)
+            selected = (best_res is not None and r.model_id == best_res.model_id)
+            error_msg = r.errors[0] if r.errors else None
+
+            candidate_trials.append(
+                ExperimentTrial(
+                    trial_id=f"trial-{r.model_id}",
+                    model_name=r.model_name,
+                    estimator_class=est_class,
+                    metric=metric_name,
+                    score=float(metric_score),
+                    cv_mean=float(r.cv_mean),
+                    cv_std=float(r.cv_std),
+                    cv_scores=r.cv_scores or [],
+                    parameters=r.hpo_result.get("best_params") or {},
+                    rank=rank,
+                    status=r.status,
+                    selected=selected,
+                    duration_seconds=float(r.training_time),
+                    error=error_msg,
+                )
+            )
+
+        return tracker.log_experiment(
+            dataset_fingerprint=fingerprint,
+            problem_type=prob_type,
+            pipeline_id=(
+                f"pipeline-{best_res.model_id}" if best_res else "pipeline-none"
+            ),
+            selected_model=best_res.model_name if best_res else "None",
+            candidate_models=[r.model_name for r in results],
+            metrics=best_res.metrics if best_res else {},
+            cv_scores=best_res.cv_scores if best_res else [],
+            training_time_s=best_res.training_time if best_res else 0.0,
+            prediction_time_s=best_res.prediction_time if best_res else 0.0,
+            memory_usage_mb=best_res.memory_usage_mb if best_res else 0.0,
+            feature_importance=best_res.feature_importance if best_res else {},
+            artifacts=artifacts,
+            hyperparameters=best_res.hpo_result.get("best_params") if best_res else {},
+            experiment_id=experiment_id,
+            candidate_trials=candidate_trials,
+        )
+
     def explain(self):
         """Explain ML-OS decisions."""
         raise NotImplementedError
@@ -867,57 +984,17 @@ class MLOSEngine:
         successful = [r for r in results if r.status == "SUCCESS"]
         best_res = max(successful, key=lambda r: r.cv_mean) if successful else None
 
-        # Fingerprint dataset
-        fingerprinter = DatasetFingerprinter()
-        fingerprint = fingerprinter.compute_fingerprint(
-            dataframe, target_column=target_column
-        )
-
-        # Get problem type from memory/dataset and normalize it
-        prob_type = "classification"
-        if self.project_memory:
-            if self.project_memory.dataset and self.project_memory.dataset.problem_type:
-                prob_type = self.project_memory.dataset.problem_type
-            elif (
-                self.project_memory.project_profile
-                and self.project_memory.project_profile.problem_type
-            ):
-                prob_type = self.project_memory.project_profile.problem_type
-
-        if prob_type:
-            mapping = {
-                "binary_classification": "Binary Classification",
-                "binary classification": "Binary Classification",
-                "classification": "Binary Classification",
-                "multiclass_classification": "Multi-class Classification",
-                "multiclass classification": "Multi-class Classification",
-                "multi_class_classification": "Multi-class Classification",
-                "regression": "Regression",
-            }
-            prob_type = mapping.get(prob_type.lower(), prob_type)
-
         # Track experiment
         from mlos.experiment.ids import generate_experiment_id
-
         exp_id = experiment_id or generate_experiment_id()
-        tracker = ExperimentTracker(w_root)
-        exp_record = tracker.log_experiment(
-            dataset_fingerprint=fingerprint,
-            problem_type=prob_type,
-            pipeline_id=(
-                f"pipeline-{best_res.model_id}" if best_res else "pipeline-none"
-            ),
-            selected_model=best_res.model_name if best_res else "None",
-            candidate_models=[r.model_name for r in results],
-            metrics=best_res.metrics if best_res else {},
-            cv_scores=best_res.cv_scores if best_res else [],
-            training_time_s=best_res.training_time if best_res else 0.0,
-            prediction_time_s=best_res.prediction_time if best_res else 0.0,
-            memory_usage_mb=best_res.memory_usage_mb if best_res else 0.0,
-            feature_importance=best_res.feature_importance if best_res else {},
-            artifacts=artifacts,
-            hyperparameters=best_res.hpo_result.get("best_params") if best_res else {},
+        exp_record = self._track_experiment(
             experiment_id=exp_id,
+            results=results,
+            best_res=best_res,
+            dataframe=dataframe,
+            target_column=target_column,
+            tracker=ExperimentTracker(str(w_root)),
+            artifacts=artifacts,
         )
 
         # Register Pipeline
@@ -977,7 +1054,7 @@ class MLOSEngine:
         lineage_tracker = LineageTracker()
         lineage_artifacts = lineage_tracker.generate_lineage(
             output_dir=output_dir,
-            dataset_fingerprint=fingerprint,
+            dataset_fingerprint=exp_record.dataset_fingerprint,
             features=list(best_res.feature_importance.keys()) if best_res else [],
             pipeline_id=exp_record.pipeline_id,
             model_id=best_res.model_id if best_res else "none",

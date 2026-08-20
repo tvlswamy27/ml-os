@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Workspace, Project, ProjectDetails, AnalysisReport } from '../types';
+import type { Workspace, Project, ProjectDetails, AnalysisReport, Experiment } from '../types';
 
 export const projectService = {
   listWorkspaces: async (): Promise<Workspace[]> => {
@@ -34,5 +34,9 @@ export const projectService = {
       dataset_path: datasetPath,
       target_column: targetColumn,
     });
+  },
+
+  getExperiments: async (projectId: number): Promise<Experiment[]> => {
+    return apiClient.get<Experiment[]>(`/api/projects/${projectId}/experiments`);
   },
 };
