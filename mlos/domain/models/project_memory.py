@@ -44,6 +44,10 @@ class ProjectMemory(BaseModel):
 
     current_stage: str = "Project Initialization"
 
+    run_id: str | None = None
+
+    completed_stages: list[str] = field(default_factory=list)
+
     completed_tasks: list[str] = field(default_factory=list)
 
     notes: list[str] = field(default_factory=list)

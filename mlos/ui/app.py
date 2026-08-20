@@ -517,26 +517,8 @@ def background_run_pipeline(
         if event_bus.is_cancel_requested(run_id):
             raise ExecutionCancelledError("Run cancelled before starting ExecutionRuntime.")
 
-        # Run SDK workflow stages
+        # Run SDK workflow stages (this executes both ML stages and AutoML Search canonically)
         session = project.run(experiment_id=generated_exp_id, run_id=run_id)
-
-        # Check cooperative cancellation before starting AutoML
-        if event_bus.is_cancel_requested(run_id):
-            raise ExecutionCancelledError("Run cancelled before starting AutoML.")
-
-        # Run AutoML search
-        results, artifacts = engine.run_automl(
-            str(path_resolved),
-            target_column=target_column,
-            output_dir=str(project_root / "artifacts" / "automl"),
-            experiment_id=generated_exp_id,
-            workspace_root=project_root,
-            run_id=run_id,
-        )
-
-        # Final check cooperative cancellation
-        if event_bus.is_cancel_requested(run_id):
-            raise ExecutionCancelledError("Run cancelled after completing AutoML.")
 
         # Final success details
         eval_metrics = project.metrics()

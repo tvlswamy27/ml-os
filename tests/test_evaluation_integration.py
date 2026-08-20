@@ -149,6 +149,9 @@ def test_evaluation_engine_missing_metrics_file_handling():
     """
     Verify missing metrics file is handled gracefully by falling back to stdout parsing.
     """
+    from unittest.mock import patch
+    from pathlib import Path
+
     memory = ProjectMemory(project_name="MissingMetricsProj", project_goal="Test")
     session = ExecutionSession(
         pipeline_source=PipelineSource(imports="", body="", code=""),
@@ -162,8 +165,10 @@ def test_evaluation_engine_missing_metrics_file_handling():
     engine = EvaluationEngine()
     engine.register_evaluator(SimpleEvaluator())
 
-    session_result = engine.evaluate(context)
-    assert session_result.metrics["accuracy"] == 0.92
+    with patch("mlos.cli.persistence.find_project_root") as mock_find:
+        mock_find.return_value = Path("nonexistent_directory_for_testing")
+        session_result = engine.evaluate(context)
+        assert session_result.metrics["accuracy"] == 0.92
 
 
 def test_evaluation_service_orchestration_and_history():

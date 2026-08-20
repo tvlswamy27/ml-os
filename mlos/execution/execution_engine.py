@@ -37,12 +37,16 @@ class ExecutionEngine:
         if isinstance(context, Pipeline):
             return self.runner.run(context)
 
+        run_id = None
+        if hasattr(context, "project_memory") and context.project_memory:
+            run_id = context.project_memory.run_id
+
         pipeline = context.project_memory.pipeline
         if not pipeline:
             raise RuntimeError("No pipeline is registered in memory to execute.")
 
         start_time = datetime.now()
-        res = self.runner.run(pipeline)
+        res = self.runner.run(pipeline, run_id=run_id)
         end_time = datetime.now()
 
         duration = (end_time - start_time).total_seconds()
@@ -62,6 +66,8 @@ class ExecutionEngine:
 
         if hasattr(context, "project_root") and context.project_root:
             project_dir = Path(context.project_root)
+        elif hasattr(context, "project_memory") and context.project_memory and context.project_memory.pipeline and context.project_memory.pipeline.entrypoint_path:
+            project_dir = Path(context.project_memory.pipeline.entrypoint_path).parent.parent
         else:
             project_dir = find_project_root() or Path.cwd()
 
@@ -69,13 +75,14 @@ class ExecutionEngine:
 
         if artifacts_dir.exists():
             for p in artifacts_dir.glob("*"):
-                # Register all files found in the artifacts directory
-                p_abs = str(p.resolve())
-                artifacts[p.name] = p_abs
-                if "model" in p.name.lower():
-                    model_path = p_abs
-                elif "metric" in p.name.lower():
-                    metrics_path = p_abs
+                if p.is_file():
+                    # Register all files found in the artifacts directory
+                    p_abs = str(p.resolve())
+                    artifacts[p.name] = p_abs
+                    if "model" in p.name.lower():
+                        model_path = p_abs
+                    elif "metric" in p.name.lower():
+                        metrics_path = p_abs
 
         return ExecutionSession(
             pipeline_source=context.pipeline_source,

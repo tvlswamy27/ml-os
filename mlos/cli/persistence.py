@@ -84,14 +84,14 @@ def find_project_root(start_dir: Path | str | None = None) -> Path | None:
 
     # 1 & 2: Search current directory and parent directories
     for parent in [current] + list(current.parents):
-        if (parent / ".mlos").is_dir():
+        if (parent / ".mlos").is_dir() and str(parent.resolve()).lower() != str(Path.home().resolve()).lower():
             return parent
 
     # 3: Search immediate child directories
     if current.is_dir():
         try:
             subdirs = [
-                d for d in current.iterdir() if d.is_dir() and (d / ".mlos").is_dir()
+                d for d in current.iterdir() if d.is_dir() and (d / ".mlos").is_dir() and str(d.resolve()).lower() != str(Path.home().resolve()).lower()
             ]
             if subdirs:
                 return subdirs[0]

@@ -23,6 +23,7 @@ class ExecutionEvent:
     source: str
     payload: dict[str, Any]
     run_id: str | None = None
+    stage: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -32,6 +33,7 @@ class ExecutionEvent:
             "source": self.source,
             "payload": self.payload,
             "run_id": self.run_id,
+            "stage": self.stage,
         }
 
     @classmethod
@@ -43,6 +45,7 @@ class ExecutionEvent:
             source=data["source"],
             payload=data.get("payload", {}),
             run_id=data.get("run_id"),
+            stage=data.get("stage"),
         )
 
 
@@ -111,7 +114,7 @@ class GlobalEventBus:
                     pass
 
     def publish(
-        self, event_type: str, source: str, payload: dict[str, Any], run_id: str | None = None
+        self, event_type: str, source: str, payload: dict[str, Any], run_id: str | None = None, stage: str | None = None
     ) -> ExecutionEvent:
         """Publish a new event to all matching subscribers."""
         event = ExecutionEvent(
@@ -121,6 +124,7 @@ class GlobalEventBus:
             source=source,
             payload=payload,
             run_id=run_id or payload.get("run_id"),
+            stage=stage or payload.get("stage"),
         )
 
         # Collect subscribers under a lock, then call them outside of the lock

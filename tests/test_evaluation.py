@@ -131,19 +131,19 @@ def test_evaluation_service_structured_file(tmp_path):
 
 
 def test_full_pipeline_assemble_execute_evaluate_integration(tmp_path):
-    # Setup MLOSEngine
-    engine = MLOSEngine()
-    engine.create_project(name="FullRunProj", goal="Verify compile run and evaluate")
-
     # We will generate a python script that writes a structured metrics.json file to its own artifacts path!
     project_dir = Path("playground") / "FullRunProj"
+
+    # Setup MLOSEngine
+    engine = MLOSEngine()
+    engine.create_project(name="FullRunProj", goal="Verify compile run and evaluate", destination=project_dir)
 
     script_code = """
 import os
 import json
 
 # Setup output path
-artifacts_dir = os.path.join("playground", "FullRunProj", "artifacts")
+artifacts_dir = "artifacts"
 os.makedirs(artifacts_dir, exist_ok=True)
 
 # Write output file

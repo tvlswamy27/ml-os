@@ -25,6 +25,20 @@ class ExecutionDispatcher:
         self.mlos_engine = mlos_engine
         self.event_bus = event_bus
 
+        def bridge_to_global(event):
+            from mlos.communication.event_bus import GlobalEventBus
+            run_id = event.run_id or (self.mlos_engine.project_memory.run_id if (self.mlos_engine and self.mlos_engine.project_memory) else None)
+            GlobalEventBus().publish(
+                event_type=event.event_type,
+                source=event.source,
+                payload=event.payload,
+                run_id=run_id,
+                stage=event.stage or event.payload.get("subsystem"),
+            )
+
+        for et in ["PlanGenerated", "NodeScheduled", "NodeStarted", "NodeCompleted", "NodeFailed"]:
+            self.event_bus.subscribe(et, bridge_to_global)
+
     def dispatch_subsystem(
         self, subsystem_name: SubsystemName, strategy: ExecutionStrategy
     ) -> ExecutionLifecycle:

@@ -14,10 +14,21 @@ class ExecutionEvent:
     Standard event published during planning and execution dispatching.
     """
 
-    def __init__(self, event_type: str, payload: dict):
+    def __init__(
+        self,
+        event_type: str,
+        payload: dict,
+        run_id: str | None = None,
+        source: str = "MetaReasoning",
+        stage: str | None = None,
+        timestamp: datetime | None = None,
+    ):
         self.event_type = event_type
-        self.timestamp = datetime.utcnow()
         self.payload = payload
+        self.run_id = run_id or payload.get("run_id")
+        self.source = source
+        self.stage = stage
+        self.timestamp = timestamp or datetime.utcnow()
 
 
 class ExecutionEventBus:

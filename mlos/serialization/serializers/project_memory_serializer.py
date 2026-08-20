@@ -29,6 +29,8 @@ class ProjectMemorySerializer(VersionedSerializer):
             "project_name": model.project_name,
             "project_goal": model.project_goal,
             "current_stage": model.current_stage,
+            "run_id": model.run_id,
+            "completed_stages": list(model.completed_stages),
             "completed_tasks": list(model.completed_tasks),
             "notes": list(model.notes),
         }
@@ -173,6 +175,8 @@ class ProjectMemorySerializer(VersionedSerializer):
         )
 
         memory.current_stage = data.get("current_stage", "Project Initialization")
+        memory.run_id = data.get("run_id")
+        memory.completed_stages = data.get("completed_stages", [])
         memory.completed_tasks = data.get("completed_tasks", [])
         memory.notes = data.get("notes", [])
 

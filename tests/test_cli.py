@@ -199,8 +199,10 @@ def test_cli_run_success(mock_reconstruct, mock_find_root, tmp_path):
         mock_run.assert_called_once()
 
 
-def test_cli_doctor_output():
+def test_cli_doctor_output(tmp_path, monkeypatch):
     # Verify doctor runs and prints exit code 0 when all packages are installed
+    monkeypatch.chdir(tmp_path)
+    main(["init", "--name", "TestProj", "--goal", "Accuracy", "--non-interactive"])
     exit_code = main(["doctor"])
     assert exit_code == 0
 

@@ -19,7 +19,7 @@ class PipelineRunner(ABC):
     """
 
     @abstractmethod
-    def run(self, pipeline: Pipeline) -> ExecutionResult:
+    def run(self, pipeline: Pipeline, run_id: str | None = None) -> ExecutionResult:
         """
         Execute the pipeline and return the result.
         """

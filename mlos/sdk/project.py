@@ -164,231 +164,36 @@ class MLProject:
         Execute the stage-based pipeline, auto-organizing outputs and logging lineage metrics.
         """
         assert self.memory is not None
-        from mlos.execution_intelligence.runtime import ExecutionGraph, ExecutionRuntime
-        from mlos.execution_intelligence.stage import (
-            ArtifactGenerationStage,
-            DataLoadingStage,
-            DeploymentPackagingStage,
-            EvaluationStage,
-            ExplainabilityStage,
-            FeaturePipelineStage,
-            HyperparameterOptimizationStage,
-            TrainingStage,
-            TransformationStage,
-            ValidationStage,
-        )
+        from mlos.engine.engine import MLOSEngine
 
-        # Setup standard stage execution DAG
-        graph = ExecutionGraph()
+        engine = MLOSEngine()
+        engine.project_memory = self.memory
+        engine.project_path = self.project_path
 
-        stages = [
-            DataLoadingStage(),
-            ValidationStage(),
-            TransformationStage(),
-            FeaturePipelineStage(),
-            TrainingStage(),
-            HyperparameterOptimizationStage(),
-            EvaluationStage(),
-            ExplainabilityStage(),
-            ArtifactGenerationStage(),
-            DeploymentPackagingStage(),
-        ]
+        # Use memory dataset path and target if not set on SDK facade
+        dataset_path = self.dataset_path
+        if not dataset_path and self.memory.dataset and self.memory.dataset.path:
+            dataset_path = self.memory.dataset.path
 
-        for s in stages:
-            graph.add_stage(s)
+        target_col = self.target_column
+        if not target_col and self.memory.dataset and self.memory.dataset.target:
+            target_col = self.memory.dataset.target
 
-        # Wire linear dependencies
-        graph.add_dependency("Validation", "Data Loading")
-        graph.add_dependency("Transformation", "Validation")
-        graph.add_dependency("Feature Engineering", "Transformation")
-        graph.add_dependency("Training", "Feature Engineering")
-        graph.add_dependency("Hyperparameter Optimization", "Training")
-        graph.add_dependency("Evaluation", "Hyperparameter Optimization")
-        graph.add_dependency("Explainability", "Evaluation")
-        graph.add_dependency("Artifact Generation", "Explainability")
-        graph.add_dependency("Deployment Packaging", "Artifact Generation")
-
-        runtime = ExecutionRuntime()
-        start_time = datetime.now()
-
-        # Run topologically sorted stage list
-        results = runtime.run_graph(
-            graph,
-            self.memory,
-            dataset_path=self.dataset_path or "",
-            target=self.target_column or "",
-            project_path=str(self.project_path),
+        run_record = engine.run_canonical_lifecycle(
+            dataset_path=dataset_path or "",
+            target_column=target_col,
+            output_dir=str(self.project_path / "artifacts" / "automl"),
+            experiment_id=experiment_id,
             run_id=run_id,
+            workspace_root=self.project_path,
         )
 
-        end_time = datetime.now()
-        duration = (end_time - start_time).total_seconds()
-
-        ctx = results.get("__context__", {})
-
-        # 1. Automatically register physical files inside ArtifactRegistry
-        registered_artifacts = []
-
-        if "model_file" in ctx:
-            art = self.artifact_registry.register_artifact(
-                name="model",
-                artifact_type="MODEL",
-                source_file_path=Path(ctx["model_file"]),
-                metadata={"problem_type": ctx.get("problem_type")},
-            )
-            registered_artifacts.append(art)
-
-        if "transformed_dataframe" in ctx:
-            prep_file = self.project_path / "preprocessor.joblib"
-            with open(prep_file, "w") as f:
-                f.write("Imputer checkpoint placeholder")
-            art = self.artifact_registry.register_artifact(
-                name="preprocessor",
-                artifact_type="PREPROCESSOR",
-                source_file_path=prep_file,
-            )
-            registered_artifacts.append(art)
-
-        if "metrics_file" in ctx:
-            art = self.artifact_registry.register_artifact(
-                name="metrics",
-                artifact_type="REPORT",
-                source_file_path=Path(ctx["metrics_file"]),
-            )
-            registered_artifacts.append(art)
-
-        if "explainability_file" in ctx:
-            art = self.artifact_registry.register_artifact(
-                name="explainability_report",
-                artifact_type="EXPLAINABILITY",
-                source_file_path=Path(ctx["explainability_file"]),
-            )
-            registered_artifacts.append(art)
-
-        if "deployment_package" in ctx:
-            art = self.artifact_registry.register_artifact(
-                name="deployment_package",
-                artifact_type="DEPLOYMENT",
-                source_file_path=Path(ctx["deployment_package"]),
-            )
-            registered_artifacts.append(art)
-
-        # 2. Extract capture events log timeline
-        events_timeline = self.event_store.get_timeline(
-            start_time=start_time, end_time=end_time
-        )
-        run_events = [
-            RunEvent(
-                event_id=ev.event_id,
-                event_type=ev.event_type,
-                timestamp=ev.timestamp,
-                source=ev.source,
-                payload=ev.payload,
-            )
-            for ev in events_timeline
-        ]
-
-        # 3. Snapshot active system rules
-        active_rules = []
-        if self.memory.knowledge_entries:
-            for entry in self.memory.knowledge_entries:
-                active_rules.append(
-                    {
-                        "knowledge_id": str(entry.knowledge_id),
-                        "target_component": entry.target_component,
-                        "target_subsystem": entry.target_subsystem,
-                        "parameters": (
-                            dict(entry.parameters) if entry.parameters else {}
-                        ),
-                    }
-                )
-
-        knowledge_snap = KnowledgeSnapshot(
-            snapshot_id=uuid4(),
-            timestamp=datetime.now(),
-            active_rules_count=len(active_rules),
-            rules=active_rules,
-        )
-
-        # 4. Construct run record logs
-        run_execution = RunExecution(
-            execution_id=uuid4(),
-            status="SUCCESS",
-            start_time=start_time,
-            end_time=end_time,
-            duration_seconds=duration,
-            stdout="Completed topological stages.",
-            stderr="",
-            exit_code=0,
-            pipeline_hash=str(uuid4()),
-        )
-
-        run_metrics = RunMetrics(
-            metrics_id=uuid4(),
-            metrics=ctx.get("evaluation_metrics", {}),
-            timestamp=datetime.now(),
-        )
-
-        model_run_artifacts = [
-            RunArtifact(
-                artifact_id=a.artifact_id,
-                name=a.name,
-                artifact_type=a.artifact_type,
-                file_path=a.file_path,
-                version=a.version,
-            )
-            for a in registered_artifacts
-        ]
-
-        from mlos.experiment.ids import generate_experiment_id
-
-        exp_id = experiment_id or generate_experiment_id()
-        experiment = self.experiment_tracker.get_or_create_experiment(exp_id)
-
-        canonical_problem_type = None
-        if self.memory:
-            if self.memory.project_profile and self.memory.project_profile.problem_type:
-                canonical_problem_type = self.memory.project_profile.problem_type
-            elif self.memory.dataset and self.memory.dataset.problem_type:
-                canonical_problem_type = self.memory.dataset.problem_type
-
-        if canonical_problem_type:
-            mapping = {
-                "binary_classification": "Binary Classification",
-                "multiclass_classification": "Multi-class Classification",
-                "regression": "Regression",
-                "classification": "Binary Classification",
-            }
-            canonical_problem_type = mapping.get(
-                canonical_problem_type.lower(), canonical_problem_type
-            )
-
-        run_record = Run(
-            run_id=uuid4(),
-            experiment_id=experiment.experiment_id,
-            name=f"run_{len(experiment.runs) + 1}",
-            timestamp=datetime.now(),
-            execution=run_execution,
-            metrics=run_metrics,
-            artifacts=model_run_artifacts,
-            events=run_events,
-            knowledge_snapshot=knowledge_snap,
-            metadata={
-                "project_name": self.name,
-                "problem_type": canonical_problem_type,
-                "experiment_id": exp_id,
-            },
-        )
-
-        self.experiment_tracker.record_run(experiment.experiment_id, run_record)
-
-        # Save final state memory
         self.save()
-
         return MLProjectSession(run_record, self)
 
     def metrics(self) -> dict[str, float]:
         """Return the evaluation metrics associated with the last successful run."""
+        self.experiment_tracker._load()
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         if not exp.runs:
             return {}
@@ -396,12 +201,14 @@ class MLProject:
 
     def artifacts(self) -> list[ExecutionArtifact]:
         """Retrieve list of all registered outputs inside the ArtifactRegistry."""
+        self.artifact_registry.load()
         return self.artifact_registry.list_artifacts()
 
     def explain(self) -> dict[str, float]:
         """Fetch model explainability importance map."""
         import json
 
+        self.artifact_registry.load()
         explain_art = self.artifact_registry.list_artifacts(
             artifact_type="EXPLAINABILITY"
         )
@@ -443,6 +250,7 @@ class MLProject:
 
     def history(self) -> list[dict[str, Any]]:
         """Return history metadata of all executed runs."""
+        self.experiment_tracker._load()
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         return [
             {
@@ -466,6 +274,7 @@ class MLProject:
 
     def compare_runs(self) -> dict[str, dict[str, Any]]:
         """Compare evaluation metrics side-by-side across all historical runs."""
+        self.experiment_tracker._load()
         exp = self.experiment_tracker.get_or_create_experiment(self.name)
         comparison = {}
         for r in exp.runs:
