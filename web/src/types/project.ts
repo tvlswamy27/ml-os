@@ -97,3 +97,13 @@ export interface Experiment {
   pipeline_id?: string;
   candidate_trials?: ExperimentTrial[];
 }
+
+export interface Artifact {
+  name: string;
+  relative_path: string;
+  size_bytes: number;
+  modified_at: string;
+  artifact_type: string;
+  downloadable: boolean;
+  mime_type: string;
+}

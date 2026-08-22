@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 from sqlalchemy.orm import Session
 from datetime import datetime
 import threading
@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import pandas as pd
 from typing import List, Any, Dict
+import mimetypes
 
 from ..database import get_db
 from .auth import get_current_user
@@ -579,4 +580,140 @@ def get_project_experiments(project_id: int, current_user: models.User = Depends
         sanitized_experiments.append(sanitized_exp)
         
     return sanitized_experiments
+
+
+@router.get("/projects/{project_id}/artifacts", response_model=List[schemas.ArtifactResponse])
+def get_project_artifacts(project_id: int, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = verify_project_access(project_id, current_user.id, db)
+    
+    try:
+        ProjectService.validate_project_path(project.project_path)
+    except ValueError as path_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "code": "INVALID_PROJECT_PATH",
+                "message": str(path_err)
+            }
+        )
+        
+    project_root = Path(project.project_path).resolve()
+    artifacts = []
+    
+    # Check explicitly allowed root files
+    allowed_root_files = ["pipeline.py", "model.joblib", "metrics.json"]
+    for filename in allowed_root_files:
+        filepath = project_root / filename
+        if filepath.is_file():
+            stat = filepath.stat()
+            mime_type, _ = mimetypes.guess_type(str(filepath))
+            artifacts.append({
+                "name": filename,
+                "relative_path": filename,
+                "size_bytes": stat.st_size,
+                "modified_at": datetime.fromtimestamp(stat.st_mtime),
+                "artifact_type": "code" if filename.endswith(".py") else ("model" if filename.endswith(".joblib") else "metrics"),
+                "downloadable": True,
+                "mime_type": mime_type or "application/octet-stream"
+            })
+            
+    # Check artifacts directory
+    artifacts_dir = project_root / "artifacts"
+    if artifacts_dir.is_dir():
+        for filepath in artifacts_dir.rglob("*"):
+            if filepath.is_file():
+                try:
+                    rel_path = filepath.relative_to(project_root)
+                    stat = filepath.stat()
+                    mime_type, _ = mimetypes.guess_type(str(filepath))
+                    
+                    artifact_type = "unknown"
+                    if filepath.suffix == ".py": artifact_type = "code"
+                    elif filepath.suffix == ".joblib": artifact_type = "model"
+                    elif filepath.suffix == ".json": artifact_type = "metrics"
+                    
+                    artifacts.append({
+                        "name": filepath.name,
+                        "relative_path": str(rel_path).replace("\\", "/"),
+                        "size_bytes": stat.st_size,
+                        "modified_at": datetime.fromtimestamp(stat.st_mtime),
+                        "artifact_type": artifact_type,
+                        "downloadable": True,
+                        "mime_type": mime_type or "application/octet-stream"
+                    })
+                except Exception:
+                    pass
+
+    return artifacts
+
+
+@router.get("/projects/{project_id}/artifacts/download")
+def download_project_artifact(project_id: int, path: str, current_user: models.User = Depends(get_current_user), db: Session = Depends(get_db)):
+    project = verify_project_access(project_id, current_user.id, db)
+    
+    if not path or ".." in path or path.startswith("/") or path.startswith("\\") or ":" in path:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_PATH", "message": "Path contains invalid characters or traversal attempts."}
+        )
+        
+    try:
+        ProjectService.validate_project_path(project.project_path)
+    except ValueError as path_err:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_PROJECT_PATH", "message": str(path_err)}
+        )
+        
+    project_root = Path(project.project_path).resolve()
+    requested_path = (project_root / path).resolve()
+    
+    # Validate it's within project_root
+    try:
+        requested_path.relative_to(project_root)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "PATH_TRAVERSAL_REJECTED", "message": "Requested path is outside the project root."}
+        )
+        
+    # Validate allowlisted locations
+    allowed_root_files = ["pipeline.py", "model.joblib", "metrics.json"]
+    is_allowed = False
+    
+    try:
+        rel_path = requested_path.relative_to(project_root)
+        rel_str = str(rel_path).replace("\\", "/")
+        
+        if rel_str in allowed_root_files:
+            is_allowed = True
+        elif rel_str.startswith("artifacts/"):
+            is_allowed = True
+    except ValueError:
+        pass
+        
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"code": "ACCESS_DENIED", "message": "Access to this file is not allowed."}
+        )
+        
+    if not requested_path.exists():
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"code": "FILE_NOT_FOUND", "message": "The requested artifact does not exist."}
+        )
+        
+    if not requested_path.is_file():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"code": "INVALID_FILE", "message": "The requested path is not a regular file."}
+        )
+        
+    mime_type, _ = mimetypes.guess_type(str(requested_path))
+    return FileResponse(
+        path=str(requested_path),
+        filename=requested_path.name,
+        media_type=mime_type or "application/octet-stream"
+    )
 

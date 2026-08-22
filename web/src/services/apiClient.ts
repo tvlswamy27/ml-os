@@ -87,4 +87,45 @@ export const apiClient = {
     });
     return handleResponse<T>(response);
   },
+
+  download: async (url: string, filename: string): Promise<void> => {
+    const response = await fetch(`${BASE_URL}${url}`, {
+      method: 'GET',
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      let errorPayload: any = {};
+      try {
+        errorPayload = await response.json();
+      } catch {}
+      
+      let code = 'HTTP_ERROR';
+      let message = response.statusText || `Request failed with status ${response.status}`;
+      
+      if (errorPayload && errorPayload.detail) {
+        if (typeof errorPayload.detail === 'object') {
+          code = errorPayload.detail.code || 'HTTP_ERROR';
+          message = errorPayload.detail.message || JSON.stringify(errorPayload.detail);
+        } else if (typeof errorPayload.detail === 'string') {
+          code = 'VALIDATION_ERROR';
+          message = errorPayload.detail;
+        }
+      } else if (errorPayload && errorPayload.error) {
+        code = errorPayload.error.code || 'HTTP_ERROR';
+        message = errorPayload.error.message || message;
+      }
+      throw new ApiRequestError(response.status, { code, message });
+    }
+    
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(objectUrl);
+  },
 };

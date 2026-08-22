@@ -2,12 +2,13 @@ import * as React from "react";
 import { Play, Square, Terminal } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useProjectStore } from "../store/projectStore";
-import { useProjectDetails, useRun, useToast } from "../hooks";
+import { useProjectDetails, useRun, useToast, useProjectArtifacts } from "../hooks";
 import { eventService } from "../services/eventService";
 import { Timeline } from "../components/Timeline";
 import type { TimelineStep } from "../components/Timeline";
 import { Button } from "../components/Button";
 import { Card, CardHeader, CardTitle, CardContent } from "../components/Card";
+import { ArtifactCard } from "../components/ArtifactCard";
 import { ApiRequestError } from "../services/apiClient";
 
 export const Run: React.FC = () => {
@@ -23,6 +24,7 @@ export const Run: React.FC = () => {
   const [runStatus, setRunStatus] = React.useState<'idle' | 'queued' | 'running' | 'completed' | 'failed' | 'cancelled' | 'cancel_requested'>('idle');
 
   const { startRunMutation, cancelRunMutation, runStatus: realRunStatus } = useRun(selectedProjectId, runId);
+  const { artifacts, isLoading: artifactsLoading, downloadArtifactMutation } = useProjectArtifacts(selectedProjectId);
 
   // SSE subscription
   React.useEffect(() => {
@@ -215,16 +217,37 @@ export const Run: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Generated Code Preview notice */}
+          {/* Generated Artifacts */}
           {runStatus === "completed" && (
-            <div className="p-4 border border-border rounded bg-card/45 text-xs text-muted-foreground leading-relaxed animate-in fade-in duration-200">
-              <span className="font-bold text-foreground font-mono block mb-1">
-                ✓ Pipeline Script Generated
-              </span>
-              The model preprocessing and training pipeline script was compiled and written to:
-              <code className="block mt-1 font-mono font-bold text-primary bg-secondary/30 p-1.5 rounded truncate">
-                {details?.project_path}/pipeline.py
-              </code>
+            <div className="space-y-4 animate-in fade-in duration-200">
+              <h3 className="text-sm font-semibold tracking-tight text-foreground">Generated Artifacts</h3>
+              {artifactsLoading ? (
+                <div className="text-xs text-muted-foreground p-4 border border-border rounded bg-card/45 text-center">Loading artifacts...</div>
+              ) : artifacts && artifacts.length > 0 ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {artifacts.map((artifact) => (
+                    <ArtifactCard
+                      key={artifact.relative_path}
+                      name={artifact.name}
+                      type={artifact.artifact_type}
+                      path={artifact.relative_path}
+                      size={`${(artifact.size_bytes / 1024).toFixed(1)} KB`}
+                      created={new Date(artifact.modified_at).toLocaleString()}
+                      onDownload={() => {
+                        toast(`Downloading ${artifact.name}...`, "info");
+                        downloadArtifactMutation.mutate(
+                          { path: artifact.relative_path, name: artifact.name },
+                          {
+                            onError: (err: any) => toast(err.message || "Download failed", "error")
+                          }
+                        );
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground p-4 border border-border rounded bg-card/45 text-center">No artifacts have been generated for this run yet.</div>
+              )}
             </div>
           )}
         </div>

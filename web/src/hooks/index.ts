@@ -4,3 +4,4 @@ export * from './useProjects';
 export * from './useProjectAnalysis';
 export * from './useRun';
 export * from './useToast';
+export * from './useProjectArtifacts';

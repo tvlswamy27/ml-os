@@ -1,5 +1,5 @@
 import { apiClient } from './apiClient';
-import type { Workspace, Project, ProjectDetails, AnalysisReport, Experiment } from '../types';
+import type { Workspace, Project, ProjectDetails, AnalysisReport, Experiment, Artifact } from '../types';
 
 export const projectService = {
   listWorkspaces: async (): Promise<Workspace[]> => {
@@ -38,5 +38,13 @@ export const projectService = {
 
   getExperiments: async (projectId: number): Promise<Experiment[]> => {
     return apiClient.get<Experiment[]>(`/api/projects/${projectId}/experiments`);
+  },
+
+  getProjectArtifacts: async (projectId: number): Promise<Artifact[]> => {
+    return apiClient.get<Artifact[]>(`/api/projects/${projectId}/artifacts`);
+  },
+
+  downloadArtifact: async (projectId: number, path: string, name: string): Promise<void> => {
+    return apiClient.download(`/api/projects/${projectId}/artifacts/download?path=${encodeURIComponent(path)}`, name);
   },
 };

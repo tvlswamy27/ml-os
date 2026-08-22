@@ -102,3 +102,13 @@ class ExperimentRecordResponse(BaseModel):
     status: str
     candidate_trials: List[ExperimentTrialResponse] = []
 
+
+class ArtifactResponse(BaseModel):
+    name: str
+    relative_path: str
+    size_bytes: int
+    modified_at: datetime
+    artifact_type: str
+    downloadable: bool
+    mime_type: str
+
